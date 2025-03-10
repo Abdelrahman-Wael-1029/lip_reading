@@ -1,10 +1,9 @@
-import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/bloc_observer.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
-import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 import 'package:lip_reading/utils/theme.dart';
+import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
 import 'package:responsive_framework/responsive_wrapper.dart';
 
 void main() async {
@@ -25,6 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
@@ -41,8 +41,7 @@ class MyApp extends StatelessWidget {
         ),
       ),
       theme: lightTheme,
-      debugShowCheckedModeBanner: false,
-      home: const LipReadingScreen(),
+      home: const SplashScreen(),
     );
   }
 }

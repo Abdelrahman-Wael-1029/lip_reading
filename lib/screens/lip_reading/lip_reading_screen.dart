@@ -8,6 +8,7 @@ import 'package:lip_reading/utils/utils.dart';
 
 class LipReadingScreen extends StatefulWidget {
   const LipReadingScreen({super.key});
+  
 
   @override
   State<LipReadingScreen> createState() => _LipReadingScreenState();
