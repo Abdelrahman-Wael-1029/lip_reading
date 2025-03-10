@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  static const String routeName = '/';
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -68,6 +71,11 @@ class _SplashScreenState extends State<SplashScreen>
             }
             setState(() {});
           });
+
+    // after 4 second make push
+    Timer(Duration(seconds: 4), () {
+      Navigator.pushReplacementNamed(context, LipReadingScreen.routeName);
+    });
 
     _controller.repeat();
   }

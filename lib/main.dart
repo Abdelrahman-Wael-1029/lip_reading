@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/bloc_observer.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
+import 'package:lip_reading/utils/app_route.dart';
 import 'package:lip_reading/utils/theme.dart';
 import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
 import 'package:responsive_framework/responsive_wrapper.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
           ],
         ),
       ),
+      onGenerateRoute: AppRoutes.onGenerateRoute,
       theme: lightTheme,
       home: const SplashScreen(),
     );
