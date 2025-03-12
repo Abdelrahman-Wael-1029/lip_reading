@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lip_reading/components/custom_button.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
@@ -64,14 +63,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   BlocConsumer<LipReadingCubit, LipReadingState>(
                     listener: (context, state) {},
                     builder: (context, state) {
-                      if (state is LipReadingVideoLoading) {
-                        return const SizedBox(
-                          height: 300,
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      } else if (state is LipReadingVideoError) {
+                      if (state is LipReadingVideoError) {
                         return Container(
                           height: 300,
                           decoration: BoxDecoration(
@@ -89,7 +81,26 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         final videoController =
                             context.read<LipReadingCubit>().controller;
                         if (videoController != null) {
-                          return CustomVideoPlayer(controller: videoController);
+                          return Column(
+                            spacing: getSizedBox(context)!,
+                            children: [
+                              CustomVideoPlayer(controller: videoController),
+                              Container(
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: AppColors.primaryColor),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: AppColors.backgroundColor,
+                                ),
+                                padding: EdgeInsets.all(getPadding(context)!),
+                                child: Text(
+                                  'abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo abdo ',
+                                  style:
+                                      TextStyle(color: AppColors.primaryColor),
+                                ),
+                              )
+                            ],
+                          );
                         }
                       }
                       return Column(
@@ -128,29 +139,39 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             ),
           ),
           bottomNavigationBar: Container(
-            color: AppColors.secondaryColor,
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.backgroundColor,
+                  width: 1,
+                ),
+              ),
+              color: AppColors.secondaryColor,
+            ),
             padding: const EdgeInsets.all(8.0),
             child: Row(
               spacing: 16,
               children: [
                 Expanded(
-                  child: CustomButton(
-                    text: 'Record',
-                    textColor: AppColors.white,
-                    backgroundColor: AppColors.secondaryColor,
+                  child: IconButton(
                     onPressed: () {
                       context.read<LipReadingCubit>().recordVideo();
                     },
+                    icon: const Icon(
+                      Icons.mic,
+                      color: AppColors.backgroundColor,
+                    ),
                   ),
                 ),
                 Expanded(
-                  child: CustomButton(
-                    text: 'Upload',
-                    textColor: AppColors.white,
-                    backgroundColor: AppColors.secondaryColor,
+                  child: IconButton(
                     onPressed: () {
                       context.read<LipReadingCubit>().pickVideoFromGallery();
                     },
+                    icon: const Icon(
+                      Icons.photo,
+                      color: AppColors.backgroundColor,
+                    ),
                   ),
                 ),
               ],
