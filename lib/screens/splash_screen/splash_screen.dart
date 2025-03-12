@@ -13,20 +13,9 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-double width(BuildContext context) {
-  return MediaQuery.of(context).size.width;
-}
-
-double height(BuildContext context) {
-  return MediaQuery.of(context).size.height;
-}
-
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   double ballY = 0;
-  double widthVal = 50;
-  double heightVal = 50;
-  double bottomVal = 500;
   bool add = false;
   bool showShadow = false;
   int times = 0;
@@ -35,9 +24,9 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
 
   @override
-  @override
   void initState() {
     super.initState();
+
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 1))
           ..addListener(() {
@@ -46,6 +35,7 @@ class _SplashScreenState extends State<SplashScreen>
             } else {
               ballY -= 15;
             }
+
             if (ballY <= -200) {
               times += 1;
               add = true;
@@ -54,27 +44,26 @@ class _SplashScreenState extends State<SplashScreen>
             if (ballY >= 0) {
               add = false;
               showShadow = false;
-              widthVal += 50;
-              heightVal += 50;
-              bottomVal -= 200;
             }
             if (times == 3) {
               showShadow = false;
-              widthVal = width(context);
-              heightVal = height(context);
               Timer(Duration(milliseconds: 300), () {
-                setState(() {
-                  showComic = true;
-                });
+                if (mounted) {
+                  setState(() {
+                    showComic = true;
+                  });
+                }
               });
               _controller.stop();
             }
-            setState(() {});
+            if (mounted) setState(() {}); // Only update if widget is mounted
           });
 
-    // after 4 second make push
+    // Navigate after 4 seconds
     Timer(Duration(seconds: 4), () {
-      Navigator.pushReplacementNamed(context, LipReadingScreen.routeName);
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, LipReadingScreen.routeName);
+      }
     });
 
     _controller.repeat();
@@ -84,68 +73,79 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.secondaryColor,
-      body: SizedBox(
-        width: width(context),
-        height: height(context),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            LogoAnimation(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          double screenWidth = constraints.maxWidth;
+          double screenHeight = constraints.maxHeight;
+
+          // Dynamically calculated values
+          double widthVal = times < 3 ? 50 + (times * 50) : screenWidth;
+          double heightVal = times < 3 ? 50 + (times * 50) : screenHeight;
+          double bottomVal = times < 3 ? screenHeight * 0.6 - (times * 200) : 0;
+
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              LogoAnimation(
                 bottomVal: bottomVal,
                 heightVal: heightVal,
                 ballY: ballY,
                 times: times,
                 showShadow: showShadow,
-                widthVal: widthVal),
-            if (showComic)
-              Positioned(
+                widthVal: widthVal,
+              ),
+              if (showComic)
+                Positioned(
                   child: Column(
-                // mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.chrome_reader_mode_outlined, // Bus icon
-                        size: 60,
-                        color: AppColors.secondaryColor, // Purple icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chrome_reader_mode_outlined,
+                            size: 60,
+                            color: AppColors.secondaryColor,
+                          ),
+                          SizedBox(width: 10),
+                          DefaultTextStyle(
+                            style: const TextStyle(
+                              color: Color.fromARGB(255, 49, 47, 47),
+                              fontSize: 30.0,
+                              fontFamily: 'Bobbers',
+                            ),
+                            child: AnimatedTextKit(
+                              totalRepeatCount: 1,
+                              animatedTexts: [
+                                TyperAnimatedText('Lip Reading'),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 10),
-                      DefaultTextStyle(
-                        style: const TextStyle(
-                          color: Color.fromARGB(255, 49, 47, 47),
-                          fontSize: 30.0,
-                          fontFamily: 'Bobbers',
-                        ),
-                        child: AnimatedTextKit(
-                          totalRepeatCount: 1,
-                          animatedTexts: [
-                            TyperAnimatedText('Lip Reading'),
-                          ],
-                        ),
-                      ),
+                      TextInSplash(text: 'Know what they are saying'),
                     ],
                   ),
-                  TextInSplash(text: 'Know what they are saying'),
-                ],
-              ))
-          ],
-        ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class LogoAnimation extends StatelessWidget {
-  const LogoAnimation(
-      {super.key,
-      required this.bottomVal,
-      required this.widthVal,
-      required this.heightVal,
-      required this.ballY,
-      required this.times,
-      required this.showShadow});
+  const LogoAnimation({
+    super.key,
+    required this.bottomVal,
+    required this.widthVal,
+    required this.heightVal,
+    required this.ballY,
+    required this.times,
+    required this.showShadow,
+  });
+
   final double bottomVal;
   final double widthVal;
   final double heightVal;
@@ -181,7 +181,7 @@ class LogoAnimation extends StatelessWidget {
               decoration: BoxDecoration(
                   color: Colors.black.withOpacity(.2),
                   borderRadius: BorderRadius.circular(100)),
-            )
+            ),
         ],
       ),
     );
@@ -198,7 +198,6 @@ class TextInSplash extends StatelessWidget {
       textAlign: TextAlign.center,
       style: const TextStyle(
         fontSize: 24,
-        // fontFamily: 'Agne',
       ),
       child: AnimatedTextKit(
         totalRepeatCount: 1,
