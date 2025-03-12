@@ -34,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   late AnimationController _controller;
 
-  @override
+
   @override
   void initState() {
     super.initState();
