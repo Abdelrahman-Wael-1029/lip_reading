@@ -83,10 +83,10 @@ class CustomVideoPlayer extends StatelessWidget {
                       await cubit.controller!.seekTo(position);
                     },
                   ),
-                  Text(
-                    "${cubit.currentPosition} / ${cubit.totalDuration}",
-                    style: const TextStyle(color: Colors.black),
-                  ),
+                  // Text(
+                  //   "${cubit.currentPosition} / ${cubit.totalDuration}",
+                  //   style: const TextStyle(color: Colors.black),
+                  // ),
                 ],
               ),
             ),
