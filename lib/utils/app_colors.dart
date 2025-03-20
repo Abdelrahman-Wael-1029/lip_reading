@@ -1,11 +1,3 @@
-/*
-#3d95e8
-#004eb6
-#e6f4f1
-#683e00
-
-*/
-
 import 'package:flutter/material.dart';
 
 class AppColors {

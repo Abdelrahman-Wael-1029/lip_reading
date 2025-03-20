@@ -51,7 +51,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             decoration: BoxDecoration(
               image: DecorationImage(
                   image: AssetImage(
-                    AppAssets.background,
+                    AppAssets.background2,
                   ),
                   fit: BoxFit.fill),
             ),
