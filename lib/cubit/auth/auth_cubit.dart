@@ -12,12 +12,25 @@ class AuthCubit extends Cubit<AuthState> {
   void toggleVisiablity() {
     isPasswordVisiable = !isPasswordVisiable;
     emit(ChangeVisiablity());
-    
   }
+
   Future<void> signIn(String email, String password) async {
     emit(LoginLoading());
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      emit(LoginSuccess());
+    } catch (e) {
+      emit(LoginFailure(errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> signUp(String name, String email, String password) async {
+    emit(LoginLoading());
+    try {
+      await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
+      await _auth.currentUser!.updateDisplayName(name);
+
       emit(LoginSuccess());
     } catch (e) {
       emit(LoginFailure(errorMessage: e.toString()));

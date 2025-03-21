@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:lip_reading/screens/auth/signup_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
-import 'package:lip_reading/screens/login_screen/login_screen.dart';
+import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -63,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate after 4 seconds
     Timer(Duration(seconds: 4), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+        Navigator.pushReplacementNamed(context, SignupScreen.routeName);
       }
     });
 

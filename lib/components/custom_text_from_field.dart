@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
 import 'package:responsive_framework/responsive_value.dart';
 import 'package:responsive_framework/responsive_wrapper.dart';
@@ -113,7 +112,6 @@ Widget customTextFormField({
             ],
           ).value,
           fontWeight: FontWeight.w500,
-          color: AppColors.black,
         ),
         filled: true,
         fillColor: backgroundColor,
