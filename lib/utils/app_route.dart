@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
+import 'package:lip_reading/screens/login_screen/login_screen.dart';
 import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
 
 class AppRoutes {
@@ -9,6 +10,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case LipReadingScreen.routeName:
         return MaterialPageRoute(builder: (_) => const LipReadingScreen());
+      case LoginScreen.routeName:
+        return MaterialPageRoute(builder: (_) => LoginScreen());
 
       default:
         return MaterialPageRoute(builder: (_) => errorRoute());
