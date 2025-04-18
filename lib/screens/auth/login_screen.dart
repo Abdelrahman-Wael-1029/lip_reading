@@ -88,7 +88,7 @@ class LoginScreen extends StatelessWidget {
           suffixIcon: IconButton(
             onPressed: authCubit.toggleVisiablity,
             icon: Icon(
-              authCubit.isPasswordVisiablity
+              authCubit.isConfirmPasswordVisiable
                   ? Icons.visibility
                   : Icons.visibility_off,
             ),

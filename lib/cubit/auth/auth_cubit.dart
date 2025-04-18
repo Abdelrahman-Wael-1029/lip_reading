@@ -5,12 +5,16 @@ import 'package:lip_reading/cubit/auth/auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthInitial());
   bool isPasswordVisiable = false;
+  bool isConfirmPasswordVisiable = false;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  bool get isPasswordVisiablity => isPasswordVisiable;
 
   void toggleVisiablity() {
     isPasswordVisiable = !isPasswordVisiable;
+    emit(ChangeVisiablity());
+  }
+
+  void toggleConfirmVisiablity() {
+    isConfirmPasswordVisiable = !isConfirmPasswordVisiable;
     emit(ChangeVisiablity());
   }
 
