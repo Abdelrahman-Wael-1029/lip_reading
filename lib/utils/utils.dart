@@ -5,19 +5,19 @@ import 'package:responsive_framework/responsive_wrapper.dart';
 double? getSizedBox(context) {
   return ResponsiveValue<double>(
     context,
-    defaultValue: 20.0,
+    defaultValue: 28.0,
     valueWhen: [
       const Condition.smallerThan(
         name: MOBILE,
-        value: 16.0,
+        value: 20.0,
       ),
       const Condition.smallerThan(
         name: TABLET,
-        value: 18.0,
+        value: 24.0,
       ),
       const Condition.smallerThan(
         name: DESKTOP,
-        value: 20.0,
+        value: 28.0,
       ),
     ],
   ).value;

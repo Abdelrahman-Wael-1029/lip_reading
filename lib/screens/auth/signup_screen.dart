@@ -190,13 +190,18 @@ class SignupScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account? '),
+                    Text(
+                      'Already have an account? ',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
                     InkWell(
                       onTap: () => Navigator.pushReplacementNamed(
                           context, LoginScreen.routeName),
-                      child: const Text(
+                      child: Text(
                         'Login',
-                        style: TextStyle(color: AppColors.primaryColor),
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: AppColors.primaryColor,
+                        ),
                       ),
                     ),
                   ],

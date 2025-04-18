@@ -6,6 +6,5 @@ var lightTheme = ThemeData(
   scaffoldBackgroundColor: AppColors.backgroundColor,
   colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryColor),
   textTheme: TextTheme(
-    bodyLarge: TextStyle(),
   ),
 );
