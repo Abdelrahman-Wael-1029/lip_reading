@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate after 4 seconds
     Timer(Duration(seconds: 4), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, SignupScreen.routeName);
+        Navigator.pushReplacementNamed(context, LoginScreen.routeName);
       }
     });
 
