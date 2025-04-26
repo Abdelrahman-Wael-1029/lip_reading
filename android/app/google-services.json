@@ -40,10 +40,10 @@
               "client_type": 3
             },
             {
-              "client_id": "923125462848-v13s4qa7r5kkr38t1kncs8u23ua5bq22.apps.googleusercontent.com",
+              "client_id": "923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.taskManager"
+                "bundle_id": "com.example.lipReading"
               }
             }
           ]
@@ -76,10 +76,10 @@
               "client_type": 3
             },
             {
-              "client_id": "923125462848-v13s4qa7r5kkr38t1kncs8u23ua5bq22.apps.googleusercontent.com",
+              "client_id": "923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.taskManager"
+                "bundle_id": "com.example.lipReading"
               }
             }
           ]
@@ -112,10 +112,10 @@
               "client_type": 3
             },
             {
-              "client_id": "923125462848-v13s4qa7r5kkr38t1kncs8u23ua5bq22.apps.googleusercontent.com",
+              "client_id": "923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.taskManager"
+                "bundle_id": "com.example.lipReading"
               }
             }
           ]

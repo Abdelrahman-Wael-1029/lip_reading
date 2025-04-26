@@ -34,7 +34,6 @@ Widget customTextFormField({
   AutovalidateMode? autovalidateMode,
 }) {
   return SizedBox(
-    // height: height ?? 87 * SizeConfig.verticalBlock,
     child: TextFormField(
       autovalidateMode: autovalidateMode?? AutovalidateMode.onUserInteraction,
       textInputAction: textInputAction ?? TextInputAction.next,
@@ -87,7 +86,7 @@ Widget customTextFormField({
             ],
           ).value,
           fontWeight: FontWeight.w300,
-          color: hintColor,
+          color: hintColor ?? AppColors.grey,
         ),
         contentPadding: padding ??=
              EdgeInsets.symmetric(horizontal: getPadding(context)??14, vertical: getPadding(context)??20),
@@ -113,13 +112,13 @@ Widget customTextFormField({
             ],
           ).value,
           fontWeight: FontWeight.w500,
-          color: AppColors.black,
         ),
         filled: true,
         fillColor: backgroundColor,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius ?? 45),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(borderRadius ?? 8),
+          borderSide: BorderSide(
+          ),
         ),
       ),
       validator: validator,
