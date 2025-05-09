@@ -1,30 +1,51 @@
 import 'package:flutter/material.dart';
 
+/// AppColors defines all color constants used in the application
 class AppColors {
-  static const Color primaryColor = Color(0xff3d95e8);
-  static const Color secondaryColor = Color(0xff004eb6);
-  static const Color backgroundColor = Color(0xfff9f9f9);
-  static const Color buttonColor = Color(0xff607D8B);
+  // Primary colors
+  static const Color primaryLight = Color(0xFF3F51B5);  // Indigo
+  static const Color primaryDark = Color(0xFF303F9F);   // Darker Indigo
+
+  // Accent colors
+  static const Color accentLight = Color(0xFFFFC107);   // Amber
+  static const Color accentDark = Color(0xFFFFAB00);    // Darker Amber
+
+  // Background colors
+  static const Color backgroundLight = Color(0xFFF5F5F5);  // Light Grey
+  static const Color backgroundDark = Color(0xFF121212);   // Dark Grey
+
+  // Surface colors (cards, sheets, etc.)
+  static const Color surfaceLight = Colors.white;
+  static const Color surfaceDark = Color.fromARGB(255, 53, 53, 53);  // Slightly lighter than background dark
+
+  // Error colors
+  static const Color errorLight = Color(0xFFD32F2F);   // Red
+  static const Color errorDark = Color(0xFFEF5350);    // Lighter Red for dark theme
+
+  // Text colors
+  static const Color textPrimaryLight = Color(0xFF212121);  // Almost Black
+  static const Color textSecondaryLight = Color(0xFF757575); // Medium Grey
+  static const Color textPrimaryDark = Color(0xFFE0E0E0);   // Almost White
+  static const Color textSecondaryDark = Color(0xFF9E9E9E); // Medium Grey
+
+  // Divider colors  
+  static const Color dividerLight = Color(0xFFBDBDBD);  // Light Grey
+  static const Color dividerDark = Color(0xFF424242);   // Dark Grey
+
+  // Status colors
+  static const Color successLight = Color(0xFF4CAF50);  // Green
+  static const Color successDark = Color(0xFF66BB6A);   // Lighter Green for dark theme
+  static const Color warningLight = Color(0xFFFFC107);  // Amber
+  static const Color warningDark = Color(0xFFFFD54F);   // Lighter Amber for dark theme
+  static const Color infoLight = Color(0xFF2196F3);     // Blue
+  static const Color infoDark = Color(0xFF64B5F6);      // Lighter Blue for dark theme
+
+  // Special purpose colors
+  static const Color disabledLight = Color(0xFFE0E0E0); // Light Grey
+  static const Color disabledDark = Color(0xFF424242);  // Dark Grey
+  static const Color connectivityOnline = Color(0xFF4CAF50); // Green
+  static const Color connectivityOffline = Color(0xFFD32F2F); // Red
   static const Color white = Colors.white;
   static const Color black = Colors.black;
   static const Color grey = Colors.grey;
 }
-
-
-/*
-#FF5722: A vibrant orange that provides a strong contrast to your blues while still feeling modern and energetic.
-#4CAF50: A fresh green that would stand out against your blue palette while maintaining a professional look.
-#7E57C2: A purple tone that contrasts with blue but isn't as stark as orange or red.
-#F44336: A bold red that would create maximum visual impact for important actions.
-#FFC107: A warm amber/gold that would pop against the cool blues but isn't as intense as orange or red.
-#8BC34A: A lime green that's energetic and fresh, offering a nature-inspired contrast to your tech-oriented blues.
-#009688: A teal that bridges between blue and green, providing contrast while still having a hint of familiarity with your palette.
-#E91E63: A pink/magenta that creates a striking contrast and brings a more modern, bold feel.
-#607D8B: A blue-gray that offers a more subtle contrast if you want something less vibrant but still distinct.
-#795548: A brown/coffee tone that provides an earthy contrast to the technological feel of blues.
-#9C27B0: A rich purple that stands out while maintaining a premium look.
-#FFEB3B: A bright yellow for maximum visibility (though be careful with white text on this).
-#FF9800: A softer orange option compared to the previous suggestion if you wanted something less intense.
-#5D4037: A deep brown that could work well for a more subtle, sophisticated look.
-#00BCD4: A cyan that provides a fresh feel while still being in the blue family but distinct enough from your primary blues.
-*/

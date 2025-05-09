@@ -33,16 +33,39 @@ Widget customTextFormField({
   TextInputAction? textInputAction,
   AutovalidateMode? autovalidateMode,
 }) {
-  return SizedBox(
-    child: TextFormField(
-      autovalidateMode: autovalidateMode?? AutovalidateMode.onUserInteraction,
-      textInputAction: textInputAction ?? TextInputAction.next,
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
-      textDirection: textDirection,
-      minLines: minLines,
-      obscuringCharacter: obscuringCharacter,
-      maxLines: maxLines,
-      style: TextStyle(
+  return TextFormField(
+    autovalidateMode: autovalidateMode?? AutovalidateMode.onUserInteraction,
+    textInputAction: textInputAction ?? TextInputAction.next,
+    onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    textDirection: textDirection,
+    minLines: minLines,
+    obscuringCharacter: obscuringCharacter,
+    maxLines: maxLines,
+    style: TextStyle(
+      fontSize: ResponsiveValue<double>(
+        context,
+        defaultValue: 16.0,
+        valueWhen: [
+          const Condition.smallerThan(
+            name: MOBILE,
+            value: 16.0,
+          ),
+          const Condition.smallerThan(
+            name: TABLET,
+            value: 18.0,
+          ),
+          const Condition.smallerThan(
+            name: DESKTOP,
+            value: 20.0,
+          ),
+        ],
+      ).value,
+      fontWeight: FontWeight.w300,
+    ),
+    decoration: InputDecoration(
+      hintText: hintText,
+      isDense: true,
+      hintStyle: TextStyle(
         fontSize: ResponsiveValue<double>(
           context,
           defaultValue: 16.0,
@@ -62,77 +85,52 @@ Widget customTextFormField({
           ],
         ).value,
         fontWeight: FontWeight.w300,
+        color: hintColor ?? AppColors.grey,
       ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        isDense: true,
-        hintStyle: TextStyle(
-          fontSize: ResponsiveValue<double>(
-            context,
-            defaultValue: 16.0,
-            valueWhen: [
-              const Condition.smallerThan(
-                name: MOBILE,
-                value: 16.0,
-              ),
-              const Condition.smallerThan(
-                name: TABLET,
-                value: 18.0,
-              ),
-              const Condition.smallerThan(
-                name: DESKTOP,
-                value: 20.0,
-              ),
-            ],
-          ).value,
-          fontWeight: FontWeight.w300,
-          color: hintColor ?? AppColors.grey,
-        ),
-        contentPadding: padding ??=
-             EdgeInsets.symmetric(horizontal: getPadding(context)??14, vertical: getPadding(context)??20),
-        suffixIcon: suffixIcon,
-        prefixIcon: prefixIcon,
-        errorStyle: TextStyle(
-          fontSize: ResponsiveValue<double>(
-            context,
-            defaultValue: 16.0,
-            valueWhen: [
-              const Condition.smallerThan(
-                name: MOBILE,
-                value: 16.0,
-              ),
-              const Condition.smallerThan(
-                name: TABLET,
-                value: 18.0,
-              ),
-              const Condition.smallerThan(
-                name: DESKTOP,
-                value: 20.0,
-              ),
-            ],
-          ).value,
-          fontWeight: FontWeight.w500,
-        ),
-        filled: true,
-        fillColor: backgroundColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius ?? 8),
-          borderSide: BorderSide(
-          ),
+      contentPadding: padding ??=
+           EdgeInsets.symmetric(horizontal: getPadding(context)??14, vertical: getPadding(context)??20),
+      suffixIcon: suffixIcon,
+      prefixIcon: prefixIcon,
+      errorStyle: TextStyle(
+        fontSize: ResponsiveValue<double>(
+          context,
+          defaultValue: 16.0,
+          valueWhen: [
+            const Condition.smallerThan(
+              name: MOBILE,
+              value: 16.0,
+            ),
+            const Condition.smallerThan(
+              name: TABLET,
+              value: 18.0,
+            ),
+            const Condition.smallerThan(
+              name: DESKTOP,
+              value: 20.0,
+            ),
+          ],
+        ).value,
+        fontWeight: FontWeight.w500,
+      ),
+      filled: true,
+      fillColor: backgroundColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadius ?? 8),
+        borderSide: BorderSide(
         ),
       ),
-      validator: validator,
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      readOnly: readOnly,
-      enabled: enabled,
-      autofocus: autofocus,
-      onChanged: onChanged,
-      onTap: onTap,
-      onFieldSubmitted: onFieldSubmitted,
-      onSaved: onSaved,
-      onEditingComplete: onEditingComplete,
     ),
+    validator: validator,
+    controller: controller,
+    obscureText: obscureText,
+    keyboardType: keyboardType,
+    readOnly: readOnly,
+    enabled: enabled,
+    autofocus: autofocus,
+    onChanged: onChanged,
+    onTap: onTap,
+    onFieldSubmitted: onFieldSubmitted,
+    onSaved: onSaved,
+    onEditingComplete: onEditingComplete,
   );
 }

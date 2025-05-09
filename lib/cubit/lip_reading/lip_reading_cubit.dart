@@ -79,7 +79,7 @@ class LipReadingCubit extends Cubit<LipReadingState> {
           totalVideoSeconds = _controller!.value.duration.inSeconds;
           totalDuration = _formatDuration(_controller!.value.duration);
 
-// Listener to update video progress
+          // Listener to update video progress
           _controller!.addListener(() {
             final position = _controller!.value.position;
             final duration = _controller!.value.duration;
@@ -97,7 +97,7 @@ class LipReadingCubit extends Cubit<LipReadingState> {
           emit(LipReadingVideoError('Video file not found'));
         }
       } else {
-        emit(LipReadingInitial());
+
       }
     } catch (e) {
       emit(LipReadingVideoError('Failed to load video: ${e.toString()}'));

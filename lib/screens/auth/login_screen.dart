@@ -6,7 +6,6 @@ import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
 import 'package:lip_reading/screens/auth/signup_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
-import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -38,7 +37,6 @@ class LoginScreen extends StatelessWidget {
                   child: Text(
                     'Welcome to Lip Reading',
                     style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                          color: AppColors.secondaryColor,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -57,10 +55,8 @@ class LoginScreen extends StatelessWidget {
                   context: context,
                   hintText: 'Email',
                   controller: emailController,
-                  backgroundColor: Colors.white,
                   prefixIcon: const Icon(
                     Icons.mail,
-                    color: AppColors.grey,
                   ),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: (_) {
@@ -85,13 +81,11 @@ class LoginScreen extends StatelessWidget {
                   builder: (context, state) {
                     var authCubit = context.read<AuthCubit>();
                     return customTextFormField(
-                      backgroundColor: Colors.white,
                       context: context,
                       hintText: 'Password',
                       controller: passwordController,
                       prefixIcon: const Icon(
                         Icons.lock,
-                        color: AppColors.grey,
                       ),
                       suffixIcon: IconButton(
                         onPressed: authCubit.toggleVisiablity,
@@ -128,8 +122,8 @@ class LoginScreen extends StatelessWidget {
                       child: Text(
                         'Sign Up',
                         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: AppColors.primaryColor,
-                        ),
+                              color: Theme.of(context).primaryColor,
+                            ),
                       ),
                     ),
                   ],
@@ -171,8 +165,6 @@ class LoginScreen extends StatelessWidget {
               }
               return CustomButton(
                 text: 'Log in',
-                backgroundColor: AppColors.buttonColor,
-                textColor: AppColors.white,
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   final authCubit = context.read<AuthCubit>();

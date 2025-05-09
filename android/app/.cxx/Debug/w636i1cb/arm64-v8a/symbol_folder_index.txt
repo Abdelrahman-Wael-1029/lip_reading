@@ -1,0 +1,1 @@
+C:\Users\abdelrahman wael\vscode\flutter\lip_reading\build\app\intermediates\cxx\Debug\w636i1cb\obj\arm64-v8a

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
-import 'package:lip_reading/screens/auth/signup_screen.dart';
-import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
-import 'package:lip_reading/utils/app_colors.dart';
+import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -64,7 +64,12 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate after 4 seconds
     Timer(Duration(seconds: 4), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+        final authCubit = context.read<AuthCubit>();
+        Navigator.pushReplacementNamed(
+            context,
+            authCubit.isAuthenticated()
+                ? LipReadingScreen.routeName
+                : LoginScreen.routeName);
       }
     });
 
@@ -74,7 +79,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.secondaryColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           double screenWidth = constraints.maxWidth;
@@ -107,7 +111,6 @@ class _SplashScreenState extends State<SplashScreen>
                           Icon(
                             Icons.chrome_reader_mode_outlined,
                             size: 60,
-                            color: AppColors.secondaryColor,
                           ),
                           SizedBox(width: 10),
                           DefaultTextStyle(
@@ -172,7 +175,8 @@ class LogoAnimation extends StatelessWidget {
                 width: widthVal,
                 height: heightVal,
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle, color: AppColors.primaryColor),
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).primaryColor),
               ),
             ),
           ),

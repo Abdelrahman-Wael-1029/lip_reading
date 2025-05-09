@@ -6,7 +6,6 @@ import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
-import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -25,7 +24,6 @@ class SignupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
@@ -40,7 +38,6 @@ class SignupScreen extends StatelessWidget {
                 Text(
                   'Sign Up',
                   style: Theme.of(context).textTheme.headlineLarge!.copyWith(
-                        color: AppColors.secondaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -55,13 +52,11 @@ class SignupScreen extends StatelessWidget {
                   height: getSizedBox(context)! / 2,
                 ),
                 customTextFormField(
-                  backgroundColor: Colors.white,
                   context: context,
                   hintText: 'Name',
                   controller: nameController,
                   prefixIcon: const Icon(
                     Icons.person,
-                    color: AppColors.grey,
                   ),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: (_) {
@@ -85,10 +80,8 @@ class SignupScreen extends StatelessWidget {
                   context: context,
                   hintText: 'Email',
                   controller: emailController,
-                  backgroundColor: Colors.white,
                   prefixIcon: const Icon(
                     Icons.mail,
-                    color: AppColors.grey,
                   ),
                   autovalidateMode: AutovalidateMode.onUserInteraction,
                   validator: (_) {
@@ -113,13 +106,12 @@ class SignupScreen extends StatelessWidget {
                   builder: (context, state) {
                     var authCubit = context.read<AuthCubit>();
                     return customTextFormField(
-                      backgroundColor: Colors.white,
                       context: context,
                       hintText: 'Password',
                       controller: passwordController,
+                      textInputAction: TextInputAction.next,
                       prefixIcon: const Icon(
                         Icons.lock,
-                        color: AppColors.grey,
                       ),
                       suffixIcon: IconButton(
                         onPressed: authCubit.toggleVisiablity,
@@ -155,13 +147,12 @@ class SignupScreen extends StatelessWidget {
                   builder: (context, state) {
                     var authCubit = context.read<AuthCubit>();
                     return customTextFormField(
-                      backgroundColor: Colors.white,
                       context: context,
                       hintText: 'Confirm Password',
                       controller: confirmPasswordController,
+                      textInputAction: TextInputAction.done,
                       prefixIcon: const Icon(
                         Icons.lock,
-                        color: AppColors.grey,
                       ),
                       suffixIcon: IconButton(
                         onPressed: authCubit.toggleConfirmVisiablity,
@@ -200,8 +191,8 @@ class SignupScreen extends StatelessWidget {
                       child: Text(
                         'Login',
                         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: AppColors.primaryColor,
-                        ),
+                              color: Theme.of(context).primaryColor,
+                            ),
                       ),
                     ),
                   ],
@@ -243,8 +234,6 @@ class SignupScreen extends StatelessWidget {
               }
               return CustomButton(
                 text: 'Sign Up',
-                backgroundColor: AppColors.buttonColor,
-                textColor: AppColors.white,
                 onPressed: () {
                   if (!formKey.currentState!.validate()) return;
                   final authCubit = context.read<AuthCubit>();

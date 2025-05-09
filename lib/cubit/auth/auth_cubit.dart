@@ -24,7 +24,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       emit(LoginSuccess());
     } catch (e) {
-      print("error"+e.toString());
+      print("error" + e.toString());
       emit(LoginFailure(errorMessage: e.toString()));
     }
   }
@@ -40,5 +40,13 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       emit(LoginFailure(errorMessage: e.toString()));
     }
+  }
+
+  bool isAuthenticated() {
+    return _auth.currentUser != null;
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }

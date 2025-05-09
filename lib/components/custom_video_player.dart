@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
-import 'package:lip_reading/utils/app_colors.dart';
 import 'package:video_player/video_player.dart';
 
 class CustomVideoPlayer extends StatelessWidget {
@@ -100,7 +99,7 @@ class CustomVideoPlayer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColors.buttonColor,
+        
       ),
       child: IconButton(
         icon: Icon(icon, color: Colors.white),
