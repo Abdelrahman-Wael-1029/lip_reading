@@ -23,6 +23,8 @@ class LipReadingScreen extends StatefulWidget {
 
 class _LipReadingScreenState extends State<LipReadingScreen>
     with WidgetsBindingObserver {
+  AppLifecycleState? _previousState;
+
   @override
   void initState() {
     super.initState();
@@ -37,17 +39,19 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused) {
       context.read<VideoCubit>().pauseVideo();
-    } else {
+    } else if (state == AppLifecycleState.resumed &&
+        _previousState == AppLifecycleState.paused) {
       if (context.read<VideoCubit>().controller != null) {
         context.read<VideoCubit>().controller!.initialize().then((_) {
           setState(() {});
         });
       }
     }
+
+    _previousState = state;
+    print('previous state $state');
     super.didChangeAppLifecycleState(state);
   }
 

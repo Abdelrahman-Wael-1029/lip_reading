@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
@@ -12,8 +13,9 @@ import 'package:responsive_framework/responsive_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Bloc.observer = MyBlocObserver();
-
+// disalbe landscape
+  SystemChrome.setPreferredOrientations(
+      [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   Bloc.observer = MyBlocObserver();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -24,7 +26,6 @@ void main() async {
       BlocProvider(create: (context) => LipReadingCubit()),
       BlocProvider(create: (context) => VideoCubit()),
       BlocProvider(create: (context) => AuthCubit()),
-
     ],
     child: const MyApp(),
   ));

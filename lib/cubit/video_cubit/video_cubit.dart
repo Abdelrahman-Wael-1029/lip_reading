@@ -138,7 +138,10 @@ class VideoCubit extends Cubit<VideoState> {
       // Use a separate stream subscription instead of the listener
       _videoProgressSubscription =
           Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
-        if (controller != null && controller!.value.isInitialized) {
+        // check is playing or pause
+        if (controller != null &&
+            controller!.value.isInitialized &&
+            !controller!.value.isPlaying) {
           final position = controller!.value.position;
           final duration = controller!.value.duration;
 
