@@ -6,6 +6,7 @@ import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
+import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
@@ -85,8 +86,7 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
               listener: (context, state) {
                 // Handle state changes if needed
                 if (state is LipReadingVideoSuccess) {
-                  final videoController =
-                      context.read<LipReadingCubit>().controller;
+                  final videoController = context.read<VideoCubit>().controller;
                   if (videoController != null &&
                       !videoController.value.isInitialized) {
                     videoController.initialize().then((_) {
@@ -96,17 +96,15 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
                 }
               },
               builder: (context, state) {
-                final videoController =
-                    context.read<LipReadingCubit>().controller;
-
+                final videoController = context.read<VideoCubit>().controller;
                 // Show error state
                 if (state is LipReadingVideoError) {
                   return _buildErrorState(context, state.message);
                 }
                 // Show loading state
-                // else if (state is LipReadingVideoLoading) {
-                //   return _buildLoadingState(context);
-                // }
+                else if (state is LipReadingVideoLoading) {
+                  return _buildLoadingState(context);
+                }
                 // Show video and results state if controller exists and is initialized
                 else if (state is LipReadingVideoSuccess &&
                     videoController != null &&
@@ -401,7 +399,7 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
           icon: Icons.videocam,
           label: 'Record Video',
           onPressed: () {
-            context.read<LipReadingCubit>().recordVideo();
+            context.read<LipReadingCubit>().recordVideo(context);
           },
         ),
         const SizedBox(width: 20),
@@ -410,7 +408,7 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
           icon: Icons.photo_library,
           label: 'Upload Video',
           onPressed: () {
-            context.read<LipReadingCubit>().pickVideoFromGallery();
+            context.read<LipReadingCubit>().pickVideoFromGallery(context);
           },
         ),
       ],
@@ -476,7 +474,7 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
             onPressed: isLoading
                 ? null
                 : () {
-                    context.read<LipReadingCubit>().recordVideo();
+                    context.read<LipReadingCubit>().recordVideo(context);
                   },
           ),
           _buildBottomActionButton(
@@ -486,7 +484,7 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
             onPressed: isLoading
                 ? null
                 : () {
-                    context.read<LipReadingCubit>().pickVideoFromGallery();
+                    context.read<LipReadingCubit>().pickVideoFromGallery(context);
                   },
           ),
           _buildBottomActionButton(

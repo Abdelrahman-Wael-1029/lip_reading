@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:video_player/video_player.dart';
 
 class CustomVideoPlayer extends StatelessWidget {
@@ -10,7 +10,7 @@ class CustomVideoPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var cubit = context.read<LipReadingCubit>();
+    var cubit = context.watch<VideoCubit>();
     return GestureDetector(
       onTap: () => cubit.toggleControls(),
       child: Stack(
@@ -43,7 +43,7 @@ class CustomVideoPlayer extends StatelessWidget {
                           controller.play();
                         }
                         context
-                            .read<LipReadingCubit>()
+                            .read<VideoCubit>()
                             .updatePlayPauseIcon(controller.value.isPlaying);
                       },
                     ),
@@ -72,8 +72,10 @@ class CustomVideoPlayer extends StatelessWidget {
                     child: SliderTheme(
                       data: SliderThemeData(
                         trackHeight: 4.0,
-                        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6.0),
-                        overlayShape: RoundSliderOverlayShape(overlayRadius: 12.0),
+                        thumbShape:
+                            RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                        overlayShape:
+                            RoundSliderOverlayShape(overlayRadius: 12.0),
                         thumbColor: Colors.red,
                         activeTrackColor: Colors.red,
                         inactiveTrackColor: Colors.black.withOpacity(0.3),
@@ -87,7 +89,8 @@ class CustomVideoPlayer extends StatelessWidget {
                         },
                         onChangeEnd: (value) async {
                           final position = Duration(
-                              seconds: (value * cubit.totalVideoSeconds).toInt());
+                              seconds:
+                                  (value * cubit.totalVideoSeconds).toInt());
                           await cubit.controller!.seekTo(position);
                         },
                       ),

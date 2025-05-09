@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/firebase_options.dart';
 import 'package:lip_reading/utils/app_route.dart';
 import 'package:lip_reading/utils/theme.dart';
@@ -21,7 +22,9 @@ void main() async {
   runApp(MultiBlocProvider(
     providers: [
       BlocProvider(create: (context) => LipReadingCubit()),
+      BlocProvider(create: (context) => VideoCubit()),
       BlocProvider(create: (context) => AuthCubit()),
+
     ],
     child: const MyApp(),
   ));
