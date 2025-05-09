@@ -6,6 +6,7 @@ import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
+import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:lip_reading/utils/utils.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -63,6 +64,9 @@ class SignupScreen extends StatelessWidget {
                     if (nameController.text.isEmpty) {
                       return 'this is field is required';
                     }
+                    if (nameController.text.length < 3) {
+                      return 'name must be at least 3 characters';
+                    }
                     return null;
                   },
                 ),
@@ -87,6 +91,11 @@ class SignupScreen extends StatelessWidget {
                   validator: (_) {
                     if (emailController.text.isEmpty) {
                       return 'this is field is required';
+                    }
+                    // regex for email validation
+                    if (!RegExp(r'\S+@\S+\.\S+')
+                        .hasMatch(emailController.text)) {
+                      return 'Please enter a valid email address';
                     }
                     return null;
                   },
@@ -126,6 +135,9 @@ class SignupScreen extends StatelessWidget {
                       validator: (_) {
                         if (passwordController.text.isEmpty) {
                           return 'this is field is required';
+                        }
+                        if (passwordController.text.length < 6) {
+                          return 'password must be at least 6 characters';
                         }
                         return null;
                       },
@@ -191,7 +203,7 @@ class SignupScreen extends StatelessWidget {
                       child: Text(
                         'Login',
                         style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                              color: Theme.of(context).primaryColor,
+                              color: Theme.of(context).colorScheme.secondary,
                             ),
                       ),
                     ),
@@ -218,19 +230,33 @@ class SignupScreen extends StatelessWidget {
             listener: (context, state) {
               if (state is LoginSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Login Successful!')),
+                  SnackBar(
+                    content: Text(
+                      'Login Successful!',
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.success),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.onSuccess,
+                  ),
                 );
                 Navigator.pushReplacementNamed(
                     context, LipReadingScreen.routeName);
               } else if (state is LoginFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.errorMessage)),
+                  SnackBar(
+                    content: Text(
+                      state.errorMessage,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.onError,
+                  ),
                 );
               }
             },
             builder: (context, state) {
               if (state is LoginLoading) {
-                return const LinearProgressIndicator();
+                return const CircularProgressIndicator.adaptive();
               }
               return CustomButton(
                 text: 'Sign Up',

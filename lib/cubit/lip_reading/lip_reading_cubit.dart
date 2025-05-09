@@ -1,4 +1,3 @@
-// lip_reading_cubit.dart
 import 'dart:async';
 import 'dart:io';
 import 'package:bloc/bloc.dart';
@@ -13,9 +12,11 @@ class LipReadingCubit extends Cubit<LipReadingState> {
   String currentPosition = "0:00";
   String totalDuration = "0:00";
   Timer? _hideControlsTimer;
+  String? _currentVideoPath;
 
   final ImagePicker _picker = ImagePicker();
   VideoPlayerController? _controller;
+  StreamSubscription? _videoProgressSubscription;
 
   bool showControls = true;
 
@@ -38,7 +39,7 @@ class LipReadingCubit extends Cubit<LipReadingState> {
   }
 
   void _resetHideControlsTimer() {
-    _hideControlsTimer?.cancel(); // إلغاء المؤقت القديم
+    _hideControlsTimer?.cancel();
 
     _hideControlsTimer = Timer(const Duration(seconds: 4), () {
       showControls = false;
@@ -55,13 +56,37 @@ class LipReadingCubit extends Cubit<LipReadingState> {
   }
 
   void recordVideo() async {
+    // Dispose current controller before recording
+    await _cleanupController();
     await _pickVideo(ImageSource.camera);
+  }
+
+  Future<void> _cleanupController() async {
+    _videoProgressSubscription?.cancel();
+    _videoProgressSubscription = null;
+
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = null;
+
+    if (_controller != null) {
+      await _controller!.pause();
+      await _controller!.dispose();
+      _controller = null;
+    }
+  }
+
+  // Call this method when returning to the screen
+  Future<void> reInitializeLastVideo() async {
+    if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
+      final file = File(_currentVideoPath!);
+      if (await file.exists()) {
+        await _initializeVideoController(file);
+      }
+    }
   }
 
   Future<void> _pickVideo(ImageSource source) async {
     try {
-      emit(LipReadingVideoLoading());
-
       final XFile? pickedFile = await _picker.pickVideo(
         source: source,
         maxDuration: const Duration(minutes: 5),
@@ -69,38 +94,60 @@ class LipReadingCubit extends Cubit<LipReadingState> {
 
       if (pickedFile != null) {
         String videoPath = pickedFile.path;
+        _currentVideoPath = videoPath;
         final file = File(videoPath);
 
         if (await file.exists()) {
-          await _controller?.dispose();
-
-          _controller = VideoPlayerController.file(file);
-          await _controller!.initialize();
-          totalVideoSeconds = _controller!.value.duration.inSeconds;
-          totalDuration = _formatDuration(_controller!.value.duration);
-
-          // Listener to update video progress
-          _controller!.addListener(() {
-            final position = _controller!.value.position;
-            final duration = _controller!.value.duration;
-
-            if (duration.inSeconds > 0) {
-              videoProgress = position.inSeconds / duration.inSeconds;
-              currentPosition = _formatDuration(position);
-              emit(LipReadingVideoSuccess());
-            }
-          });
-
-          await _controller!.play();
-          emit(LipReadingVideoSuccess());
+          await _cleanupController();
+          await _initializeVideoController(file);
         } else {
           emit(LipReadingVideoError('Video file not found'));
         }
       } else {
-
+        // User canceled picking video
+        if (_controller == null && _currentVideoPath != null) {
+          // Try to reinitialize previous video
+          await reInitializeLastVideo();
+        } else {
+          emit(LipReadingVideoSuccess());
+        }
       }
     } catch (e) {
       emit(LipReadingVideoError('Failed to load video: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _initializeVideoController(File videoFile) async {
+    try {
+      _controller = VideoPlayerController.file(videoFile);
+
+      // Wait for controller to initialize
+      await _controller!.initialize();
+
+      totalVideoSeconds = _controller!.value.duration.inSeconds;
+      totalDuration = _formatDuration(_controller!.value.duration);
+
+      // Use a separate stream subscription instead of the listener
+      _videoProgressSubscription =
+          Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
+        if (_controller != null && _controller!.value.isInitialized) {
+          final position = _controller!.value.position;
+          final duration = _controller!.value.duration;
+
+          if (duration.inSeconds > 0) {
+            videoProgress = position.inSeconds / duration.inSeconds;
+            currentPosition = _formatDuration(position);
+            emit(LipReadingVideoSuccess());
+          }
+        }
+      });
+
+      await _controller!.play();
+      showControls = true;
+      _resetHideControlsTimer();
+      emit(LipReadingVideoSuccess());
+    } catch (e) {
+      emit(LipReadingVideoError('Failed to initialize video: ${e.toString()}'));
     }
   }
 
@@ -114,8 +161,8 @@ class LipReadingCubit extends Cubit<LipReadingState> {
   VideoPlayerController? get controller => _controller;
 
   @override
-  Future<void> close() {
-    _controller?.dispose();
+  Future<void> close() async {
+    await _cleanupController();
     return super.close();
   }
 }

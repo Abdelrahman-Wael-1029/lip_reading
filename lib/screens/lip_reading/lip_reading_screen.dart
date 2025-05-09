@@ -3,8 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
+import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
+import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
 import 'package:video_player/video_player.dart';
@@ -33,11 +35,10 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // Implement your logout logic here
-              // For example:
-              // Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-              // Or if using authentication service:
-              // context.read<AuthenticationCubit>().logout();
+
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  LoginScreen.routeName, (route) => false);
+              context.read<AuthCubit>().logout();
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -103,9 +104,9 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
                   return _buildErrorState(context, state.message);
                 }
                 // Show loading state
-                else if (state is LipReadingVideoLoading) {
-                  return _buildLoadingState(context);
-                }
+                // else if (state is LipReadingVideoLoading) {
+                //   return _buildLoadingState(context);
+                // }
                 // Show video and results state if controller exists and is initialized
                 else if (state is LipReadingVideoSuccess &&
                     videoController != null &&
@@ -344,20 +345,31 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  spacing: 8,
                   children: [
                     Icon(
                       Icons.text_fields,
                       color: Theme.of(context).primaryColor,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Transcribed Text',
-                      style: TextStyle(
-                        fontSize: getMediumFontSize(context),
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                    Expanded(
+                      child: Text(
+                        'Transcribed Text',
+                        style: TextStyle(
+                          fontSize: getMediumFontSize(context),
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).primaryColor,
+                        ),
                       ),
                     ),
+                    // icon for share resutl
+                    IconButton(
+                        onPressed: () {
+                          // Share the transcribed text
+                        },
+                        icon: Icon(
+                          Icons.share,
+                          color: Theme.of(context).primaryColor,
+                        ))
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -375,46 +387,6 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
           ),
 
           const SizedBox(height: 24),
-
-          // Action buttons for after video processing
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Logic to try another video
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Another Video'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Theme.of(context).primaryColor,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Logic to save or share results
-                },
-                icon: const Icon(Icons.share),
-                label: const Text('Share Results'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Theme.of(context).primaryColor,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
