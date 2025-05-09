@@ -21,7 +21,36 @@ class LipReadingScreen extends StatefulWidget {
   State<LipReadingScreen> createState() => _LipReadingScreenState();
 }
 
-class _LipReadingScreenState extends State<LipReadingScreen> {
+class _LipReadingScreenState extends State<LipReadingScreen>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      context.read<VideoCubit>().pauseVideo();
+    } else {
+      if (context.read<VideoCubit>().controller != null) {
+        context.read<VideoCubit>().controller!.initialize().then((_) {
+          setState(() {});
+        });
+      }
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -484,7 +513,9 @@ class _LipReadingScreenState extends State<LipReadingScreen> {
             onPressed: isLoading
                 ? null
                 : () {
-                    context.read<LipReadingCubit>().pickVideoFromGallery(context);
+                    context
+                        .read<LipReadingCubit>()
+                        .pickVideoFromGallery(context);
                   },
           ),
           _buildBottomActionButton(

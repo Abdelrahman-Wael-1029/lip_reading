@@ -15,7 +15,7 @@ class VideoCubit extends Cubit<VideoState> {
   String? _currentVideoPath;
 
   final ImagePicker _picker = ImagePicker();
-  VideoPlayerController? _controller;
+  VideoPlayerController? controller;
   StreamSubscription? _videoProgressSubscription;
 
   bool showControls = true;
@@ -51,6 +51,12 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoSuccess());
   }
 
+  void pauseVideo() async {
+    if (controller != null) {
+      await controller!.pause();
+    }
+  }
+
   Future<void> pickVideoFromGallery() async {
     await _cleanupController();
     await _pickVideo(ImageSource.gallery);
@@ -69,15 +75,16 @@ class VideoCubit extends Cubit<VideoState> {
     _hideControlsTimer?.cancel();
     _hideControlsTimer = null;
 
-    if (_controller != null) {
-      await _controller!.pause();
-      await _controller!.dispose();
-      _controller = null;
+    if (controller != null) {
+      await controller!.pause();
+      await controller!.dispose();
+      controller = null;
     }
   }
 
   // Call this method when returning to the screen
   Future<void> reInitializeLastVideo() async {
+    print('reinitial ');
     if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
       final file = File(_currentVideoPath!);
       if (await file.exists()) {
@@ -106,7 +113,7 @@ class VideoCubit extends Cubit<VideoState> {
         }
       } else {
         // User canceled picking video
-        if (_controller == null && _currentVideoPath != null) {
+        if (controller == null && _currentVideoPath != null) {
           // Try to reinitialize previous video
           await reInitializeLastVideo();
         } else {
@@ -120,20 +127,20 @@ class VideoCubit extends Cubit<VideoState> {
 
   Future<void> _initializeVideoController(File videoFile) async {
     try {
-      _controller = VideoPlayerController.file(videoFile);
+      controller = VideoPlayerController.file(videoFile);
 
       // Wait for controller to initialize
-      await _controller!.initialize();
+      await controller!.initialize();
 
-      totalVideoSeconds = _controller!.value.duration.inSeconds;
-      totalDuration = _formatDuration(_controller!.value.duration);
+      totalVideoSeconds = controller!.value.duration.inSeconds;
+      totalDuration = _formatDuration(controller!.value.duration);
 
       // Use a separate stream subscription instead of the listener
       _videoProgressSubscription =
           Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
-        if (_controller != null && _controller!.value.isInitialized) {
-          final position = _controller!.value.position;
-          final duration = _controller!.value.duration;
+        if (controller != null && controller!.value.isInitialized) {
+          final position = controller!.value.position;
+          final duration = controller!.value.duration;
 
           if (duration.inSeconds > 0) {
             videoProgress = position.inSeconds / duration.inSeconds;
@@ -143,7 +150,7 @@ class VideoCubit extends Cubit<VideoState> {
         }
       });
 
-      await _controller!.play();
+      await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
       emit(VideoSuccess());
@@ -158,8 +165,6 @@ class VideoCubit extends Cubit<VideoState> {
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return "$minutes:$seconds";
   }
-
-  VideoPlayerController? get controller => _controller;
 
   @override
   Future<void> close() async {
