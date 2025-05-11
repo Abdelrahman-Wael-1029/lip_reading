@@ -23,7 +23,7 @@ class LipReadingScreen extends StatefulWidget {
 
 class _LipReadingScreenState extends State<LipReadingScreen>
     with WidgetsBindingObserver {
-  AppLifecycleState? _previousState;
+  bool isHidden = false;
 
   @override
   void initState() {
@@ -39,18 +39,15 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.hidden) {
       context.read<VideoCubit>().pauseVideo();
-    } else if (state == AppLifecycleState.resumed &&
-        _previousState == AppLifecycleState.paused) {
+    } else if (state == AppLifecycleState.resumed && isHidden) {
+      isHidden = false;
       if (context.read<VideoCubit>().controller != null) {
-        context.read<VideoCubit>().controller!.initialize().then((_) {
-          setState(() {});
-        });
+        context.read<VideoCubit>().seekToCurrentPosition();
       }
     }
-
-    _previousState = state;
+    if (!isHidden) isHidden = state == AppLifecycleState.hidden;
     print('previous state $state');
     super.didChangeAppLifecycleState(state);
   }
@@ -122,9 +119,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   final videoController = context.read<VideoCubit>().controller;
                   if (videoController != null &&
                       !videoController.value.isInitialized) {
-                    videoController.initialize().then((_) {
-                      setState(() {});
-                    });
+                    context.read<VideoCubit>().seekToCurrentPosition();
                   }
                 }
               },
@@ -482,8 +477,11 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   Widget _buildBottomActionBar(BuildContext context) {
     // Disable buttons during loading state
-    final bool isLoading =
-        context.watch<LipReadingCubit>().state is LipReadingVideoLoading;
+    final cubit = context.watch<LipReadingCubit>();
+    final bool isLoading = cubit.state is LipReadingVideoLoading;
+    if (cubit.state is LipReadingInitial) {
+      return SizedBox.shrink();
+    }
 
     return Container(
       decoration: BoxDecoration(

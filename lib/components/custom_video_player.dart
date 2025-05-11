@@ -42,9 +42,7 @@ class CustomVideoPlayer extends StatelessWidget {
                         } else {
                           controller.play();
                         }
-                        context
-                            .read<VideoCubit>()
-                            .updatePlayPauseIcon(controller.value.isPlaying);
+                        cubit.updatePlayPauseIcon(controller.value.isPlaying);
                       },
                     ),
                     _buildControlButton(

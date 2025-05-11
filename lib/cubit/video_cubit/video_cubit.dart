@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:video_player/video_player.dart';
@@ -51,20 +52,19 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoSuccess());
   }
 
-  void pauseVideo() async {
+  Future<void> pauseVideo() async {
     if (controller != null) {
       await controller!.pause();
     }
   }
 
   Future<void> pickVideoFromGallery() async {
-    await _cleanupController();
+    await pauseVideo();
     await _pickVideo(ImageSource.gallery);
   }
 
   Future<void> recordVideo() async {
-    // Dispose current controller before recording
-    await _cleanupController();
+    await pauseVideo();
     await _pickVideo(ImageSource.camera);
   }
 
@@ -101,6 +101,7 @@ class VideoCubit extends Cubit<VideoState> {
       );
 
       if (pickedFile != null) {
+        await _cleanupController();
         String videoPath = pickedFile.path;
         _currentVideoPath = videoPath;
         final file = File(videoPath);
@@ -141,7 +142,7 @@ class VideoCubit extends Cubit<VideoState> {
         // check is playing or pause
         if (controller != null &&
             controller!.value.isInitialized &&
-            !controller!.value.isPlaying) {
+            controller!.value.isPlaying) {
           final position = controller!.value.position;
           final duration = controller!.value.duration;
 
@@ -159,6 +160,18 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError('Failed to initialize video: ${e.toString()}'));
+    }
+  }
+
+  // initalize controller and seek to the current position
+  Future<void> seekToCurrentPosition() async {
+    try {
+      final currentPosition = controller!.value.position;
+      await controller!.initialize();
+      await controller!.seekTo(currentPosition);
+      emit(VideoSuccess());
+    } catch (e) {
+      debugPrint(e.toString());
     }
   }
 
