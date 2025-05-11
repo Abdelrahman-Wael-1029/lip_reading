@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
@@ -24,7 +25,7 @@ class LipReadingScreen extends StatefulWidget {
 class _LipReadingScreenState extends State<LipReadingScreen>
     with WidgetsBindingObserver {
   bool isHidden = false;
-
+  final nameVideoController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -338,6 +339,27 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             ),
           ),
 
+          const SizedBox(height: 24),
+          customTextFormField(
+            context: context,
+            controller: nameVideoController,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter some text';
+              }
+              return null;
+            },
+            // suffix icon for upload new name
+            suffixIcon: IconButton(
+              icon: const Icon(
+                Icons.upload_file,
+                color: AppColors.white,
+              ),
+              onPressed: () {
+                // context.read<VideoCubit>().updateVideoName(context);
+              },
+            ),
+          ),
           const SizedBox(height: 24),
 
           // Title for results section
