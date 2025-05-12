@@ -34,12 +34,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                  LoginScreen.routeName, (route) => false);
-              context.read<AuthCubit>().logout();
+              // clean up video cubit
+              await context.read<VideoCubit>().cleanupController();
+              if (context.mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                    LoginScreen.routeName, (route) => false);
+                context.read<AuthCubit>().logout();
+              }
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
@@ -127,8 +130,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          await context.read<VideoCubit>().initializeNetworkVideo(video.url);
-          if (context.mounted) Navigator.pop(context);
+          final bool success =
+              await context.read<VideoCubit>().initializeNetworkVideo(video);
+          print('network video initialized $success ');
+          if (context.mounted && success) {
+            Navigator.pop(context);
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(16),

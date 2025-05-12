@@ -24,7 +24,6 @@ class LipReadingScreen extends StatefulWidget {
 class _LipReadingScreenState extends State<LipReadingScreen>
     with WidgetsBindingObserver {
   bool isHidden = false;
-  final nameVideoController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -63,8 +62,11 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.person, color: AppColors.white),
-            onPressed: () {
-              Navigator.pushNamed(context, HistoryScreen.routeName);
+            onPressed: () async {
+              await context.read<VideoCubit>().pauseVideo();
+              if (context.mounted) {
+                Navigator.pushNamed(context, HistoryScreen.routeName);
+              }
             },
           ),
         ],
@@ -315,7 +317,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           const SizedBox(height: 24),
           customTextFormField(
             context: context,
-            controller: nameVideoController,
+            controller: context.read<VideoCubit>().nameVideoController,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter some text';
@@ -324,12 +326,12 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             },
             // suffix icon for upload new name
             suffixIcon: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.upload_file,
-                color: AppColors.white,
+                color: Theme.of(context).primaryColor,
               ),
               onPressed: () {
-                // context.read<VideoCubit>().updateVideoName(context);
+                context.read<VideoCubit>().updateVideoTitle(context);
               },
             ),
           ),

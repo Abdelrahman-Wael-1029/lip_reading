@@ -11,29 +11,42 @@ import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoCubit extends Cubit<VideoState> {
-  VideoCubit() : super(VideoInitial());
+  // Services
+  final FirestoreService _firestoreService = FirestoreService();
+  final StorageService _storageService = StorageService();
+  final ImagePicker _picker = ImagePicker();
+
+  // Constants
+  final String _collection = 'videos';
+
+  // Controllers
+  VideoPlayerController? controller;
+  final nameVideoController = TextEditingController();
+
+  // Video state
   double videoProgress = 0.0;
   int totalVideoSeconds = 0;
   String currentPosition = "0:00";
   String totalDuration = "0:00";
-  Timer? _hideControlsTimer;
+  bool showControls = true;
   String? _currentVideoPath;
-  final FirestoreService _firestoreService = FirestoreService();
-  final StorageService _storageService = StorageService();
-  final String _collection = 'videos';
-  List<VideoModel> videos = [];
   String? result;
-  String name = '';
 
-  final ImagePicker _picker = ImagePicker();
-  VideoPlayerController? controller;
+  // Data
+  List<VideoModel> videos = [];
+  VideoModel? selectedVideo;
+
+  // Timers and subscriptions
+  Timer? _hideControlsTimer;
   StreamSubscription? _videoProgressSubscription;
 
-  bool showControls = true;
+  VideoCubit() : super(VideoInitial());
 
+  // UI Control Methods
   void toggleControls() {
     showControls = !showControls;
     emit(VideoSuccess());
+
     if (showControls) {
       _resetHideControlsTimer();
     } else {
@@ -41,43 +54,136 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  //initialize network video
-  Future<void> initializeNetworkVideo(String videoUrl) async {
-    await _cleanupController();
-    controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-    await controller!.initialize();
-    totalVideoSeconds = controller!.value.duration.inSeconds;
-    totalDuration = _formatDuration(controller!.value.duration);
-    emit(VideoSuccess());
+  void _resetHideControlsTimer() {
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = Timer(const Duration(seconds: 6), () {
+      showControls = false;
+      emit(VideoSuccess());
+    });
   }
 
   void updateVideoPosition(double progress) {
     videoProgress = progress;
     showControls = true;
     emit(VideoSuccess());
-
     _resetHideControlsTimer();
-  }
-
-  void _resetHideControlsTimer() {
-    _hideControlsTimer?.cancel();
-
-    _hideControlsTimer = Timer(const Duration(seconds: 4), () {
-      showControls = false;
-      emit(VideoSuccess());
-    });
   }
 
   void updatePlayPauseIcon(bool isPlaying) {
     emit(VideoSuccess());
   }
 
+  // Video Controller Methods
+  Future<bool> initializeNetworkVideo(VideoModel video) async {
+    emit(VideoLoading());
+    try {
+      await cleanupController();
+
+      // Store selected video before initializing controller
+      selectedVideo = video;
+      nameVideoController.text = video.title;
+      result = video.result;
+
+
+      // Create controller with safeguards
+      final VideoPlayerController newController =
+          VideoPlayerController.networkUrl(Uri.parse(video.url));
+      // Initialize first before assigning to class variable
+      await newController.initialize();
+
+      // Only assign after successful initialization
+      controller = newController;
+
+      totalVideoSeconds = controller!.value.duration.inSeconds;
+      totalDuration = _formatDuration(controller!.value.duration);
+
+      _setupVideoProgressTracking();
+
+      showControls = true;
+      _resetHideControlsTimer();
+
+      emit(VideoSuccess());
+      return true; // Success indicator
+    } catch (e) {
+      debugPrint('Network video initialization error: ${e.toString()}');
+      emit(VideoError('Failed to initialize network video: ${e.toString()}'));
+      return false; // Failure indicator
+    }
+  }
+
   Future<void> pauseVideo() async {
-    if (controller != null) {
+    if (controller != null && controller!.value.isInitialized) {
       await controller!.pause();
     }
   }
 
+  Future<void> seekToCurrentPosition() async {
+    try {
+      if (controller != null && controller!.value.isInitialized) {
+        final currentPosition = controller!.value.position;
+        await controller!.initialize();
+        await controller!.seekTo(currentPosition);
+        emit(VideoSuccess());
+      }
+    } catch (e) {
+      debugPrint('Error seeking to position: ${e.toString()}');
+    }
+  }
+
+  Future<void> cleanupController() async {
+    // Cancel subscriptions and timers
+    _videoProgressSubscription?.cancel();
+    _videoProgressSubscription = null;
+
+    _hideControlsTimer?.cancel();
+    _hideControlsTimer = null;
+
+    // Dispose controller safely
+    if (controller != null) {
+      final tempController = controller;
+      controller =
+          null; // Set to null before disposal to prevent access after disposal
+
+      if (tempController!.value.isInitialized) {
+        await tempController.pause();
+      }
+      await tempController.dispose();
+    }
+
+    // Reset state
+    selectedVideo = null;
+    nameVideoController.clear();
+    result = null;
+  }
+
+  void _setupVideoProgressTracking() {
+    _videoProgressSubscription?.cancel();
+
+    _videoProgressSubscription =
+        Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
+      if (controller != null &&
+          controller!.value.isInitialized &&
+          controller!.value.isPlaying) {
+        final position = controller!.value.position;
+        final duration = controller!.value.duration;
+
+        if (duration.inSeconds > 0) {
+          videoProgress = position.inSeconds / duration.inSeconds;
+          currentPosition = _formatDuration(position);
+          emit(VideoSuccess());
+        }
+      }
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  // Video Pick Methods
   Future<void> pickVideoFromGallery() async {
     await pauseVideo();
     await _pickVideo(ImageSource.gallery);
@@ -88,23 +194,7 @@ class VideoCubit extends Cubit<VideoState> {
     await _pickVideo(ImageSource.camera);
   }
 
-  Future<void> _cleanupController() async {
-    _videoProgressSubscription?.cancel();
-    _videoProgressSubscription = null;
-
-    _hideControlsTimer?.cancel();
-    _hideControlsTimer = null;
-
-    if (controller != null) {
-      await controller!.pause();
-      await controller!.dispose();
-      controller = null;
-    }
-  }
-
-  // Call this method when returning to the screen
   Future<void> reInitializeLastVideo() async {
-    print('reinitial ');
     if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
       final file = File(_currentVideoPath!);
       if (await file.exists()) {
@@ -121,13 +211,11 @@ class VideoCubit extends Cubit<VideoState> {
       );
 
       if (pickedFile != null) {
-        await _cleanupController();
-        String videoPath = pickedFile.path;
-        _currentVideoPath = videoPath;
-        final file = File(videoPath);
+        await cleanupController();
+        _currentVideoPath = pickedFile.path;
+        final file = File(_currentVideoPath!);
 
         if (await file.exists()) {
-          await _cleanupController();
           await _initializeVideoController(file);
           uploadVideo();
         } else {
@@ -136,7 +224,6 @@ class VideoCubit extends Cubit<VideoState> {
       } else {
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
-          // Try to reinitialize previous video
           await reInitializeLastVideo();
         } else {
           emit(VideoSuccess());
@@ -149,85 +236,57 @@ class VideoCubit extends Cubit<VideoState> {
 
   Future<void> _initializeVideoController(File videoFile) async {
     try {
-      controller = VideoPlayerController.file(videoFile);
+      await cleanupController();
 
-      // Wait for controller to initialize
+      controller = VideoPlayerController.file(videoFile);
       await controller!.initialize();
+
+      _setupVideoProgressTracking();
 
       totalVideoSeconds = controller!.value.duration.inSeconds;
       totalDuration = _formatDuration(controller!.value.duration);
 
-      // Use a separate stream subscription instead of the listener
-      _videoProgressSubscription =
-          Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
-        // check is playing or pause
-        if (controller != null &&
-            controller!.value.isInitialized &&
-            controller!.value.isPlaying) {
-          final position = controller!.value.position;
-          final duration = controller!.value.duration;
-
-          if (duration.inSeconds > 0) {
-            videoProgress = position.inSeconds / duration.inSeconds;
-            currentPosition = _formatDuration(position);
-            result =
-                'this is the result from video cubit ${videoProgress} ${currentPosition} ${totalDuration} in initialize video for the video cubit at video vor ljsdlj ljs ls jsl jsl jsl jslj lsj ljs';
-            emit(VideoSuccess());
-          }
-        }
-      });
+      result = 'Video analysis result for ${videoFile.path}';
+      nameVideoController.text = await getNextTitle();
 
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
+
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError('Failed to initialize video: ${e.toString()}'));
     }
   }
 
-  // initalize controller and seek to the current position
-  Future<void> seekToCurrentPosition() async {
-    try {
-      final currentPosition = controller!.value.position;
-      await controller!.initialize();
-      await controller!.seekTo(currentPosition);
-      emit(VideoSuccess());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
-  @override
-  Future<void> close() async {
-    await _cleanupController();
-    return super.close();
-  }
-
+  // Firestore Methods
   Future<void> uploadVideo() async {
     try {
       emit(VideoLoading());
-      String name = await getNextTitle();
+
+      if (_currentVideoPath == null) {
+        emit(VideoError('No video selected'));
+        return;
+      }
+
       String videoUrl = await _storageService.uploadData(
         data: File(_currentVideoPath!).readAsBytesSync(),
         storagePath: 'videos',
-        fileName: name,
+        fileName: nameVideoController.text,
       );
+
       String id = const Uuid().v4();
+      selectedVideo = VideoModel(
+        id: id,
+        title: nameVideoController.text,
+        url: videoUrl,
+        result: result ?? 'No analysis result available',
+      );
 
-      await addVideo(
-          VideoModel(id: id, title: name, url: videoUrl, result: result!));
-
+      await addVideo(selectedVideo!);
       emit(VideoSuccess());
     } catch (e) {
-      print('error in upload video ' + e.toString());
+      debugPrint('Error in upload video: ${e.toString()}');
       emit(VideoError(e.toString()));
     }
   }
@@ -242,7 +301,6 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  // Get a video by ID
   Future<VideoModel?> getVideo(String videoId) async {
     try {
       final videoData = await _firestoreService.getDocument(
@@ -253,14 +311,12 @@ class VideoCubit extends Cubit<VideoState> {
       if (videoData != null) {
         return VideoModel.fromJson(videoData, docId: videoId);
       }
-
       return null;
     } catch (e) {
       throw Exception('Failed to get video: $e');
     }
   }
 
-  // Get all videos (history)
   Future<List<VideoModel>> getVideoHistory({
     String? orderBy = 'createdAt',
     bool descending = true,
@@ -284,11 +340,11 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  // Create a new video
   Future<String> addVideo(VideoModel video) async {
     try {
-      return await _firestoreService.addDocument(
+      return await _firestoreService.setDocument(
         collection: _collection,
+        documentId: video.id,
         data: video.toJson(),
       );
     } catch (e) {
@@ -296,23 +352,37 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  // Update video title
-  Future<void> updateVideoTitle({
-    required String videoId,
-    required String newTitle,
-  }) async {
+  Future<void> updateVideoTitle(BuildContext context) async {
     try {
+      if (selectedVideo == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No video selected. Please try again.'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return;
+      }
+
       await _firestoreService.updateDocument(
         collection: _collection,
-        documentId: videoId,
-        data: {'title': newTitle},
+        documentId: selectedVideo!.id,
+        data: {'title': nameVideoController.text},
       );
+
+      // Update local state
+      selectedVideo = selectedVideo!.copyWith(title: nameVideoController.text);
+      emit(VideoSuccess());
     } catch (e) {
-      throw Exception('Failed to update video title: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update title: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
   }
 
-  // Update entire video
   Future<void> updateVideo(VideoModel video) async {
     try {
       await _firestoreService.updateDocument(
@@ -325,21 +395,39 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  // Delete a video
   Future<void> deleteVideo(String videoId) async {
     try {
       await _firestoreService.deleteDocument(
         collection: _collection,
         documentId: videoId,
       );
+
+      // Update local state if needed
+      videos.removeWhere((video) => video.id == videoId);
+      if (selectedVideo?.id == videoId) {
+        selectedVideo = null;
+      }
+
+      emit(VideoSuccess());
     } catch (e) {
       throw Exception('Failed to delete video: $e');
     }
   }
 
   Future<String> getNextTitle() async {
-    name =
-        "Video ${(await _firestoreService.getLenthDocsCollection(collection: _collection))}";
-    return name;
+    try {
+      int count = await _firestoreService.getLenthDocsCollection(
+          collection: _collection);
+      return "Video ${count + 1}";
+    } catch (e) {
+      return "New Video";
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await cleanupController();
+    nameVideoController.dispose();
+    return super.close();
   }
 }
