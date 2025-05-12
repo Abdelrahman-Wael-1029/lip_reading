@@ -23,6 +23,7 @@ class VideoCubit extends Cubit<VideoState> {
   final String _collection = 'videos';
   List<VideoModel> videos = [];
   String? result;
+  String name = '';
 
   final ImagePicker _picker = ImagePicker();
   VideoPlayerController? controller;
@@ -128,6 +129,7 @@ class VideoCubit extends Cubit<VideoState> {
         if (await file.exists()) {
           await _cleanupController();
           await _initializeVideoController(file);
+          uploadVideo();
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -170,9 +172,6 @@ class VideoCubit extends Cubit<VideoState> {
             currentPosition = _formatDuration(position);
             result =
                 'this is the result from video cubit ${videoProgress} ${currentPosition} ${totalDuration} in initialize video for the video cubit at video vor ljsdlj ljs ls jsl jsl jsl jslj lsj ljs';
-            // upload video
-            uploadVideo();
-
             emit(VideoSuccess());
           }
         }
@@ -216,12 +215,10 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       emit(VideoLoading());
       String name = await getNextTitle();
-      String extension = _currentVideoPath!.split('.').last;
       String videoUrl = await _storageService.uploadData(
         data: File(_currentVideoPath!).readAsBytesSync(),
         storagePath: 'videos',
         fileName: name,
-        contentType: 'video/$extension',
       );
       String id = const Uuid().v4();
 
@@ -341,6 +338,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<String> getNextTitle() async {
-    return "Video ${(await _firestoreService.getLenthDocsCollection(collection: _collection))}";
+    name =
+        "Video ${(await _firestoreService.getLenthDocsCollection(collection: _collection))}";
+    return name;
   }
 }

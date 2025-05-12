@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lip_reading/screens/auth/signup_screen.dart';
+import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
@@ -15,6 +16,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => LoginScreen());
       case SignupScreen.routeName:
         return MaterialPageRoute(builder: (_) => SignupScreen());
+      case HistoryScreen.routeName:
+        return MaterialPageRoute(builder: (_) => HistoryScreen());
 
       default:
         return MaterialPageRoute(builder: (_) => errorRoute());

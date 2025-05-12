@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
-import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
-import 'package:lip_reading/screens/auth/login_screen.dart';
+import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
 import 'package:video_player/video_player.dart';
@@ -53,32 +52,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     super.didChangeAppLifecycleState(state);
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                  LoginScreen.routeName, (route) => false);
-              context.read<AuthCubit>().logout();
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,9 +62,9 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.white),
+            icon: const Icon(Icons.person, color: AppColors.white),
             onPressed: () {
-              _showLogoutDialog(context);
+              Navigator.pushNamed(context, HistoryScreen.routeName);
             },
           ),
         ],
