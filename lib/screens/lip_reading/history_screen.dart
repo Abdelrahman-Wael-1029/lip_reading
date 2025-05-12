@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
@@ -10,16 +11,21 @@ import 'package:lip_reading/utils/app_colors.dart';
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
   static const String routeName = '/history';
+
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
+  TextEditingController searchController = TextEditingController();
+  List<VideoModel> filteredVideos = [];
+
   @override
   void initState() {
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => context.read<VideoCubit>().fetchVideos());
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => context.read<VideoCubit>().fetchVideos(),
+    );
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -36,11 +42,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              // clean up video cubit
               await context.read<VideoCubit>().cleanupController();
               if (context.mounted) {
                 Navigator.of(context).pushNamedAndRemoveUntil(
-                    LoginScreen.routeName, (route) => false);
+                  LoginScreen.routeName,
+                  (route) => false,
+                );
                 context.read<AuthCubit>().logout();
               }
             },
@@ -51,10 +58,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  void _onSearch(String query, List<VideoModel> videos) {
+    setState(() {
+      filteredVideos = videos
+          .where((video) => video.title.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  Future<void> _onRefresh() async {
+    await context.read<VideoCubit>().fetchVideos();
+    _onSearch(searchController.text, context.read<VideoCubit>().videos);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final videoCubit = context.watch<VideoCubit>();
+    final state = videoCubit.state;
+
+    final videos = videoCubit.videos;
+
+    final displayVideos = searchController.text.isEmpty ? videos : filteredVideos;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
@@ -66,23 +92,57 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-      body: videoCubit.state is VideoLoading
+      body: state is VideoLoading
           ? const Center(child: CircularProgressIndicator())
-          : videoCubit.state is VideoError
-              ? Center(
-                  child: Text(
-                    'Error loading history',
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? AppColors.errorDark
-                          : AppColors.errorLight,
+          : RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (state is VideoError)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Text(
+                          'Error loading history',
+                          style: TextStyle(
+                            color: isDarkMode
+                                ? AppColors.errorDark
+                                : AppColors.errorLight,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                )
-              : videoCubit.videos.isEmpty
-                  ? Center(
+                  if (videos.isNotEmpty) ...[
+                    customTextFormField(
+                      context: context,
+                      controller: searchController,
+                      hintText: "Search videos",
+                      onChanged: (query) => _onSearch(query, videos),
+                      prefixIcon: const Icon(Icons.search),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (displayVideos.isEmpty && videos.isNotEmpty)
+                    Center(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: isDarkMode
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text('No result found'),
+                        ],
+                      ),
+                    )
+                  else if (videos.isEmpty)
+                    Center(
+                      child: Column(
                         children: [
                           Icon(
                             Icons.history,
@@ -104,15 +164,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ],
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: videoCubit.videos.length,
-                      itemBuilder: (context, index) {
-                        final video = videoCubit.videos[index];
-                        return _buildVideoHistoryItem(
-                            context, video, isDarkMode);
-                      },
-                    ),
+                  else
+                    ...displayVideos.map((video) => _buildVideoHistoryItem(
+                          context,
+                          video,
+                          isDarkMode,
+                        )),
+                ],
+              ),
+            ),
     );
   }
 
@@ -132,7 +192,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
         onTap: () async {
           final bool success =
               await context.read<VideoCubit>().initializeNetworkVideo(video);
-          print('network video initialized $success ');
           if (context.mounted && success) {
             Navigator.pop(context);
           }
@@ -170,16 +229,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           video.title.isNotEmpty
                               ? video.title
                               : 'Untitled Video',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'dateString',
+                          'dateString', // replace with actual date if needed
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
