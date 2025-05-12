@@ -310,13 +310,16 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               borderRadius: BorderRadius.circular(12),
               child: AspectRatio(
                 aspectRatio: videoController.value.aspectRatio,
-                child: CustomVideoPlayer(controller: videoController),
+                child: CustomVideoPlayer(),
               ),
             ),
           ),
 
           const SizedBox(height: 24),
-          BlocBuilder<VideoCubit, VideoState>(builder: (context, state) {
+          BlocBuilder<VideoCubit, VideoState>(buildWhen: (previous, current) {
+            return current is! VideoPlaying;
+          }, builder: (context, state) {
+            print('update in lip readiing screen for name and reslutl');
             final videoCubit = context.read<VideoCubit>();
             return Column(
               children: [

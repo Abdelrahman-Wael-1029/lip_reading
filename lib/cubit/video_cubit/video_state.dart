@@ -4,7 +4,11 @@ class VideoInitial extends VideoState {}
 
 class VideoLoading extends VideoState {}
 
+// for name and result
 class VideoSuccess extends VideoState {}
+
+// for other success states
+class VideoPlaying extends VideoState {}
 
 class VideoError extends VideoState {
   final String errorMessage;

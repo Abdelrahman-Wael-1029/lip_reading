@@ -1,24 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
+import 'package:lip_reading/utils/app_colors.dart';
 import 'package:video_player/video_player.dart';
 
 class CustomVideoPlayer extends StatelessWidget {
-  final VideoPlayerController controller;
+  const CustomVideoPlayer({
+    super.key,
+  });
 
-  const CustomVideoPlayer({super.key, required this.controller});
+  Widget _emtpyState(context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    return Center(
+      child: Column(
+        children: [
+          Icon(
+            Icons.history,
+            size: 64,
+            color: isDarkMode
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No video found',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Video not Found Please try again',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     var cubit = context.watch<VideoCubit>();
+    print('rebuild build video player');
+    if (cubit.controller == null) return _emtpyState(context);
     return GestureDetector(
       onTap: () => cubit.toggleControls(),
       child: Stack(
         alignment: Alignment.center,
         children: [
           AspectRatio(
-            aspectRatio: controller.value.aspectRatio,
-            child: VideoPlayer(controller),
+            aspectRatio: cubit.controller!.value.aspectRatio,
+            child: VideoPlayer(cubit.controller!),
           ),
           (!cubit.showControls)
               ? SizedBox.shrink()
@@ -28,31 +58,26 @@ class CustomVideoPlayer extends StatelessWidget {
                     _buildControlButton(
                         icon: Icons.replay_10,
                         onPressed: () {
-                          final currentPosition = controller.value.position;
-                          controller.seekTo(
-                              currentPosition - const Duration(seconds: 10));
+                          cubit.replay_10();
                         }),
                     _buildControlButton(
-                      icon: controller.value.isPlaying
+                      icon: cubit.controller!.value.isPlaying
                           ? Icons.pause
                           : Icons.play_arrow,
                       onPressed: () {
-                        if (controller.value.isPlaying) {
-                          controller.pause();
+                        if (cubit.controller!.value.isPlaying) {
+                          cubit.controller!.pause();
                         } else {
-                          controller.play();
+                          cubit.controller!.play();
                         }
-                        cubit.updatePlayPauseIcon(controller.value.isPlaying);
+                        cubit.updatePlayPauseIcon(
+                            cubit.controller!.value.isPlaying);
                       },
                     ),
                     _buildControlButton(
                       icon: Icons.forward_10,
                       onPressed: () async {
-                        final currentPosition = await controller.position;
-                        if (currentPosition != null) {
-                          await controller.seekTo(
-                              currentPosition + const Duration(seconds: 10));
-                        }
+                        await cubit.forward_10();
                       },
                     ),
                   ],

@@ -8,6 +8,7 @@ import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/service/firestore_service.dart';
 import 'package:lip_reading/service/storage_service.dart';
+import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
@@ -19,13 +20,12 @@ class VideoCubit extends Cubit<VideoState> {
 
   // Constants
   String get _collection {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) {
-    throw Exception('No authenticated user');
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('No authenticated user');
+    }
+    return 'users/${user.uid}/videos';
   }
-  return 'users/${user.uid}/videos';
-}
-
 
   // Controllers
   VideoPlayerController? controller;
@@ -52,7 +52,7 @@ class VideoCubit extends Cubit<VideoState> {
   // UI Control Methods
   void toggleControls() {
     showControls = !showControls;
-    emit(VideoSuccess());
+    emit(VideoPlaying());
 
     if (showControls) {
       _resetHideControlsTimer();
@@ -65,19 +65,19 @@ class VideoCubit extends Cubit<VideoState> {
     _hideControlsTimer?.cancel();
     _hideControlsTimer = Timer(const Duration(seconds: 6), () {
       showControls = false;
-      emit(VideoSuccess());
+      emit(VideoPlaying());
     });
   }
 
   void updateVideoPosition(double progress) {
     videoProgress = progress;
     showControls = true;
-    emit(VideoSuccess());
+    emit(VideoPlaying());
     _resetHideControlsTimer();
   }
 
   void updatePlayPauseIcon(bool isPlaying) {
-    emit(VideoSuccess());
+    emit(VideoPlaying());
   }
 
   // Video Controller Methods
@@ -108,7 +108,10 @@ class VideoCubit extends Cubit<VideoState> {
       showControls = true;
       _resetHideControlsTimer();
 
-      emit(VideoSuccess());
+      // play video
+      await controller!.play();
+
+      emit(VideoPlaying());
       return true; // Success indicator
     } catch (e) {
       debugPrint('Network video initialization error: ${e.toString()}');
@@ -129,7 +132,7 @@ class VideoCubit extends Cubit<VideoState> {
         final currentPosition = controller!.value.position;
         await controller!.initialize();
         await controller!.seekTo(currentPosition);
-        emit(VideoSuccess());
+        emit(VideoPlaying());
       }
     } catch (e) {
       debugPrint('Error seeking to position: ${e.toString()}');
@@ -175,7 +178,7 @@ class VideoCubit extends Cubit<VideoState> {
         if (duration.inSeconds > 0) {
           videoProgress = position.inSeconds / duration.inSeconds;
           currentPosition = _formatDuration(position);
-          emit(VideoSuccess());
+          emit(VideoPlaying());
         }
       }
     });
@@ -231,7 +234,7 @@ class VideoCubit extends Cubit<VideoState> {
         if (controller == null && _currentVideoPath != null) {
           await reInitializeLastVideo();
         } else {
-          emit(VideoSuccess());
+          emit(VideoPlaying());
         }
       }
     } catch (e) {
@@ -255,7 +258,7 @@ class VideoCubit extends Cubit<VideoState> {
       showControls = true;
       _resetHideControlsTimer();
 
-      emit(VideoSuccess());
+      emit(VideoPlaying());
     } catch (e) {
       emit(VideoError('Failed to initialize video: ${e.toString()}'));
     }
@@ -287,7 +290,7 @@ class VideoCubit extends Cubit<VideoState> {
       String videoUrl = await _storageService.uploadData(
         data: File(_currentVideoPath!).readAsBytesSync(),
         storagePath: 'videos',
-        fileName: nameVideoController.text,
+        fileName: id,
       );
 
       selectedVideo!.url = videoUrl;
@@ -304,7 +307,7 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoLoading());
     try {
       videos = await getVideoHistory();
-      emit(VideoSuccess());
+      emit(VideoPlaying());
     } catch (e) {
       emit(VideoError(e.toString()));
     }
@@ -381,11 +384,23 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Update local state
       selectedVideo = selectedVideo!.copyWith(title: nameVideoController.text);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Video title updated successfully!',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.success,
+        ),
+      );
       emit(VideoSuccess());
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to update title: ${e.toString()}'),
+          content: const Text(
+            'Failed to update title try again later',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
@@ -417,16 +432,33 @@ class VideoCubit extends Cubit<VideoState> {
         selectedVideo = null;
       }
 
-      emit(VideoSuccess());
+      emit(VideoPlaying());
     } catch (e) {
       throw Exception('Failed to delete video: $e');
     }
   }
 
+  Future<void> replay_10() async {
+    final currentPosition = controller!.value.position;
+    await controller!.seekTo(currentPosition - const Duration(seconds: 10));
+    updateVideoPosition(
+        controller!.value.position.inSeconds.toDouble() / totalVideoSeconds);
+
+    emit(VideoPlaying());
+  }
+
+  Future<void> forward_10() async {
+    final currentPosition = controller!.value.position;
+    await controller!.seekTo(currentPosition + const Duration(seconds: 10));
+    updateVideoPosition(
+        controller!.value.position.inSeconds.toDouble() / totalVideoSeconds);
+    emit(VideoPlaying());
+  }
+
   Future<String> getNextTitle() async {
     try {
-      int count = await _firestoreService.getCollectionCount(
-          collection: _collection);
+      int count =
+          await _firestoreService.getCollectionCount(collection: _collection);
       return "Video ${count + 1}";
     } catch (e) {
       return "New Video";
