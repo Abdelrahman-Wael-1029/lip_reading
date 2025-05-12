@@ -7,6 +7,7 @@ import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
 import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
@@ -315,99 +316,109 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           ),
 
           const SizedBox(height: 24),
-          customTextFormField(
-            context: context,
-            controller: context.read<VideoCubit>().nameVideoController,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter some text';
-              }
-              return null;
-            },
-            // suffix icon for upload new name
-            suffixIcon: IconButton(
-              icon: Icon(
-                Icons.upload_file,
-                color: Theme.of(context).primaryColor,
-              ),
-              onPressed: () {
-                context.read<VideoCubit>().updateVideoTitle(context);
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Title for results section
-          Text(
-            'Lip Reading Results',
-            style: TextStyle(
-              fontSize: getLargeFontSize(context),
-              fontWeight: FontWeight.bold,
-              color: AppColors.white,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Results container
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            padding: EdgeInsets.all(getPadding(context)!),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          BlocBuilder<VideoCubit, VideoState>(builder: (context, state) {
+            final videoCubit = context.read<VideoCubit>();
+            return Column(
               children: [
-                Row(
-                  spacing: 8,
-                  children: [
-                    Icon(
-                      Icons.text_fields,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Transcribed Text',
-                        style: TextStyle(
-                          fontSize: getMediumFontSize(context),
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
+                if (videoCubit.selectedVideo != null)
+                  customTextFormField(
+                    context: context,
+                    controller: context.read<VideoCubit>().nameVideoController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text';
+                      }
+                      return null;
+                    },
+                    // suffix icon for upload new name
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        Icons.upload_file,
+                        color: Theme.of(context).primaryColor,
                       ),
+                      onPressed: () {
+                        context.read<VideoCubit>().updateVideoTitle(context);
+                      },
                     ),
-                    // icon for share resutl
-                    IconButton(
-                        onPressed: () {
-                          // Share the transcribed text
-                        },
-                        icon: Icon(
-                          Icons.share,
-                          color: Theme.of(context).primaryColor,
-                        ))
-                  ],
-                ),
-                const SizedBox(height: 12),
+                  ),
+                if (videoCubit.selectedVideo != null)
+                  const SizedBox(height: 24),
+
+                // Title for results section
                 Text(
-                  // Replace this with actual transcribed text
-                  'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
+                  'Lip Reading Results',
                   style: TextStyle(
-                    fontSize: getMediumFontSize(context),
-                    color: Colors.black87,
-                    height: 1.5,
+                    fontSize: getLargeFontSize(context),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
                   ),
                 ),
+
+                const SizedBox(height: 16),
+
+                (videoCubit.selectedVideo?.result != null)
+                    ? Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        padding: EdgeInsets.all(getPadding(context)!),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Icon(
+                                  Icons.text_fields,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Transcribed Text',
+                                    style: TextStyle(
+                                      fontSize: getMediumFontSize(context),
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ),
+                                // icon for share resutl
+                                IconButton(
+                                    onPressed: () {
+                                      // Share the transcribed text
+                                    },
+                                    icon: Icon(
+                                      Icons.share,
+                                      color: Theme.of(context).primaryColor,
+                                    ))
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              // Replace this with actual transcribed text
+                              'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
+                              style: TextStyle(
+                                fontSize: getMediumFontSize(context),
+                                color: Colors.black87,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : CircularProgressIndicator()
               ],
-            ),
-          ),
+            );
+          }),
 
           const SizedBox(height: 24),
         ],

@@ -30,7 +30,6 @@ class VideoCubit extends Cubit<VideoState> {
   String totalDuration = "0:00";
   bool showControls = true;
   String? _currentVideoPath;
-  String? result;
 
   // Data
   List<VideoModel> videos = [];
@@ -77,13 +76,12 @@ class VideoCubit extends Cubit<VideoState> {
   Future<bool> initializeNetworkVideo(VideoModel video) async {
     emit(VideoLoading());
     try {
+      if (video.url.isEmpty) return false;
       await cleanupController();
 
       // Store selected video before initializing controller
       selectedVideo = video;
       nameVideoController.text = video.title;
-      result = video.result;
-
 
       // Create controller with safeguards
       final VideoPlayerController newController =
@@ -153,7 +151,6 @@ class VideoCubit extends Cubit<VideoState> {
     // Reset state
     selectedVideo = null;
     nameVideoController.clear();
-    result = null;
   }
 
   void _setupVideoProgressTracking() {
@@ -246,9 +243,6 @@ class VideoCubit extends Cubit<VideoState> {
       totalVideoSeconds = controller!.value.duration.inSeconds;
       totalDuration = _formatDuration(controller!.value.duration);
 
-      result = 'Video analysis result for ${videoFile.path}';
-      nameVideoController.text = await getNextTitle();
-
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
@@ -268,6 +262,19 @@ class VideoCubit extends Cubit<VideoState> {
         emit(VideoError('No video selected'));
         return;
       }
+      String id = const Uuid().v4();
+      String result =
+          'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
+      nameVideoController.text = await getNextTitle();
+      selectedVideo = VideoModel(
+        id: id,
+        title: nameVideoController.text,
+        url: '',
+        result: result,
+      );
+
+      await addVideo(selectedVideo!);
+      emit(VideoSuccess());
 
       String videoUrl = await _storageService.uploadData(
         data: File(_currentVideoPath!).readAsBytesSync(),
@@ -275,15 +282,9 @@ class VideoCubit extends Cubit<VideoState> {
         fileName: nameVideoController.text,
       );
 
-      String id = const Uuid().v4();
-      selectedVideo = VideoModel(
-        id: id,
-        title: nameVideoController.text,
-        url: videoUrl,
-        result: result ?? 'No analysis result available',
-      );
+      selectedVideo!.url = videoUrl;
+      await updateVideo(selectedVideo!);
 
-      await addVideo(selectedVideo!);
       emit(VideoSuccess());
     } catch (e) {
       debugPrint('Error in upload video: ${e.toString()}');

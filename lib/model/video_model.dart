@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class VideoModel {
   final String id;
   final String title;
-  final String url;
-  final String result;
+  String url;
+  String result;
   final DateTime? createdAt;
 
   VideoModel({
