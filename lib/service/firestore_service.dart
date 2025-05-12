@@ -1,120 +1,39 @@
-// lib/services/firestore_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Generic method to fetch a document by ID
+  // ----------------- Document Operations -----------------
+
   Future<Map<String, dynamic>?> getDocument({
     required String collection,
     required String documentId,
   }) async {
     try {
-      DocumentSnapshot doc =
-          await _firestore.collection(collection).doc(documentId).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>;
-      }
-      return null;
+      DocumentSnapshot doc = await _firestore.collection(collection).doc(documentId).get();
+      return doc.exists ? doc.data() as Map<String, dynamic> : null;
     } catch (e) {
       throw Exception('Failed to get document: $e');
     }
   }
 
-  // Generic method to fetch all documents in a collection
-  Future<List<Map<String, dynamic>>> getCollection({
-    required String collection,
-    String? orderBy,
-    bool descending = false,
-    int? limit,
-    Map<String, dynamic>? whereCondition,
-  }) async {
-    try {
-      Query query = _firestore.collection(collection);
-
-      // Apply where condition if provided
-      if (whereCondition != null) {
-        String field = whereCondition['field'];
-        dynamic value = whereCondition['value'];
-        String operator = whereCondition['operator'];
-
-        switch (operator) {
-          case '==':
-            query = query.where(field, isEqualTo: value);
-            break;
-          case '>':
-            query = query.where(field, isGreaterThan: value);
-            break;
-          case '>=':
-            query = query.where(field, isGreaterThanOrEqualTo: value);
-            break;
-          case '<':
-            query = query.where(field, isLessThan: value);
-            break;
-          case '<=':
-            query = query.where(field, isLessThanOrEqualTo: value);
-            break;
-          case 'array-contains':
-            query = query.where(field, arrayContains: value);
-            break;
-        }
-      }
-
-      // Apply order if provided
-      if (orderBy != null) {
-        query = query.orderBy(orderBy, descending: descending);
-      }
-
-      // Apply limit if provided
-      if (limit != null) {
-        query = query.limit(limit);
-      }
-
-      QuerySnapshot querySnapshot = await query.get();
-      return querySnapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data() as Map<String, dynamic>,
-              })
-          .toList();
-    } catch (e) {
-      throw Exception('Failed to get collection: $e');
-    }
-  }
-
-  Future<int> getLenthDocsCollection({
-    required String collection,
-  }) async {
-    try {
-      QuerySnapshot querySnapshot =
-          await _firestore.collection(collection).get();
-      return querySnapshot.size;
-    } catch (e) {
-      throw Exception('Failed to get collection: $e');
-    }
-  }
-
-  // Generic method to add a document
   Future<String> addDocument({
     required String collection,
     required Map<String, dynamic> data,
     String? documentId,
   }) async {
     try {
+      final ref = _firestore.collection(collection);
       if (documentId != null) {
-        await _firestore.collection(collection).doc(documentId).set(data);
+        await ref.doc(documentId).set(data);
         return documentId;
-      } else {
-        DocumentReference docRef =
-            await _firestore.collection(collection).add(data);
-        return docRef.id;
       }
+      return (await ref.add(data)).id;
     } catch (e) {
       throw Exception('Failed to add document: $e');
     }
   }
 
-  // Generic method to update a document
   Future<void> updateDocument({
     required String collection,
     required String documentId,
@@ -127,7 +46,6 @@ class FirestoreService {
     }
   }
 
-  // Generic method to delete a document
   Future<void> deleteDocument({
     required String collection,
     required String documentId,
@@ -139,7 +57,6 @@ class FirestoreService {
     }
   }
 
-  // Method to create or update a document (upsert)
   Future<String> setDocument({
     required String collection,
     required String documentId,
@@ -147,29 +64,60 @@ class FirestoreService {
     bool merge = true,
   }) async {
     try {
-      await _firestore
-          .collection(collection)
-          .doc(documentId)
-          .set(data, SetOptions(merge: merge));
+      await _firestore.collection(collection).doc(documentId).set(data, SetOptions(merge: merge));
       return documentId;
     } catch (e) {
       throw Exception('Failed to set document: $e');
     }
   }
 
-  // Method to listen to real-time updates on a document
+  // ----------------- Collection Operations -----------------
+
+  Future<List<Map<String, dynamic>>> getCollection({
+    required String collection,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+    Map<String, dynamic>? whereCondition,
+  }) async {
+    try {
+      final query = _buildQuery(
+        collection: collection,
+        orderBy: orderBy,
+        descending: descending,
+        limit: limit,
+        whereCondition: whereCondition,
+      );
+
+      final querySnapshot = await query.get();
+      return _mapQuerySnapshot(querySnapshot);
+    } catch (e) {
+      throw Exception('Failed to get collection: $e');
+    }
+  }
+
+  Future<int> getCollectionCount({
+    required String collection,
+  }) async {
+    try {
+      final snapshot = await _firestore.collection(collection).get();
+      return snapshot.size;
+    } catch (e) {
+      throw Exception('Failed to count documents: $e');
+    }
+  }
+
+  // ----------------- Real-Time Streams -----------------
+
   Stream<Map<String, dynamic>?> streamDocument({
     required String collection,
     required String documentId,
   }) {
-    return _firestore
-        .collection(collection)
-        .doc(documentId)
-        .snapshots()
-        .map((doc) => doc.exists ? doc.data() as Map<String, dynamic> : null);
+    return _firestore.collection(collection).doc(documentId).snapshots().map(
+          (doc) => doc.exists ? doc.data() as Map<String, dynamic> : null,
+        );
   }
 
-  // Method to listen to real-time updates on a collection
   Stream<List<Map<String, dynamic>>> streamCollection({
     required String collection,
     String? orderBy,
@@ -177,80 +125,37 @@ class FirestoreService {
     int? limit,
     Map<String, dynamic>? whereCondition,
   }) {
-    Query query = _firestore.collection(collection);
+    final query = _buildQuery(
+      collection: collection,
+      orderBy: orderBy,
+      descending: descending,
+      limit: limit,
+      whereCondition: whereCondition,
+    );
 
-    // Apply where condition if provided
-    if (whereCondition != null) {
-      String field = whereCondition['field'];
-      dynamic value = whereCondition['value'];
-      String operator = whereCondition['operator'];
-
-      switch (operator) {
-        case '==':
-          query = query.where(field, isEqualTo: value);
-          break;
-        case '>':
-          query = query.where(field, isGreaterThan: value);
-          break;
-        case '>=':
-          query = query.where(field, isGreaterThanOrEqualTo: value);
-          break;
-        case '<':
-          query = query.where(field, isLessThan: value);
-          break;
-        case '<=':
-          query = query.where(field, isLessThanOrEqualTo: value);
-          break;
-        case 'array-contains':
-          query = query.where(field, arrayContains: value);
-          break;
-      }
-    }
-
-    // Apply order if provided
-    if (orderBy != null) {
-      query = query.orderBy(orderBy, descending: descending);
-    }
-
-    // Apply limit if provided
-    if (limit != null) {
-      query = query.limit(limit);
-    }
-
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data() as Map<String, dynamic>,
-              })
-          .toList();
-    });
+    return query.snapshots().map(_mapQuerySnapshot);
   }
 
-  // Method to perform a batch operation
+  // ----------------- Batch and Transaction -----------------
+
   Future<void> batchOperation({
     required List<Map<String, dynamic>> operations,
   }) async {
     final batch = _firestore.batch();
 
     try {
-      for (var operation in operations) {
-        final String type = operation['type'];
-        final String collection = operation['collection'];
-        final String documentId = operation['documentId'];
-        final DocumentReference docRef =
-            _firestore.collection(collection).doc(documentId);
+      for (var op in operations) {
+        final ref = _firestore.collection(op['collection']).doc(op['documentId']);
 
-        switch (type) {
+        switch (op['type']) {
           case 'set':
-            batch.set(docRef, operation['data'],
-                SetOptions(merge: operation['merge'] ?? false));
+            batch.set(ref, op['data'], SetOptions(merge: op['merge'] ?? false));
             break;
           case 'update':
-            batch.update(docRef, operation['data']);
+            batch.update(ref, op['data']);
             break;
           case 'delete':
-            batch.delete(docRef);
+            batch.delete(ref);
             break;
         }
       }
@@ -261,15 +166,76 @@ class FirestoreService {
     }
   }
 
-  // Method to perform a transaction
-  Future<void> runTransaction(
-      {required Function(Transaction) transaction}) async {
+  Future<void> runTransaction({
+    required Future<void> Function(Transaction) transaction,
+  }) async {
     try {
-      await _firestore.runTransaction((Transaction tx) async {
-        return await transaction(tx);
-      });
+      await _firestore.runTransaction(transaction);
     } catch (e) {
       throw Exception('Failed to run transaction: $e');
     }
+  }
+
+  // ----------------- Helpers -----------------
+
+  Query _buildQuery({
+    required String collection,
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+    Map<String, dynamic>? whereCondition,
+  }) {
+    Query query = _firestore.collection(collection);
+
+    if (whereCondition != null) {
+      final field = whereCondition['field'];
+      final value = whereCondition['value'];
+      final operator = whereCondition['operator'];
+
+      query = _applyWhereCondition(query, field, value, operator);
+    }
+
+    if (orderBy != null) {
+      query = query.orderBy(orderBy, descending: descending);
+    }
+
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+
+    return query;
+  }
+
+  Query _applyWhereCondition(
+    Query query,
+    String field,
+    dynamic value,
+    String operator,
+  ) {
+    switch (operator) {
+      case '==':
+        return query.where(field, isEqualTo: value);
+      case '>':
+        return query.where(field, isGreaterThan: value);
+      case '>=':
+        return query.where(field, isGreaterThanOrEqualTo: value);
+      case '<':
+        return query.where(field, isLessThan: value);
+      case '<=':
+        return query.where(field, isLessThanOrEqualTo: value);
+      case 'array-contains':
+        return query.where(field, arrayContains: value);
+      default:
+        throw Exception('Unsupported operator: $operator');
+    }
+  }
+
+  List<Map<String, dynamic>> _mapQuerySnapshot(QuerySnapshot snapshot) {
+    return snapshot.docs
+        .map((doc) => {
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            })
+        .toList();
   }
 }

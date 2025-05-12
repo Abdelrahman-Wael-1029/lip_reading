@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:bloc/bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
@@ -17,7 +18,14 @@ class VideoCubit extends Cubit<VideoState> {
   final ImagePicker _picker = ImagePicker();
 
   // Constants
-  final String _collection = 'videos';
+  String get _collection {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    throw Exception('No authenticated user');
+  }
+  return 'users/${user.uid}/videos';
+}
+
 
   // Controllers
   VideoPlayerController? controller;
@@ -417,7 +425,7 @@ class VideoCubit extends Cubit<VideoState> {
 
   Future<String> getNextTitle() async {
     try {
-      int count = await _firestoreService.getLenthDocsCollection(
+      int count = await _firestoreService.getCollectionCount(
           collection: _collection);
       return "Video ${count + 1}";
     } catch (e) {
