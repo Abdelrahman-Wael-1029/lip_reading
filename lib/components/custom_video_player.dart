@@ -39,7 +39,7 @@ class CustomVideoPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var cubit = context.watch<VideoCubit>();
-    print('rebuild build video player');
+    print('rebuild build video player ${cubit.controller?.value.isPlaying}');
     if (cubit.controller == null) return _emtpyState(context);
     return GestureDetector(
       onTap: () => cubit.toggleControls(),

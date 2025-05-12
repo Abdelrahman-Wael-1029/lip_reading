@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
-import 'package:lip_reading/cubit/lip_reading/lip_reading_cubit.dart';
-import 'package:lip_reading/cubit/lip_reading/lip_reading_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/screens/lip_reading/history_screen.dart';
@@ -89,10 +87,22 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.all(getPadding(context)!),
-            child: BlocConsumer<LipReadingCubit, LipReadingState>(
+            child: BlocConsumer<VideoCubit, VideoState>(
+              buildWhen: (previous, current) {
+                var success = (current is! VideoPlaying &&
+                    current is! HistoryLoading &&
+                    current is! HistorySuccess &&
+                    current is! HistoryError);
+
+                print('rebuild $previous $current $success');
+                return success;
+              },
+              listenWhen: (previous, current) {
+                return current is! VideoPlaying;
+              },
               listener: (context, state) {
                 // Handle state changes if needed
-                if (state is LipReadingVideoSuccess) {
+                if (state is VideoSuccess) {
                   final videoController = context.read<VideoCubit>().controller;
                   if (videoController != null &&
                       !videoController.value.isInitialized) {
@@ -101,23 +111,24 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                 }
               },
               builder: (context, state) {
+                print('rebuild main screen');
                 final videoController = context.read<VideoCubit>().controller;
                 // Show error state
-                if (state is LipReadingVideoError) {
-                  return _buildErrorState(context, state.message);
+                if (state is VideoError) {
+                  return _buildErrorState(context, state.errorMessage);
                 }
                 // Show loading state
-                else if (state is LipReadingVideoLoading) {
+                else if (state is VideoLoading) {
                   return _buildLoadingState(context);
                 }
                 // Show video and results state if controller exists and is initialized
-                else if (state is LipReadingVideoSuccess &&
+                else if (state is VideoSuccess &&
                     videoController != null &&
                     videoController.value.isInitialized) {
                   return _buildVideoSuccessState(context, videoController);
                 }
                 // Show loading if controller exists but not initialized
-                else if (state is LipReadingVideoSuccess &&
+                else if (state is VideoSuccess &&
                     videoController != null &&
                     !videoController.value.isInitialized) {
                   return _buildLoadingState(context);
@@ -280,11 +291,10 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   Widget _buildVideoSuccessState(
       BuildContext context, VideoPlayerController videoController) {
     // No more setState - we rely on the BLoC pattern
+    var videoCubit = context.read<VideoCubit>();
+
     if (!videoController.value.isInitialized) {
-      videoController.initialize().then((_) {
-        // Emit state to refresh UI
-        setState(() {});
-      });
+      videoCubit.seekToCurrentPosition();
 
       // Show loading indicator while initializing
       return _buildLoadingState(context);
@@ -316,112 +326,105 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           ),
 
           const SizedBox(height: 24),
-          BlocBuilder<VideoCubit, VideoState>(buildWhen: (previous, current) {
-            return current is! VideoPlaying;
-          }, builder: (context, state) {
-            print('update in lip readiing screen for name and reslutl');
-            final videoCubit = context.read<VideoCubit>();
-            return Column(
-              children: [
-                if (videoCubit.selectedVideo != null)
-                  customTextFormField(
-                    context: context,
-                    controller: context.read<VideoCubit>().nameVideoController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter some text';
-                      }
-                      return null;
-                    },
-                    // suffix icon for upload new name
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        Icons.upload_file,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      onPressed: () {
-                        context.read<VideoCubit>().updateVideoTitle(context);
-                      },
+          Column(
+            children: [
+              if (videoCubit.selectedVideo != null)
+                customTextFormField(
+                  context: context,
+                  controller: context.read<VideoCubit>().nameVideoController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  // suffix icon for upload new name
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      Icons.upload_file,
+                      color: Theme.of(context).primaryColor,
                     ),
-                  ),
-                if (videoCubit.selectedVideo != null)
-                  const SizedBox(height: 24),
-
-                // Title for results section
-                Text(
-                  'Lip Reading Results',
-                  style: TextStyle(
-                    fontSize: getLargeFontSize(context),
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
+                    onPressed: () {
+                      context.read<VideoCubit>().updateVideoTitle(context);
+                    },
                   ),
                 ),
+              if (videoCubit.selectedVideo != null) const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
+              // Title for results section
+              Text(
+                'Lip Reading Results',
+                style: TextStyle(
+                  fontSize: getLargeFontSize(context),
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
+              ),
 
-                (videoCubit.selectedVideo?.result != null)
-                    ? Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        padding: EdgeInsets.all(getPadding(context)!),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              spacing: 8,
-                              children: [
-                                Icon(
-                                  Icons.text_fields,
-                                  color: Theme.of(context).primaryColor,
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'Transcribed Text',
-                                    style: TextStyle(
-                                      fontSize: getMediumFontSize(context),
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
+              const SizedBox(height: 16),
+
+              (videoCubit.selectedVideo?.result != null)
+                  ? Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      padding: EdgeInsets.all(getPadding(context)!),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            spacing: 8,
+                            children: [
+                              Icon(
+                                Icons.text_fields,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Transcribed Text',
+                                  style: TextStyle(
+                                    fontSize: getMediumFontSize(context),
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
                                   ),
                                 ),
-                                // icon for share resutl
-                                IconButton(
-                                    onPressed: () {
-                                      // Share the transcribed text
-                                    },
-                                    icon: Icon(
-                                      Icons.share,
-                                      color: Theme.of(context).primaryColor,
-                                    ))
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              // Replace this with actual transcribed text
-                              'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
-                              style: TextStyle(
-                                fontSize: getMediumFontSize(context),
-                                color: Colors.black87,
-                                height: 1.5,
                               ),
+                              // icon for share resutl
+                              IconButton(
+                                  onPressed: () {
+                                    // Share the transcribed text
+                                  },
+                                  icon: Icon(
+                                    Icons.share,
+                                    color: Theme.of(context).primaryColor,
+                                  ))
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            // Replace this with actual transcribed text
+                            'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
+                            style: TextStyle(
+                              fontSize: getMediumFontSize(context),
+                              color: Colors.black87,
+                              height: 1.5,
                             ),
-                          ],
-                        ),
-                      )
-                    : CircularProgressIndicator()
-              ],
-            );
-          }),
+                          ),
+                        ],
+                      ),
+                    )
+                  : CircularProgressIndicator()
+            ],
+          ),
 
           const SizedBox(height: 24),
         ],
@@ -438,7 +441,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           icon: Icons.videocam,
           label: 'Record Video',
           onPressed: () {
-            context.read<LipReadingCubit>().recordVideo(context);
+            context.read<VideoCubit>().recordVideo();
           },
         ),
         const SizedBox(width: 20),
@@ -447,7 +450,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           icon: Icons.photo_library,
           label: 'Upload Video',
           onPressed: () {
-            context.read<LipReadingCubit>().pickVideoFromGallery(context);
+            context.read<VideoCubit>().pickVideoFromGallery();
           },
         ),
       ],
@@ -488,9 +491,9 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   Widget _buildBottomActionBar(BuildContext context) {
     // Disable buttons during loading state
-    final cubit = context.watch<LipReadingCubit>();
-    final bool isLoading = cubit.state is LipReadingVideoLoading;
-    if (cubit.state is LipReadingInitial) {
+    final cubit = context.watch<VideoCubit>();
+    final bool isLoading = cubit.state is VideoLoading;
+    if (cubit.state is VideoInitial) {
       return SizedBox.shrink();
     }
 
@@ -516,7 +519,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             onPressed: isLoading
                 ? null
                 : () {
-                    context.read<LipReadingCubit>().recordVideo(context);
+                    context.read<VideoCubit>().recordVideo();
                   },
           ),
           _buildBottomActionButton(
@@ -526,9 +529,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             onPressed: isLoading
                 ? null
                 : () {
-                    context
-                        .read<LipReadingCubit>()
-                        .pickVideoFromGallery(context);
+                    context.read<VideoCubit>().pickVideoFromGallery();
                   },
           ),
           _buildBottomActionButton(

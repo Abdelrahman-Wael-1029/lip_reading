@@ -111,7 +111,7 @@ class VideoCubit extends Cubit<VideoState> {
       // play video
       await controller!.play();
 
-      emit(VideoPlaying());
+      emit(VideoSuccess());
       return true; // Success indicator
     } catch (e) {
       debugPrint('Network video initialization error: ${e.toString()}');
@@ -132,7 +132,7 @@ class VideoCubit extends Cubit<VideoState> {
         final currentPosition = controller!.value.position;
         await controller!.initialize();
         await controller!.seekTo(currentPosition);
-        emit(VideoPlaying());
+        emit(VideoSuccess());
       }
     } catch (e) {
       debugPrint('Error seeking to position: ${e.toString()}');
@@ -243,6 +243,7 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> _initializeVideoController(File videoFile) async {
+    emit(VideoLoading());
     try {
       await cleanupController();
 
@@ -258,7 +259,7 @@ class VideoCubit extends Cubit<VideoState> {
       showControls = true;
       _resetHideControlsTimer();
 
-      emit(VideoPlaying());
+      emit(VideoSuccess());
     } catch (e) {
       emit(VideoError('Failed to initialize video: ${e.toString()}'));
     }
@@ -267,8 +268,6 @@ class VideoCubit extends Cubit<VideoState> {
   // Firestore Methods
   Future<void> uploadVideo() async {
     try {
-      emit(VideoLoading());
-
       if (_currentVideoPath == null) {
         emit(VideoError('No video selected'));
         return;
@@ -304,12 +303,12 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> fetchVideos() async {
-    emit(VideoLoading());
+    emit(HistoryLoading());
     try {
       videos = await getVideoHistory();
-      emit(VideoPlaying());
+      emit(HistorySuccess());
     } catch (e) {
-      emit(VideoError(e.toString()));
+      emit(HistoryError(e.toString()));
     }
   }
 

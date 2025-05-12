@@ -92,7 +92,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-      body: state is VideoLoading
+      body: state is HistoryLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _onRefresh,
@@ -100,7 +100,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  if (state is VideoError)
+                  if (state is HistoryError)
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 20),

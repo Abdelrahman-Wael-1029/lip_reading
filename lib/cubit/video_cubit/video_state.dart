@@ -14,3 +14,12 @@ class VideoError extends VideoState {
   final String errorMessage;
   VideoError(this.errorMessage);
 }
+
+class HistoryLoading extends VideoState {}
+
+class HistorySuccess extends VideoState {}
+
+class HistoryError extends VideoState {
+  final String errorMessage;
+  HistoryError(this.errorMessage);
+}
