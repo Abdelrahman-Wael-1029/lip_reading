@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
+import 'package:lip_reading/utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -111,11 +112,12 @@ class _SplashScreenState extends State<SplashScreen>
                           Icon(
                             Icons.chrome_reader_mode_outlined,
                             size: 60,
+                            color: AppColors.white,
                           ),
                           SizedBox(width: 10),
                           DefaultTextStyle(
                             style: const TextStyle(
-                              color: Color.fromARGB(255, 49, 47, 47),
+                              color: AppColors.white,
                               fontSize: 30.0,
                               fontFamily: 'Bobbers',
                             ),

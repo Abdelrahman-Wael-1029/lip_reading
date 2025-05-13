@@ -15,4 +15,8 @@ extension CustomColorScheme on ColorScheme {
 
   Color get onWarning =>
       brightness == Brightness.light ? Colors.white : Colors.black;
+
+  Color get buttonColor => brightness == Brightness.light
+      ? AppColors.primaryLight
+      : AppColors.accentDark;
 }

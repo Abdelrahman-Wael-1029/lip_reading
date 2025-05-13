@@ -8,6 +8,7 @@ import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
+import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:lip_reading/utils/utils.dart';
 import 'package:video_player/video_player.dart';
 
@@ -342,7 +343,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   suffixIcon: IconButton(
                     icon: Icon(
                       Icons.upload_file,
-                      color: Theme.of(context).primaryColor,
                     ),
                     onPressed: () {
                       context.read<VideoCubit>().updateVideoTitle(context);
@@ -364,62 +364,53 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               const SizedBox(height: 16),
 
               (videoCubit.selectedVideo?.result != null)
-                  ? Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      padding: EdgeInsets.all(getPadding(context)!),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            spacing: 8,
-                            children: [
-                              Icon(
-                                Icons.text_fields,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  'Transcribed Text',
-                                  style: TextStyle(
-                                    fontSize: getMediumFontSize(context),
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).primaryColor,
+                  ? Card(
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(getPadding(context)!),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Icon(
+                                  Icons.text_fields,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Transcribed Text',
+                                    style: TextStyle(
+                                      fontSize: getMediumFontSize(context),
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .buttonColor,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              // icon for share resutl
-                              IconButton(
-                                  onPressed: () {
-                                    // Share the transcribed text
-                                  },
-                                  icon: Icon(
-                                    Icons.share,
-                                    color: Theme.of(context).primaryColor,
-                                  ))
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            // Replace this with actual transcribed text
-                            'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
-                            style: TextStyle(
-                              fontSize: getMediumFontSize(context),
-                              color: Colors.black87,
-                              height: 1.5,
+                                // icon for share resutl
+                                IconButton(
+                                    onPressed: () {
+                                      // Share the transcribed text
+                                    },
+                                    icon: Icon(
+                                      Icons.share,
+                                    ))
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            Text(
+                              // Replace this with actual transcribed text
+                              'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
+                              style: TextStyle(
+                                fontSize: getMediumFontSize(context),
+                                // color: Colors.black87,
+                                height: 1.5,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                   : CircularProgressIndicator()
@@ -497,18 +488,12 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       return SizedBox.shrink();
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(0),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -565,8 +550,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             Icon(
               icon,
               color: isDisabled
-                  ? Theme.of(context).primaryColor.withOpacity(0.5)
-                  : Theme.of(context).primaryColor,
+                  ? Theme.of(context).colorScheme.buttonColor.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.buttonColor,
               size: 28,
             ),
             const SizedBox(height: 6),
@@ -574,8 +559,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               label,
               style: TextStyle(
                 color: isDisabled
-                    ? Theme.of(context).primaryColor.withOpacity(0.5)
-                    : Theme.of(context).primaryColor,
+                    ? Theme.of(context).colorScheme.buttonColor.withOpacity(0.5)
+                    : Theme.of(context).colorScheme.buttonColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),

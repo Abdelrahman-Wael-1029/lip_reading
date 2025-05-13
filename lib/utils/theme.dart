@@ -19,7 +19,7 @@ class AppTheme {
       onSurface: AppColors.textPrimaryLight,
     ),
     scaffoldBackgroundColor: AppColors.backgroundLight,
-    cardColor: AppColors.surfaceLight,
+    cardColor: AppColors.white,
     dividerColor: AppColors.dividerLight,
     textTheme: TextTheme(
       displayLarge: TextStyle(color: AppColors.textPrimaryLight),
@@ -71,8 +71,9 @@ class AppTheme {
       foregroundColor: Colors.black,
     ),
     cardTheme: CardTheme(
-      color: AppColors.surfaceLight,
+      color: AppColors.white,
       shadowColor: Colors.black.withValues(alpha: 0.2),
+      surfaceTintColor: Colors.transparent,
       elevation: 2,
     ),
     switchTheme: SwitchThemeData(
@@ -96,6 +97,9 @@ class AppTheme {
         }
         return null;
       }),
+    ),
+    iconTheme: IconThemeData(
+      color: AppColors.primaryLight,
     ),
     expansionTileTheme: ExpansionTileThemeData(
       iconColor: AppColors.primaryLight,
@@ -165,6 +169,9 @@ class AppTheme {
       iconColor: AppColors.accentDark,
       collapsedIconColor: AppColors.infoDark,
     ),
+    iconTheme: IconThemeData(
+      color: AppColors.accentDark,
+    ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
       backgroundColor: AppColors.surfaceDark,
       selectedItemColor: AppColors.accentDark,
@@ -172,7 +179,7 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.accentDark,
         backgroundColor: AppColors.primaryDark,
       ),
     ),

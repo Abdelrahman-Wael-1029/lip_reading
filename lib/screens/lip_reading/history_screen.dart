@@ -71,6 +71,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _onSearch(searchController.text, context.read<VideoCubit>().videos);
   }
 
+  String formatDate(DateTime date){
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -207,9 +211,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? AppColors.surfaceDark.withOpacity(0.7)
-                          : AppColors.surfaceLight.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -238,7 +239,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'dateString', // replace with actual date if needed
+                          formatDate(video.createdAt!), 
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
