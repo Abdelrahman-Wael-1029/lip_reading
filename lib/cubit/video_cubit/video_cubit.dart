@@ -1,31 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:bloc/bloc.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
-import 'package:lip_reading/service/firestore_service.dart';
-import 'package:lip_reading/service/storage_service.dart';
+import 'package:lip_reading/repository/video_repository.dart';
 import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoCubit extends Cubit<VideoState> {
-  // Services
-  final FirestoreService _firestoreService = FirestoreService();
-  final StorageService _storageService = StorageService();
+  // Repository
+  final VideoRepository _videoRepository;
+  
+  // Image picker
   final ImagePicker _picker = ImagePicker();
-
-  // Constants
-  String get _collection {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      throw Exception('No authenticated user');
-    }
-    return 'users/${user.uid}/videos';
-  }
 
   // Controllers
   VideoPlayerController? controller;
@@ -47,7 +37,9 @@ class VideoCubit extends Cubit<VideoState> {
   Timer? _hideControlsTimer;
   StreamSubscription? _videoProgressSubscription;
 
-  VideoCubit() : super(VideoInitial());
+  VideoCubit({VideoRepository? videoRepository}) 
+    : _videoRepository = videoRepository ?? VideoRepository(),
+      super(VideoInitial());
 
   // UI Control Methods
   void toggleControls() {
@@ -277,7 +269,7 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  // Firestore Methods
+  // Repository Methods
   Future<void> uploadVideo() async {
     try {
       if (_currentVideoPath == null) {
@@ -287,7 +279,7 @@ class VideoCubit extends Cubit<VideoState> {
       String id = const Uuid().v4();
       String result =
           'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
-      nameVideoController.text = await getNextTitle();
+      nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo = VideoModel(
         id: id,
         title: nameVideoController.text,
@@ -295,17 +287,16 @@ class VideoCubit extends Cubit<VideoState> {
         result: result,
       );
 
-      await addVideo(selectedVideo!);
+      await _videoRepository.addVideo(selectedVideo!);
       emit(VideoSuccess());
 
-      String videoUrl = await _storageService.uploadData(
-        data: File(_currentVideoPath!).readAsBytesSync(),
-        storagePath: 'videos',
-        fileName: id,
+      String videoUrl = await _videoRepository.uploadVideoFile(
+        File(_currentVideoPath!),
+        id,
       );
 
       selectedVideo!.url = videoUrl;
-      await updateVideo(selectedVideo!);
+      await _videoRepository.updateVideo(selectedVideo!);
 
       emit(VideoSuccess());
     } catch (e) {
@@ -317,61 +308,10 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> fetchVideos() async {
     emit(HistoryLoading());
     try {
-      videos = await getVideoHistory();
+      videos = await _videoRepository.getVideoHistory();
       emit(HistorySuccess());
     } catch (e) {
       emit(HistoryError(e.toString()));
-    }
-  }
-
-  Future<VideoModel?> getVideo(String videoId) async {
-    try {
-      final videoData = await _firestoreService.getDocument(
-        collection: _collection,
-        documentId: videoId,
-      );
-
-      if (videoData != null) {
-        return VideoModel.fromJson(videoData, docId: videoId);
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get video: $e');
-    }
-  }
-
-  Future<List<VideoModel>> getVideoHistory({
-    String? orderBy = 'createdAt',
-    bool descending = true,
-    int? limit,
-  }) async {
-    try {
-      final videosData = await _firestoreService.getCollection(
-        collection: _collection,
-        orderBy: orderBy,
-        descending: descending,
-        limit: limit,
-      );
-
-      return videosData.map((data) {
-        final String id = data['id'];
-        data.remove('id');
-        return VideoModel.fromJson(data, docId: id);
-      }).toList();
-    } catch (e) {
-      throw Exception('Failed to get video history');
-    }
-  }
-
-  Future<String> addVideo(VideoModel video) async {
-    try {
-      return await _firestoreService.setDocument(
-        collection: _collection,
-        documentId: video.id,
-        data: video.toJson(),
-      );
-    } catch (e) {
-      throw Exception('Failed to add video: $e');
     }
   }
 
@@ -387,10 +327,9 @@ class VideoCubit extends Cubit<VideoState> {
         return;
       }
 
-      await _firestoreService.updateDocument(
-        collection: _collection,
-        documentId: selectedVideo!.id,
-        data: {'title': nameVideoController.text},
+      await _videoRepository.updateVideoTitle(
+        selectedVideo!.id, 
+        nameVideoController.text
       );
 
       // Update local state
@@ -418,26 +357,11 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> updateVideo(VideoModel video) async {
-    try {
-      await _firestoreService.updateDocument(
-        collection: _collection,
-        documentId: video.id,
-        data: video.toJson(),
-      );
-    } catch (e) {
-      throw Exception('Failed to update video: $e');
-    }
-  }
-
   Future<void> deleteVideo(String videoId) async {
     try {
-      await _firestoreService.deleteDocument(
-        collection: _collection,
-        documentId: videoId,
-      );
+      await _videoRepository.deleteVideo(videoId);
 
-      // Update local state if needed
+      // Update local state
       videos.removeWhere((video) => video.id == videoId);
       if (selectedVideo?.id == videoId) {
         selectedVideo = null;
@@ -464,16 +388,6 @@ class VideoCubit extends Cubit<VideoState> {
     updateVideoPosition(
         controller!.value.position.inSeconds.toDouble() / totalVideoSeconds);
     emit(VideoPlaying());
-  }
-
-  Future<String> getNextTitle() async {
-    try {
-      int count =
-          await _firestoreService.getCollectionCount(collection: _collection);
-      return "Video ${count + 1}";
-    } catch (e) {
-      return "New Video";
-    }
   }
 
   @override
