@@ -82,9 +82,10 @@ class VideoCubit extends Cubit<VideoState> {
 
   // Video Controller Methods
   Future<bool> initializeNetworkVideo(VideoModel video) async {
+    if (state is VideoLoading) return false;
     emit(VideoLoading());
     try {
-      if (video.url.isEmpty) return false;
+      if (video.url.isEmpty) throw Exception('Video URL is empty');
       await cleanupController();
 
       // Store selected video before initializing controller
@@ -215,7 +216,7 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       final XFile? pickedFile = await _picker.pickVideo(
         source: source,
-        maxDuration: const Duration(minutes: 5),
+        maxDuration: const Duration(minutes: 1),
       );
 
       if (pickedFile != null) {
@@ -224,7 +225,8 @@ class VideoCubit extends Cubit<VideoState> {
         final file = File(_currentVideoPath!);
 
         if (await file.exists()) {
-          await _initializeVideoController(file);
+          var success = await _initializeVideoController(file);
+          if (!success) return;
           uploadVideo();
         } else {
           emit(VideoError('Video file not found'));
@@ -242,14 +244,22 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> _initializeVideoController(File videoFile) async {
+  Future<bool> _initializeVideoController(File videoFile) async {
+    if (state is VideoLoading) return false;
     emit(VideoLoading());
     try {
       await cleanupController();
 
-      controller = VideoPlayerController.file(videoFile);
-      await controller!.initialize();
+      var temp = VideoPlayerController.file(videoFile);
+      await temp.initialize();
+      // check on time duration of video max is 1 minute
+      print("time of video in initialize${temp.value.duration.inMinutes}");
+      if (temp.value.duration.inSeconds > 60) {
+        emit(VideoError('Video duration exceeds 1 minute'));
+        return false;
+      }
 
+      controller = temp;
       _setupVideoProgressTracking();
 
       totalVideoSeconds = controller!.value.duration.inSeconds;
@@ -260,8 +270,10 @@ class VideoCubit extends Cubit<VideoState> {
       _resetHideControlsTimer();
 
       emit(VideoSuccess());
+      return true;
     } catch (e) {
-      emit(VideoError('Failed to initialize video: ${e.toString()}'));
+      emit(VideoError('Failed to process video try again'));
+      return false;
     }
   }
 
@@ -347,7 +359,7 @@ class VideoCubit extends Cubit<VideoState> {
         return VideoModel.fromJson(data, docId: id);
       }).toList();
     } catch (e) {
-      throw Exception('Failed to get video history: $e');
+      throw Exception('Failed to get video history');
     }
   }
 

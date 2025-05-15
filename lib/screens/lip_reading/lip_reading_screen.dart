@@ -53,6 +53,29 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   @override
   Widget build(BuildContext context) {
+    return BlocConsumer<VideoCubit, VideoState>(
+      buildWhen: (previous, current) => (current is! VideoPlaying &&
+          current is! HistoryLoading &&
+          current is! HistorySuccess &&
+          current is! HistoryError),
+      listenWhen: (previous, current) => current is VideoSuccess,
+      listener: (context, state) {
+        // Handle state changes if needed
+        if (state is VideoSuccess) {
+          final videoController = context.read<VideoCubit>().controller;
+          if (videoController != null && !videoController.value.isInitialized) {
+            context.read<VideoCubit>().seekToCurrentPosition();
+          }
+        }
+      },
+      builder: (context, state) => _buildBody(context, state),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, state) {
+    final videoController = context.read<VideoCubit>().controller;
+    print('rebuild main screen');
+
     return Scaffold(
       appBar: AppBar(
         title:
@@ -87,58 +110,35 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.all(getPadding(context)!),
-            child: BlocConsumer<VideoCubit, VideoState>(
-              buildWhen: (previous, current) {
-                var success = (current is! VideoPlaying &&
-                    current is! HistoryLoading &&
-                    current is! HistorySuccess &&
-                    current is! HistoryError);
+              padding: EdgeInsets.all(getPadding(context)!),
+              child:
+                  // Show error state
+                  (state is VideoError)
+                      ? _buildErrorState(context, state.errorMessage)
+                      :
 
-                print('rebuild $previous $current $success');
-                return success;
-              },
-              listenWhen: (previous, current) {
-                return current is! VideoPlaying;
-              },
-              listener: (context, state) {
-                // Handle state changes if needed
-                if (state is VideoSuccess) {
-                  final videoController = context.read<VideoCubit>().controller;
-                  if (videoController != null &&
-                      !videoController.value.isInitialized) {
-                    context.read<VideoCubit>().seekToCurrentPosition();
-                  }
-                }
-              },
-              builder: (context, state) {
-                print('rebuild main screen');
-                final videoController = context.read<VideoCubit>().controller;
-                // Show error state
-                if (state is VideoError) {
-                  return _buildErrorState(context, state.errorMessage);
-                }
-                // Show loading state
-                else if (state is VideoLoading) {
-                  return _buildLoadingState(context);
-                }
-                // Show video and results state if controller exists and is initialized
-                else if (state is VideoSuccess &&
-                    videoController != null &&
-                    videoController.value.isInitialized) {
-                  return _buildVideoSuccessState(context, videoController);
-                }
-                // Show loading if controller exists but not initialized
-                else if (state is VideoSuccess &&
-                    videoController != null &&
-                    !videoController.value.isInitialized) {
-                  return _buildLoadingState(context);
-                }
-                // Default empty state
-                return _buildEmptyState(context);
-              },
-            ),
-          ),
+                      // Show loading state
+                      (state is VideoLoading)
+                          ? _buildLoadingState(context)
+                          :
+
+                          // Show video and results state if controller exists and is initialized
+                          (state is VideoSuccess &&
+                                  videoController != null &&
+                                  videoController.value.isInitialized)
+                              ? _buildVideoSuccessState(
+                                  context, videoController)
+                              :
+
+                              // Show loading if controller exists but not initialized
+                              (state is VideoSuccess &&
+                                      videoController != null &&
+                                      !videoController.value.isInitialized)
+                                  ? _buildLoadingState(context)
+                                  :
+
+                                  // Default empty state
+                                  _buildEmptyState(context)),
         ),
       ),
       bottomNavigationBar: _buildBottomActionBar(context),
@@ -229,21 +229,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               ),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                // Reset state or try again logic
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Try Again'),
-            ),
           ],
         ),
       ),
@@ -482,7 +467,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   Widget _buildBottomActionBar(BuildContext context) {
     // Disable buttons during loading state
-    final cubit = context.watch<VideoCubit>();
+    final cubit = context.read<VideoCubit>();
     final bool isLoading = cubit.state is VideoLoading;
     if (cubit.state is VideoInitial) {
       return SizedBox.shrink();

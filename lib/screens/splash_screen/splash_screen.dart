@@ -204,8 +204,9 @@ class TextInSplash extends StatelessWidget {
   Widget build(BuildContext context) {
     return DefaultTextStyle(
       textAlign: TextAlign.center,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 24,
+        color: AppColors.white.withOpacity(0.8),
       ),
       child: AnimatedTextKit(
         totalRepeatCount: 1,
