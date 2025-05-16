@@ -79,6 +79,10 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoLoading());
     try {
       if (video.url.isEmpty) throw Exception('Video URL is empty');
+      if (!await ConnectivityService().isConnected()) {
+        emit(VideoError('No internet connection'));
+        return false;
+      }
       await cleanupController();
 
       // Store selected video before initializing controller
@@ -302,7 +306,7 @@ class VideoCubit extends Cubit<VideoState> {
       }
       final VideoModel? video =
           await _videoRepository.getVideo(selectedVideo!.id);
-      if (video != null){
+      if (video != null) {
         emit(VideoError('This video is already uploaded'));
         return;
       }
@@ -337,6 +341,9 @@ class VideoCubit extends Cubit<VideoState> {
     if (state is HistoryLoading) return;
     emit(HistoryLoading());
     try {
+      if (!await ConnectivityService().isConnected()) {
+        throw Exception('No internet connection');
+      }
       videos = await _videoRepository.getVideoHistory();
       emit(HistorySuccess());
     } catch (e) {
@@ -357,6 +364,19 @@ class VideoCubit extends Cubit<VideoState> {
         ).show();
         return;
       }
+      // check on network
+      if (!await ConnectivityService().isConnected()) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.warning,
+          animType: AnimType.rightSlide,
+          title: 'No internet connection',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+        return;
+      }
+      if (nameVideoController.text.isEmpty) throw Exception('');
 
       await _videoRepository.updateVideoTitle(
           selectedVideo!.id, nameVideoController.text);
@@ -371,8 +391,6 @@ class VideoCubit extends Cubit<VideoState> {
         btnOkOnPress: () {},
         btnOkColor: Theme.of(context).primaryColor,
       ).show();
-
-      emit(VideoSuccess());
     } catch (e) {
       AwesomeDialog(
         context: context,
@@ -385,10 +403,22 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> deleteVideo(String videoId) async {
+  Future<void> deleteVideo(context, String videoId) async {
     if (state is HistoryLoading) return;
     emit(HistoryLoading());
     try {
+      if (!await ConnectivityService().isConnected()) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.error,
+          animType: AnimType.rightSlide,
+          title: 'No internet connection',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+        emit(HistoryError('No internet connection'));
+        return;
+      }
       await _videoRepository.deleteVideo(videoId);
 
       // Update local state

@@ -65,11 +65,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final videoCubit = context.watch<VideoCubit>();
-    print('rebuild history screen');
     final state = videoCubit.state;
-
     final videos = videoCubit.videos;
-
     final displayVideos =
         searchController.text.isEmpty ? videos : filteredVideos;
 
@@ -92,20 +89,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
-                  if (state is HistoryError)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          'Error loading history',
-                          style: TextStyle(
-                            color: isDarkMode
-                                ? AppColors.errorDark
-                                : AppColors.errorLight,
-                          ),
-                        ),
-                      ),
-                    ),
                   if (videos.isNotEmpty) ...[
                     customTextFormField(
                       context: context,
@@ -175,7 +158,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       animType: AnimType.rightSlide,
       title: 'Are you sure',
       desc: 'Do you want to delete this video?',
-      btnOkOnPress: () => context.read<VideoCubit>().deleteVideo(video.id),
+      btnOkOnPress: () =>
+          context.read<VideoCubit>().deleteVideo(context, video.id),
       btnOkColor: Theme.of(context).colorScheme.error,
       btnCancelOnPress: () {},
       btnCancelColor: Theme.of(context).colorScheme.primary,

@@ -588,6 +588,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       context: context,
       dialogType: DialogType.info,
       animType: AnimType.rightSlide,
+      btnOkOnPress: () {},
       title: 'rules',
       body: Padding(
         padding: const EdgeInsets.all(8.0),

@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
+import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 
 class AuthCubit extends Cubit<AuthState> {
@@ -50,6 +52,8 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> logout(BuildContext context) async {
     await _auth.signOut();
+    // clear video cubit
+    await context.read<VideoCubit>().cleanupController();
     if (context.mounted) {
       Navigator.pushNamedAndRemoveUntil(
           context, LoginScreen.routeName, (route) => false);
