@@ -40,7 +40,6 @@ class CustomVideoPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<VideoCubit, VideoState>(
-      buildWhen: (previous, current) => current is VideoPlaying,
       builder: (context, state) {
         final cubit = context.read<VideoCubit>();
         if (cubit.controller == null) return _emtpyState(context);

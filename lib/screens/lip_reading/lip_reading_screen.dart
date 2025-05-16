@@ -470,7 +470,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     // Disable buttons during loading state
     final cubit = context.read<VideoCubit>();
     final bool isLoading = cubit.state is VideoLoading;
-    if (cubit.state is VideoInitial) {
+    if (cubit.state is VideoInitial || cubit.state is VideoError) {
       return SizedBox.shrink();
     }
 
