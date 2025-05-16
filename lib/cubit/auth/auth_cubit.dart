@@ -27,7 +27,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(LoginSuccess());
     } catch (e) {
       print("error$e");
-      emit(LoginFailure(errorMessage: e.toString()));
+      emit(LoginFailure(errorMessage: 'Cannot login try again'));
     }
   }
 
@@ -40,7 +40,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(LoginSuccess());
     } catch (e) {
-      emit(LoginFailure(errorMessage: e.toString()));
+      emit(LoginFailure(errorMessage: 'Cannot create user try again'));
     }
   }
 

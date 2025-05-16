@@ -148,6 +148,19 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ),
       ),
       bottomNavigationBar: _buildBottomActionBar(context),
+      floatingActionButton: IconButton(
+        onPressed: () {
+          context.read<VideoCubit>().uploadVideo(context);
+        },
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(
+              Theme.of(context).scaffoldBackgroundColor),
+        ),
+        icon: Icon(
+          Icons.upload,
+          color: Theme.of(context).primaryColor,
+        ),
+      ),
     );
   }
 

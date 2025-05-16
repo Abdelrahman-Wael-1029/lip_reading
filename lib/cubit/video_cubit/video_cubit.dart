@@ -219,9 +219,7 @@ class VideoCubit extends Cubit<VideoState> {
         final file = File(_currentVideoPath!);
 
         if (await file.exists()) {
-          var success = await _initializeVideoController(file);
-          if (!success || !await ConnectivityService().isConnected()) return;
-          uploadVideo();
+          await _initializeVideoController(file);
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -238,8 +236,8 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<bool> _initializeVideoController(File videoFile) async {
-    if (state is VideoLoading) return false;
+  Future<void> _initializeVideoController(File videoFile) async {
+    if (state is VideoLoading) return;
     emit(VideoLoading());
     try {
       await cleanupController();
@@ -250,7 +248,7 @@ class VideoCubit extends Cubit<VideoState> {
       print("time of video in initialize${temp.value.duration.inMinutes}");
       if (temp.value.duration.inSeconds > 60) {
         emit(VideoError('Video duration exceeds 1 minute'));
-        return false;
+        return;
       }
 
       controller = temp;
@@ -263,44 +261,51 @@ class VideoCubit extends Cubit<VideoState> {
       showControls = true;
       _resetHideControlsTimer();
 
-      emit(VideoSuccess());
-      return true;
-    } catch (e) {
-      emit(VideoError('Failed to process video try again'));
-      return false;
-    }
-  }
-
-  // Repository Methods
-  Future<void> uploadVideo() async {
-    try {
-      if (_currentVideoPath == null) {
-        emit(VideoError('No video selected'));
-        return;
-      }
       nameVideoController.text = await _videoRepository.getNextTitle();
-      String id = const Uuid().v4();
       String result =
           'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
       selectedVideo = VideoModel(
-        id: id,
+        id: const Uuid().v4(),
         title: nameVideoController.text,
         url: '',
         result: result,
       );
 
-      if (nameVideoController.text.isEmpty) throw Exception('');
       emit(VideoSuccess());
+      return;
+    } catch (e) {
+      emit(VideoError('Failed to process video try again'));
+      return;
+    }
+  }
+
+  // Repository Methods
+  Future<void> uploadVideo(BuildContext context) async {
+    try {
+      if (!await ConnectivityService().isConnected() ||
+          selectedVideo == null ||
+          _currentVideoPath == null) {
+        emit(VideoError('No video selected'));
+        return;
+      }
+      if (nameVideoController.text.isEmpty) throw Exception('');
       await _videoRepository.addVideo(selectedVideo!);
 
       String videoUrl = await _videoRepository.uploadVideoFile(
         File(_currentVideoPath!),
-        id,
+        selectedVideo!.id,
       );
 
       selectedVideo!.url = videoUrl;
       await _videoRepository.updateVideo(selectedVideo!);
 
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.rightSlide,
+        title: 'Video uploaded successfully',
+        btnOkOnPress: () {},
+      ).show();
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(
