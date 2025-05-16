@@ -7,7 +7,6 @@ import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
-import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:lip_reading/utils/utils.dart';
 
 class SignupScreen extends StatelessWidget {

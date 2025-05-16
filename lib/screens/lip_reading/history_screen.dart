@@ -6,7 +6,6 @@ import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
-import 'package:lip_reading/screens/auth/login_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 
 class HistoryScreen extends StatefulWidget {
@@ -36,7 +35,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       animType: AnimType.rightSlide,
       title: 'Are you sure',
       desc: 'Do you want to logout?',
-      btnOkOnPress: () => context.read<AuthCubit>().logout(),
+      btnOkOnPress: () => context.read<AuthCubit>().logout(context),
       btnOkColor: Theme.of(context).colorScheme.error,
       btnCancelOnPress: () {},
       btnCancelColor: Theme.of(context).colorScheme.primary,

@@ -1,6 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
+import 'package:lip_reading/screens/auth/login_screen.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   AuthCubit() : super(AuthInitial());
@@ -24,7 +26,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       emit(LoginSuccess());
     } catch (e) {
-      print("error" + e.toString());
+      print("error$e");
       emit(LoginFailure(errorMessage: e.toString()));
     }
   }
@@ -46,7 +48,11 @@ class AuthCubit extends Cubit<AuthState> {
     return _auth.currentUser != null;
   }
 
-  Future<void> logout() async {
+  Future<void> logout(BuildContext context) async {
     await _auth.signOut();
+    if (context.mounted) {
+      Navigator.pushNamedAndRemoveUntil(
+          context, LoginScreen.routeName, (route) => false);
+    }
   }
 }

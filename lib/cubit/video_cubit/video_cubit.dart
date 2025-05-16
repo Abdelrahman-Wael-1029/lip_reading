@@ -8,7 +8,6 @@ import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
 import 'package:lip_reading/service/connectivity_service.dart';
-import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
