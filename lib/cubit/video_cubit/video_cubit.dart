@@ -257,10 +257,6 @@ class VideoCubit extends Cubit<VideoState> {
       totalVideoSeconds = controller!.value.duration.inSeconds;
       totalDuration = _formatDuration(controller!.value.duration);
 
-      await controller!.play();
-      showControls = true;
-      _resetHideControlsTimer();
-
       nameVideoController.text = await _videoRepository.getNextTitle();
       String result =
           'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
@@ -271,6 +267,9 @@ class VideoCubit extends Cubit<VideoState> {
         result: result,
       );
 
+      await controller!.play();
+      showControls = true;
+      _resetHideControlsTimer();
       emit(VideoSuccess());
       return;
     } catch (e) {
@@ -279,18 +278,27 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
+  Future<bool> canUpload() async {
+    if (controller == null ||
+        !await ConnectivityService().isConnected() ||
+        selectedVideo == null ||
+        _currentVideoPath == null) {
+      return false;
+    }
+    return true;
+  }
+
   // Repository Methods
   Future<void> uploadVideo(BuildContext context) async {
     if (state is VideoLoading) return;
     emit(VideoLoading());
     try {
-      if (!await ConnectivityService().isConnected() ||
-          selectedVideo == null ||
-          _currentVideoPath == null) {
+      if (!await canUpload()) {
         emit(VideoError('No video selected'));
         return;
       }
       if (nameVideoController.text.isEmpty) throw Exception('');
+      await pauseVideo();
       await _videoRepository.addVideo(selectedVideo!);
 
       String videoUrl = await _videoRepository.uploadVideoFile(
