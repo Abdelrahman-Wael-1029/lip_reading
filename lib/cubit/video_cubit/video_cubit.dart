@@ -281,8 +281,7 @@ class VideoCubit extends Cubit<VideoState> {
   Future<bool> canUpload() async {
     if (controller == null ||
         !await ConnectivityService().isConnected() ||
-        selectedVideo == null ||
-        _currentVideoPath == null) {
+        selectedVideo == null) {
       return false;
     }
     return true;
@@ -294,9 +293,20 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoLoading());
     try {
       if (!await canUpload()) {
-        emit(VideoError('No video selected'));
+        if (!await ConnectivityService().isConnected()) {
+          emit(VideoError('No internet connection'));
+        } else {
+          emit(VideoError('No video selected'));
+        }
         return;
       }
+      final VideoModel? video =
+          await _videoRepository.getVideo(selectedVideo!.id);
+      if (video != null){
+        emit(VideoError('This video is already uploaded'));
+        return;
+      }
+
       if (nameVideoController.text.isEmpty) throw Exception('');
       await pauseVideo();
       await _videoRepository.addVideo(selectedVideo!);

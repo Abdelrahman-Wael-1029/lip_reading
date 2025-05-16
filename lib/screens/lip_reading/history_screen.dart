@@ -46,7 +46,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     setState(() {
       filteredVideos = videos
           .where((video) =>
-              video.title.toLowerCase().contains(query.toLowerCase()))
+              video.title.toLowerCase().trim().contains(query.toLowerCase()))
           .toList();
     });
   }

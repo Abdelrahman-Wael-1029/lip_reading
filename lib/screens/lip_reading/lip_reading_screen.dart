@@ -2,6 +2,7 @@
 
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
@@ -336,13 +337,15 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                                     ),
                                   ),
                                 ),
-                                // icon for share resutl
                                 IconButton(
                                     onPressed: () {
-                                      // Share the transcribed text
+                                      // copy to clipboard
+                                      Clipboard.setData(ClipboardData(
+                                          text: videoCubit
+                                              .selectedVideo!.result!));
                                     },
                                     icon: Icon(
-                                      Icons.share,
+                                      Icons.copy,
                                     ))
                               ],
                             ),
@@ -471,7 +474,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   Widget _buildFloatingActionButton(BuildContext context) {
     final cubit = context.read<VideoCubit>();
-    if (cubit.state is VideoInitial) {
+    if (cubit.state is VideoInitial || cubit.selectedVideo == null) {
       return SizedBox.shrink();
     }
     return IconButton(
@@ -493,7 +496,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     // Disable buttons during loading state
     final cubit = context.read<VideoCubit>();
     final bool isLoading = cubit.state is VideoLoading;
-    if (cubit.state is VideoInitial) {
+    if (cubit.state is VideoInitial || cubit.selectedVideo == null) {
       return SizedBox.shrink();
     }
 
