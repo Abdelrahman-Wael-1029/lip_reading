@@ -281,6 +281,8 @@ class VideoCubit extends Cubit<VideoState> {
 
   // Repository Methods
   Future<void> uploadVideo(BuildContext context) async {
+    if (state is VideoLoading) return;
+    emit(VideoLoading());
     try {
       if (!await ConnectivityService().isConnected() ||
           selectedVideo == null ||
