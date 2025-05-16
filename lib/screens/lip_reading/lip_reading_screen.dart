@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
@@ -58,7 +59,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           current is! HistoryLoading &&
           current is! HistorySuccess &&
           current is! HistoryError),
-      listenWhen: (previous, current) => current is VideoSuccess,
+      listenWhen: (previous, current) =>
+          (current is VideoSuccess || current is VideoError),
       listener: (context, state) {
         // Handle state changes if needed
         if (state is VideoSuccess) {
@@ -66,6 +68,17 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           if (videoController != null && !videoController.value.isInitialized) {
             context.read<VideoCubit>().seekToCurrentPosition();
           }
+        }
+        if (state is VideoError) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.warning,
+            animType: AnimType.rightSlide,
+            title: 'Please try again',
+            desc: state.errorMessage,
+            btnOkOnPress: () {},
+            btnOkColor: Theme.of(context).primaryColor,
+          ).show();
         }
       },
       builder: (context, state) => _buildBody(context, state),
@@ -111,34 +124,26 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         child: SafeArea(
           child: Padding(
               padding: EdgeInsets.all(getPadding(context)!),
-              child:
-                  // Show error state
-                  (state is VideoError)
-                      ? _buildErrorState(context, state.errorMessage)
+              child: (state is VideoLoading)
+                  ? _buildLoadingState(context)
+                  :
+
+                  // Show video and results state if controller exists and is initialized
+                  (state is VideoSuccess &&
+                          videoController != null &&
+                          videoController.value.isInitialized)
+                      ? _buildVideoSuccessState(context, videoController)
                       :
 
-                      // Show loading state
-                      (state is VideoLoading)
+                      // Show loading if controller exists but not initialized
+                      (state is VideoSuccess &&
+                              videoController != null &&
+                              !videoController.value.isInitialized)
                           ? _buildLoadingState(context)
                           :
 
-                          // Show video and results state if controller exists and is initialized
-                          (state is VideoSuccess &&
-                                  videoController != null &&
-                                  videoController.value.isInitialized)
-                              ? _buildVideoSuccessState(
-                                  context, videoController)
-                              :
-
-                              // Show loading if controller exists but not initialized
-                              (state is VideoSuccess &&
-                                      videoController != null &&
-                                      !videoController.value.isInitialized)
-                                  ? _buildLoadingState(context)
-                                  :
-
-                                  // Default empty state
-                                  _buildEmptyState(context)),
+                          // Default empty state
+                          _buildEmptyState(context)),
         ),
       ),
       bottomNavigationBar: _buildBottomActionBar(context),
@@ -184,54 +189,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         const SizedBox(height: 40),
         _buildActionButtons(context),
       ],
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, String errorMessage) {
-    return Center(
-      child: Container(
-        padding: EdgeInsets.all(getPadding(context)!),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 5,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.red,
-              size: 60,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error',
-              style: TextStyle(
-                fontSize: getLargeFontSize(context),
-                fontWeight: FontWeight.bold,
-                color: Colors.red,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: getMediumFontSize(context),
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
     );
   }
 
@@ -398,7 +355,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         ),
                       ),
                     )
-                  : CircularProgressIndicator()
+                  : const SizedBox.shrink(),
             ],
           ),
 

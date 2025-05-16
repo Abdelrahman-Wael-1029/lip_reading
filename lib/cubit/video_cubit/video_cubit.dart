@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
+import 'package:lip_reading/service/connectivity_service.dart';
 import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
@@ -13,7 +14,7 @@ import 'package:video_player/video_player.dart';
 class VideoCubit extends Cubit<VideoState> {
   // Repository
   final VideoRepository _videoRepository;
-  
+
   // Image picker
   final ImagePicker _picker = ImagePicker();
 
@@ -37,9 +38,9 @@ class VideoCubit extends Cubit<VideoState> {
   Timer? _hideControlsTimer;
   StreamSubscription? _videoProgressSubscription;
 
-  VideoCubit({VideoRepository? videoRepository}) 
-    : _videoRepository = videoRepository ?? VideoRepository(),
-      super(VideoInitial());
+  VideoCubit({VideoRepository? videoRepository})
+      : _videoRepository = videoRepository ?? VideoRepository(),
+        super(VideoInitial());
 
   // UI Control Methods
   void toggleControls() {
@@ -87,6 +88,7 @@ class VideoCubit extends Cubit<VideoState> {
       // Create controller with safeguards
       final VideoPlayerController newController =
           VideoPlayerController.networkUrl(Uri.parse(video.url));
+
       // Initialize first before assigning to class variable
       await newController.initialize();
 
@@ -108,7 +110,7 @@ class VideoCubit extends Cubit<VideoState> {
       return true; // Success indicator
     } catch (e) {
       debugPrint('Network video initialization error: ${e.toString()}');
-      emit(VideoError('Failed to initialize network video: ${e.toString()}'));
+      emit(VideoError('Video not exist please try again'));
       return false; // Failure indicator
     }
   }
@@ -218,7 +220,7 @@ class VideoCubit extends Cubit<VideoState> {
 
         if (await file.exists()) {
           var success = await _initializeVideoController(file);
-          if (!success) return;
+          if (!success || !await ConnectivityService().isConnected()) return;
           uploadVideo();
         } else {
           emit(VideoError('Video file not found'));
@@ -287,8 +289,8 @@ class VideoCubit extends Cubit<VideoState> {
         result: result,
       );
 
-      await _videoRepository.addVideo(selectedVideo!);
       emit(VideoSuccess());
+      await _videoRepository.addVideo(selectedVideo!);
 
       String videoUrl = await _videoRepository.uploadVideoFile(
         File(_currentVideoPath!),
@@ -306,6 +308,7 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> fetchVideos() async {
+    if (state is HistoryLoading) return;
     emit(HistoryLoading());
     try {
       videos = await _videoRepository.getVideoHistory();
@@ -328,9 +331,7 @@ class VideoCubit extends Cubit<VideoState> {
       }
 
       await _videoRepository.updateVideoTitle(
-        selectedVideo!.id, 
-        nameVideoController.text
-      );
+          selectedVideo!.id, nameVideoController.text);
 
       // Update local state
       selectedVideo = selectedVideo!.copyWith(title: nameVideoController.text);

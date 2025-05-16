@@ -72,7 +72,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _onSearch(searchController.text, context.read<VideoCubit>().videos);
   }
 
-  String formatDate(DateTime date) {
+  String formatDate(DateTime? date) {
+    if (date == null) return '';
     return '${date.day}/${date.month}/${date.year}';
   }
 
@@ -200,14 +201,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
               await context.read<VideoCubit>().initializeNetworkVideo(video);
           if (context.mounted && success) {
             Navigator.pop(context);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error loading video',
-                    style: TextStyle(color: AppColors.white)),
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-            );
           }
         },
         child: Padding(
@@ -249,7 +242,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          formatDate(video.createdAt!),
+                          formatDate(video.createdAt),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],

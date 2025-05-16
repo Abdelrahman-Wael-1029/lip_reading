@@ -39,7 +39,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   animated_text_kit: ^4.2.3
   firebase_core: ^3.12.1
-  firebase_auth: ^5.5.1
+  firebase_auth: ^5.5.1 
+  awesome_dialog: ^3.2.1
+  connectivity_plus: 
   uuid: ^4.5.1
   firebase_storage: ^12.4.5
   cloud_firestore: ^5.6.7
