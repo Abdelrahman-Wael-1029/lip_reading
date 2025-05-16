@@ -11,6 +11,7 @@ import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/color_scheme_extension.dart';
 import 'package:lip_reading/utils/utils.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 
 class LipReadingScreen extends StatefulWidget {
@@ -355,7 +356,50 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         ),
                       ),
                     )
-                  : const SizedBox.shrink(),
+                  : Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Card(
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(getPadding(context)!),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        height: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 80,
+                  width: double.infinity,
+                  color: Colors.white,
+                ),
+              ],
+            ),
+          ),
+        ),
+        
+      ),
             ],
           ),
 
