@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -278,10 +279,10 @@ class VideoCubit extends Cubit<VideoState> {
         emit(VideoError('No video selected'));
         return;
       }
+      nameVideoController.text = await _videoRepository.getNextTitle();
       String id = const Uuid().v4();
       String result =
           'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
-      nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo = VideoModel(
         id: id,
         title: nameVideoController.text,
@@ -289,6 +290,7 @@ class VideoCubit extends Cubit<VideoState> {
         result: result,
       );
 
+      if (nameVideoController.text.isEmpty) throw Exception('');
       emit(VideoSuccess());
       await _videoRepository.addVideo(selectedVideo!);
 
@@ -302,8 +304,8 @@ class VideoCubit extends Cubit<VideoState> {
 
       emit(VideoSuccess());
     } catch (e) {
-      debugPrint('Error in upload video: ${e.toString()}');
-      emit(VideoError(e.toString()));
+      emit(VideoError(
+          'you arrive into limit please delete to upload another video'));
     }
   }
 
@@ -321,12 +323,14 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> updateVideoTitle(BuildContext context) async {
     try {
       if (selectedVideo == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('No video selected. Please try again.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.warning,
+          animType: AnimType.rightSlide,
+          title: 'No video selected',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
         return;
       }
 
@@ -335,26 +339,25 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Update local state
       selectedVideo = selectedVideo!.copyWith(title: nameVideoController.text);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Video title updated successfully!',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.success,
-        ),
-      );
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.rightSlide,
+        title: 'Video title updated successfully',
+        btnOkOnPress: () {},
+        btnOkColor: Theme.of(context).primaryColor,
+      ).show();
+
       emit(VideoSuccess());
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Failed to update title try again later',
-            style: TextStyle(color: Colors.white),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.error,
+        animType: AnimType.rightSlide,
+        title: 'Failed to update title, Video not exist',
+        btnOkOnPress: () {},
+        btnOkColor: Theme.of(context).primaryColor,
+      ).show();
     }
   }
 

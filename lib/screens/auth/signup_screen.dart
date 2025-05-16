@@ -1,3 +1,4 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_button.dart';
@@ -229,29 +230,18 @@ class SignupScreen extends StatelessWidget {
           BlocConsumer<AuthCubit, AuthState>(
             listener: (context, state) {
               if (state is LoginSuccess) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Login Successful!',
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.success),
-                    ),
-                    backgroundColor: Theme.of(context).colorScheme.onSuccess,
-                  ),
-                );
                 Navigator.pushReplacementNamed(
                     context, LipReadingScreen.routeName);
               } else if (state is LoginFailure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      state.errorMessage,
-                      style:
-                          TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                    backgroundColor: Theme.of(context).colorScheme.onError,
-                  ),
-                );
+                AwesomeDialog(
+                  context: context,
+                  dialogType: DialogType.error,
+                  animType: AnimType.rightSlide,
+                  title: 'Error',
+                  desc: state.errorMessage,
+                  btnOkOnPress: () {},
+                  btnOkColor: Theme.of(context).primaryColor,
+                ).show();
               }
             },
             builder: (context, state) {

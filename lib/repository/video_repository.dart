@@ -135,9 +135,10 @@ class VideoRepository {
   Future<String> getNextTitle() async {
     try {
       int count = await getVideosCount();
+      if(count > 15) throw Exception("You have reached the maximum number of videos");
       return "Video ${count + 1}";
     } catch (e) {
-      return "New Video";
+      return "";
     }
   }
 }

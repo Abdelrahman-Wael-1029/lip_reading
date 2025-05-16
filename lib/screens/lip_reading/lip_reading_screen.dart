@@ -75,7 +75,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             context: context,
             dialogType: DialogType.warning,
             animType: AnimType.rightSlide,
-            title: 'Please try again',
+            title: 'Warning',
             desc: state.errorMessage,
             btnOkOnPress: () {},
             btnOkColor: Theme.of(context).primaryColor,
@@ -130,14 +130,14 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   :
 
                   // Show video and results state if controller exists and is initialized
-                  (state is VideoSuccess &&
+                  ((state is VideoSuccess || state is VideoError) &&
                           videoController != null &&
                           videoController.value.isInitialized)
                       ? _buildVideoSuccessState(context, videoController)
                       :
 
                       // Show loading if controller exists but not initialized
-                      (state is VideoSuccess &&
+                      ((state is VideoSuccess || state is VideoError) &&
                               videoController != null &&
                               !videoController.value.isInitialized)
                           ? _buildLoadingState(context)
@@ -272,7 +272,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           const SizedBox(height: 24),
           Column(
             children: [
-              if (videoCubit.selectedVideo != null)
+              if (videoCubit.selectedVideo != null && videoCubit.selectedVideo!.title.isNotEmpty)
                 customTextFormField(
                   context: context,
                   controller: context.read<VideoCubit>().nameVideoController,
@@ -292,7 +292,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     },
                   ),
                 ),
-              if (videoCubit.selectedVideo != null) const SizedBox(height: 24),
+              if (videoCubit.selectedVideo != null && videoCubit.selectedVideo!.title.isNotEmpty) const SizedBox(height: 24),
 
               // Title for results section
               Text(
@@ -357,49 +357,48 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                       ),
                     )
                   : Shimmer.fromColors(
-        baseColor: Colors.grey.shade300,
-        highlightColor: Colors.grey.shade100,
-        child: Card(
-          child: Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(getPadding(context)!),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 24,
-                      height: 24,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        height: 16,
-                        color: Colors.white,
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      child: Card(
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(getPadding(context)!),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Container(
+                                      height: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    color: Colors.white,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Container(
+                                height: 80,
+                                width: double.infinity,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 24,
-                      height: 24,
-                      color: Colors.white,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  height: 80,
-                  width: double.infinity,
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
-        ),
-        
-      ),
             ],
           ),
 
@@ -470,7 +469,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     // Disable buttons during loading state
     final cubit = context.read<VideoCubit>();
     final bool isLoading = cubit.state is VideoLoading;
-    if (cubit.state is VideoInitial || cubit.state is VideoError) {
+    if (cubit.state is VideoInitial) {
       return SizedBox.shrink();
     }
 
