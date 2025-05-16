@@ -362,6 +362,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> deleteVideo(String videoId) async {
+    if (state is HistoryLoading) return;
+    emit(HistoryLoading());
     try {
       await _videoRepository.deleteVideo(videoId);
 
@@ -371,9 +373,9 @@ class VideoCubit extends Cubit<VideoState> {
         selectedVideo = null;
       }
 
-      emit(VideoPlaying());
+      emit(HistorySuccess());
     } catch (e) {
-      throw Exception('Failed to delete video: $e');
+      emit(HistoryError(e.toString()));
     }
   }
 

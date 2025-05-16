@@ -1,3 +1,4 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
@@ -29,33 +30,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(
+    AwesomeDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await context.read<VideoCubit>().cleanupController();
-              if (context.mounted) {
-                Navigator.of(context).pushNamedAndRemoveUntil(
-                  LoginScreen.routeName,
-                  (route) => false,
-                );
-                context.read<AuthCubit>().logout();
-              }
-            },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+      dialogType: DialogType.warning,
+      animType: AnimType.rightSlide,
+      title: 'Are you sure',
+      desc: 'Do you want to logout?',
+      btnOkOnPress: () => context.read<AuthCubit>().logout(),
+      btnOkColor: Theme.of(context).colorScheme.error,
+      btnCancelOnPress: () {},
+      btnCancelColor: Theme.of(context).colorScheme.primary,
+    ).show();
   }
 
   void _onSearch(String query, List<VideoModel> videos) {
@@ -81,6 +66,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final videoCubit = context.watch<VideoCubit>();
+    print('rebuild history screen');
     final state = videoCubit.state;
 
     final videos = videoCubit.videos;
@@ -183,6 +169,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
+  void _showDeleteDialog(BuildContext context, VideoModel video) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      animType: AnimType.rightSlide,
+      title: 'Are you sure',
+      desc: 'Do you want to delete this video?',
+      btnOkOnPress: () => context.read<VideoCubit>().deleteVideo(video.id),
+      btnOkColor: Theme.of(context).colorScheme.error,
+      btnCancelOnPress: () {},
+      btnCancelColor: Theme.of(context).colorScheme.primary,
+    ).show();
+  }
+
   Widget _buildVideoHistoryItem(
     BuildContext context,
     VideoModel video,
@@ -209,6 +209,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                spacing: 16,
                 children: [
                   Container(
                     width: 64,
@@ -224,7 +225,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           : AppColors.accentLight,
                     ),
                   ),
-                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,6 +247,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         ),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete),
+                    color:
+                        isDarkMode ? AppColors.errorDark : AppColors.errorLight,
+                    onPressed: () => _showDeleteDialog(context, video),
                   ),
                 ],
               ),

@@ -272,7 +272,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           const SizedBox(height: 24),
           Column(
             children: [
-              if (videoCubit.selectedVideo != null && videoCubit.selectedVideo!.title.isNotEmpty)
+              if (videoCubit.selectedVideo != null &&
+                  videoCubit.selectedVideo!.title.isNotEmpty)
                 customTextFormField(
                   context: context,
                   controller: context.read<VideoCubit>().nameVideoController,
@@ -292,7 +293,9 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     },
                   ),
                 ),
-              if (videoCubit.selectedVideo != null && videoCubit.selectedVideo!.title.isNotEmpty) const SizedBox(height: 24),
+              if (videoCubit.selectedVideo != null &&
+                  videoCubit.selectedVideo!.title.isNotEmpty)
+                const SizedBox(height: 24),
 
               // Title for results section
               Text(
@@ -557,49 +560,44 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   }
 
   void _showHelpDialog(BuildContext context) {
-    showDialog(
+    AwesomeDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('How to Use'),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '1. Record a video or select one from your gallery',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '2. Ensure good lighting and clear view of lips',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '3. Speak clearly for best results',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '4. Wait for the AI to process and show results',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '5. View the transcribed text below the video',
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
+      dialogType: DialogType.info,
+      animType: AnimType.rightSlide,
+      title: 'rules',
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '1. Record a video or select one from your gallery',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '2. Ensure good lighting and clear view of lips',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '3. Speak clearly for best results',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '4. Wait for the AI to process and show results',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '5. View the transcribed text below the video',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it'),
-          ),
-        ],
       ),
-    );
+    ).show();
   }
 }
