@@ -148,19 +148,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ),
       ),
       bottomNavigationBar: _buildBottomActionBar(context),
-      floatingActionButton: IconButton(
-        onPressed: () {
-          context.read<VideoCubit>().uploadVideo(context);
-        },
-        style: ButtonStyle(
-          backgroundColor: MaterialStateProperty.all(
-              Theme.of(context).scaffoldBackgroundColor),
-        ),
-        icon: Icon(
-          Icons.upload,
-          color: Theme.of(context).primaryColor,
-        ),
-      ),
+      floatingActionButton: _buildFloatingActionButton(context),
     );
   }
 
@@ -478,6 +466,26 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFloatingActionButton(BuildContext context) {
+    final cubit = context.read<VideoCubit>();
+    if (cubit.state is VideoInitial) {
+      return SizedBox.shrink();
+    }
+    return IconButton(
+      onPressed: () {
+        context.read<VideoCubit>().uploadVideo(context);
+      },
+      style: ButtonStyle(
+        backgroundColor: MaterialStateProperty.all(
+            Theme.of(context).scaffoldBackgroundColor),
+      ),
+      icon: Icon(
+        Icons.upload,
+        color: Theme.of(context).primaryColor,
+      ),
     );
   }
 
