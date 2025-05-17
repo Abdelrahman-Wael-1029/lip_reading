@@ -236,7 +236,7 @@ class VideoCubit extends Cubit<VideoState> {
         }
       }
     } catch (e) {
-      emit(VideoError('Failed to load video: ${e.toString()}'));
+      emit(VideoError('Failed to load video'));
     }
   }
 

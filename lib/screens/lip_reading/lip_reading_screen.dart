@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:math';
+
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -264,8 +266,10 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: videoController.value.aspectRatio,
+              child: SizedBox(
+                width: double.infinity, 
+                height: max(MediaQuery.of(context).size.height - 100,
+                    max(100, videoController.value.aspectRatio * 100)),
                 child: CustomVideoPlayer(),
               ),
             ),
@@ -342,7 +346,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                                       // copy to clipboard
                                       Clipboard.setData(ClipboardData(
                                           text: videoCubit
-                                              .selectedVideo!.result!));
+                                              .selectedVideo!.result));
                                     },
                                     icon: Icon(
                                       Icons.copy,
