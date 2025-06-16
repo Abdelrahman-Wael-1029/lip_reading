@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
+import 'package:lip_reading/service/api_service.dart';
 import 'package:lip_reading/service/connectivity_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
@@ -262,8 +263,7 @@ class VideoCubit extends Cubit<VideoState> {
       totalDuration = _formatDuration(controller!.value.duration);
 
       nameVideoController.text = await _videoRepository.getNextTitle();
-      String result =
-          'Video analysis result for ${nameVideoController.text} and this is my result for this video and this is vidoe iven t tell me is if continue for the video';
+      String result = await ApiService.uploadVideo(videoFile);
       selectedVideo = VideoModel(
         id: const Uuid().v4(),
         title: nameVideoController.text,

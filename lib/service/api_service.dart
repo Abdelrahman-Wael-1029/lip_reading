@@ -1,69 +1,45 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart';
 
 class ApiService {
-  final Dio _dio;
-  final String baseUrl;
+   static final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: '192.168.1.4:8000',
+      connectTimeout: Duration(seconds: 10),
+      receiveTimeout: Duration(seconds: 10),
+    ),
+  );
 
-  ApiService({required this.baseUrl})
-      : _dio = Dio(BaseOptions(
-          baseUrl: baseUrl,
-          connectTimeout: Duration(seconds: 5000),
-          receiveTimeout: Duration(seconds: 3000),
-          headers: {
-            'Accept': 'application/json',
-          },
-        ));
-
-  Future<Response> uploadVideo({
-    required File file,
-    Map<String, dynamic>? data,
-    CancelToken? cancelToken,
-    void Function(int, int)? onSendProgress,
-  }) async {
-    String fileName = file.path.split(Platform.pathSeparator).last;
-    FormData formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(
-        file.path,
-        filename: fileName,
-      ),
-      if (data != null) ...data,
-    });
-
+ static Future<String> uploadVideo(File videoFile) async {
     try {
-      final response = await _dio.post(
-        '/upload-video/',
+      String fileName = videoFile.path.split('/').last;
+
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          videoFile.path,
+          filename: fileName,
+          contentType: MediaType('video', 'mp4'),
+        ),
+      });
+
+      Response response = await _dio.post(
+        '/upload',
         data: formData,
-        cancelToken: cancelToken,
-        onSendProgress: onSendProgress,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
       );
-      return response;
-    } on DioException catch (e) {
-      // Handle error
-      throw e;
-    }
-  }
 
-  /// Example: GET request
-  Future<Response> getItems(String endpoint) async {
-    try {
-      final response = await _dio.get(endpoint);
-      return response;
-    } on DioException catch (_) {
-      rethrow;
-    }
-  }
-
-  /// Example: POST request with JSON body
-  Future<Response> postData(String endpoint, Map<String, dynamic> body) async {
-    try {
-      final response = await _dio.post(
-        endpoint,
-        data: body,
-      );
-      return response;
-    } on DioError catch (e) {
-      throw e;
+      if (response.statusCode == 200) {
+        return response.data.toString();
+      } else {
+        return 'Upload failed with status: ${response.statusCode}';
+      }
+    } catch (e) {
+      return 'Upload error: $e';
     }
   }
 }

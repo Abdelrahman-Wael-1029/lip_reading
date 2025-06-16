@@ -41,103 +41,101 @@ class CustomVideoPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<VideoCubit, VideoState>(
       builder: (context, state) {
+        print('rebuild video widget');
         final cubit = context.read<VideoCubit>();
         if (cubit.controller == null) return _emtpyState(context);
-        return GestureDetector(
-          onTap: () => cubit.toggleControls(),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              AspectRatio(
-                aspectRatio: cubit.controller!.value.aspectRatio,
-                child: VideoPlayer(cubit.controller!),
-              ),
-              (!cubit.showControls)
-                  ? SizedBox.shrink()
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildControlButton(
-                            icon: Icons.replay_10,
-                            onPressed: () {
-                              cubit.replay_10();
-                            }),
-                        _buildControlButton(
-                          icon: cubit.controller!.value.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
-                          onPressed: () {
-                            if (cubit.controller!.value.isPlaying) {
-                              cubit.controller!.pause();
-                            } else {
-                              cubit.controller!.play();
-                            }
-                            cubit.updatePlayPauseIcon(
-                                cubit.controller!.value.isPlaying);
-                          },
-                        ),
-                        _buildControlButton(
-                          icon: Icons.forward_10,
-                          onPressed: () async {
-                            await cubit.forward_10();
-                          },
-                        ),
-                      ],
-                    ),
-              if (cubit.showControls)
-                Positioned(
-                  bottom: 10,
-                  left: 0,
-                  right: 0,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: cubit.controller!.value.aspectRatio,
+              child: VideoPlayer(cubit.controller!),
+            ),
+            (!cubit.showControls)
+                ? SizedBox.shrink()
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: SliderTheme(
-                          data: SliderThemeData(
-                            trackHeight: 4.0,
-                            thumbShape:
-                                RoundSliderThumbShape(enabledThumbRadius: 6.0),
-                            overlayShape:
-                                RoundSliderOverlayShape(overlayRadius: 12.0),
-                            thumbColor: Colors.red,
-                            activeTrackColor: Colors.red,
-                            inactiveTrackColor: Colors.black.withOpacity(0.3),
-                          ),
-                          child: Slider(
-                            value: cubit.videoProgress,
-                            min: 0.0,
-                            max: 1.0,
-                            onChanged: (value) {
-                              cubit.updateVideoPosition(value);
-                            },
-                            onChangeEnd: (value) async {
-                              final position = Duration(
-                                  seconds: (value * cubit.totalVideoSeconds)
-                                      .toInt());
-                              await cubit.controller!.seekTo(position);
-                            },
-                          ),
-                        ),
+                      _buildControlButton(
+                          icon: Icons.replay_10,
+                          onPressed: () {
+                            cubit.replay_10();
+                          }),
+                      _buildControlButton(
+                        icon: cubit.controller!.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        onPressed: () {
+                          if (cubit.controller!.value.isPlaying) {
+                            cubit.controller!.pause();
+                          } else {
+                            cubit.controller!.play();
+                          }
+                          cubit.updatePlayPauseIcon(
+                              cubit.controller!.value.isPlaying);
+                        },
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 16.0),
-                        child: Text(
-                          "${cubit.currentPosition} / ${cubit.totalDuration}",
-                          style: TextStyle(
-                            color: Colors.black,
-                            backgroundColor: Colors.white.withOpacity(0.7),
-                            fontSize: 12.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      _buildControlButton(
+                        icon: Icons.forward_10,
+                        onPressed: () async {
+                          await cubit.forward_10();
+                        },
                       ),
                     ],
                   ),
+            if (cubit.showControls)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 4.0),
+                      child: SliderTheme(
+                        data: SliderThemeData(
+                          trackHeight: 4.0,
+                          thumbShape:
+                              RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                          overlayShape:
+                              RoundSliderOverlayShape(overlayRadius: 12.0),
+                          thumbColor: Colors.red,
+                          activeTrackColor: Colors.red,
+                          inactiveTrackColor: Colors.black.withOpacity(0.3),
+                        ),
+                        child: Slider(
+                          value: cubit.videoProgress,
+                          min: 0.0,
+                          max: 1.0,
+                          onChanged: (value) {
+                            cubit.updateVideoPosition(value);
+                          },
+                          onChangeEnd: (value) async {
+                            final position = Duration(
+                                seconds: (value * cubit.totalVideoSeconds)
+                                    .toInt());
+                            await cubit.controller!.seekTo(position);
+                          },
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: Text(
+                        "${cubit.currentPosition} / ${cubit.totalDuration}",
+                        style: TextStyle(
+                          color: Colors.black,
+                          backgroundColor: Colors.white.withOpacity(0.7),
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+          ],
         );
       },
     );

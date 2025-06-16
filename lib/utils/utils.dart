@@ -30,15 +30,15 @@ double? getPadding(context) {
     valueWhen: [
       const Condition.smallerThan(
         name: MOBILE,
-        value: 12.0,
+        value: 8.0,
       ),
       const Condition.smallerThan(
         name: TABLET,
-        value: 16.0,
+        value: 10.0,
       ),
       const Condition.smallerThan(
         name: DESKTOP,
-        value: 20.0,
+        value: 12.0,
       ),
     ],
   ).value;

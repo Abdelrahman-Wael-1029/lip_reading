@@ -253,23 +253,24 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Video container with enhanced styling
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: double.infinity, 
-                height: max(MediaQuery.of(context).size.height - 100,
-                    max(100, videoController.value.aspectRatio * 100)),
+          GestureDetector(
+            onTap: () => videoCubit.toggleControls(),
+            child: Container(
+              width: double.infinity,
+              height: min(MediaQuery.of(context).size.height - 120,
+                  videoController.value.size.height),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
                 child: CustomVideoPlayer(),
               ),
             ),
@@ -513,34 +514,40 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildBottomActionButton(
-            context,
-            icon: Icons.videocam,
-            label: 'Record',
-            onPressed: isLoading
-                ? null
-                : () {
-                    context.read<VideoCubit>().recordVideo();
-                  },
+          Expanded(
+            child: _buildBottomActionButton(
+              context,
+              icon: Icons.videocam,
+              label: 'Record',
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      context.read<VideoCubit>().recordVideo();
+                    },
+            ),
           ),
-          _buildBottomActionButton(
-            context,
-            icon: Icons.photo_library,
-            label: 'Gallery',
-            onPressed: isLoading
-                ? null
-                : () {
-                    context.read<VideoCubit>().pickVideoFromGallery();
-                  },
+          Expanded(
+            child: _buildBottomActionButton(
+              context,
+              icon: Icons.photo_library,
+              label: 'Gallery',
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      context.read<VideoCubit>().pickVideoFromGallery();
+                    },
+            ),
           ),
-          _buildBottomActionButton(
-            context,
-            icon: Icons.info_outline,
-            label: 'Help',
-            onPressed: () {
-              // Show help or information dialog
-              _showHelpDialog(context);
-            },
+          Expanded(
+            child: _buildBottomActionButton(
+              context,
+              icon: Icons.info_outline,
+              label: 'Help',
+              onPressed: () {
+                // Show help or information dialog
+                _showHelpDialog(context);
+              },
+            ),
           ),
         ],
       ),
