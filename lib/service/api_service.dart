@@ -1,22 +1,32 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
 
 class ApiService {
-   static final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: '192.168.1.4:8000',
-      connectTimeout: Duration(seconds: 10),
-      receiveTimeout: Duration(seconds: 10),
-    ),
-  );
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  static late Dio _dio;
 
- static Future<String> uploadVideo(File videoFile) async {
+  static const String _baseUrl = "https://2fc7-102-47-249-61.ngrok-free.app";
+
+  ApiService._internal() {
+    _dio = Dio(BaseOptions(
+      baseUrl: _baseUrl,
+      connectTimeout: Duration(seconds: 10),
+      receiveTimeout: Duration(seconds: 20),
+      headers: {
+        "Accept": "application/json",
+      },
+    ));
+  }
+
+  static Future<String> uploadVideo(File videoFile) async {
     try {
-      String fileName = videoFile.path.split('/').last;
+      String fileName = path.basename(videoFile.path);
 
       FormData formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
+        "file": await MultipartFile.fromFile(
           videoFile.path,
           filename: fileName,
           contentType: MediaType('video', 'mp4'),
@@ -24,22 +34,29 @@ class ApiService {
       });
 
       Response response = await _dio.post(
-        '/upload',
+        "/transcribe/",
         data: formData,
         options: Options(
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         ),
       );
 
-      if (response.statusCode == 200) {
-        return response.data.toString();
+      if (response.statusCode == 200 && response.data['transcript'] != null) {
+        return response.data['transcript'];
       } else {
-        return 'Upload failed with status: ${response.statusCode}';
+        return "❌ فشل في استخراج النص من الفيديو.";
       }
+    } on DioException catch (e) {
+      if (e.response != null &&
+          e.response?.data is Map &&
+          e.response?.data['error'] != null) {
+        return "❗️ ${e.response?.data['error']}";
+      }
+      return "❌ خطأ في الاتصال بالخادم.";
     } catch (e) {
-      return 'Upload error: $e';
+      return "❗️ حدث خطأ غير متوقع أثناء رفع الفيديو.";
     }
   }
 }

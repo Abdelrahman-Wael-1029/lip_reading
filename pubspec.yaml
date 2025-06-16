@@ -48,6 +48,7 @@ dependencies:
   cloud_firestore: ^5.6.7
   shimmer:
   http_parser:
+  path:
 
 dev_dependencies:
   flutter_test:

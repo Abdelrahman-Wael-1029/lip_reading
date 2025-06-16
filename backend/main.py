@@ -1,27 +1,33 @@
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 import shutil
 import os
-from uuid import uuid4
 
 app = FastAPI()
 
-# المسار اللي هيتخزن فيه الفيديوهات
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+def transcribe_video(video_path: str) -> str:
+    # Dummy implementation — replace with actual inference logic
+    return f"Transcript of {video_path}"
 
-@app.post("/upload", response_class=PlainTextResponse)
-async def upload_video(file: UploadFile = File(...)):
+@app.post("/transcribe/")
+async def transcribe(file: UploadFile = File(...)):
+    original_name = file.filename
+    save_name = original_name
+    base, ext = os.path.splitext(original_name)
+    counter = 1
+
+    # Check if file already exists and rename if needed
+    while os.path.exists(save_name):
+        save_name = f"{base}_{counter}{ext}"
+        counter += 1
+
+    # Save the uploaded file
+    with open(save_name, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
     try:
-        file_extension = file.filename.split(".")[-1]
-        unique_filename = f"{uuid4()}.{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        # رجع اسم الفيديو أو مسار أو رابط حسب اللي تحتاجه
-        return f"Video uploaded successfully: {unique_filename}"
-
+        transcript = transcribe_video(save_name)
     except Exception as e:
-        return f"Upload failed: {str(e)}"
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    return JSONResponse(content={"transcript": transcript})
