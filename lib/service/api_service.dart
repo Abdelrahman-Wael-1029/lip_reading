@@ -8,7 +8,7 @@ class ApiService {
   factory ApiService() => _instance;
   static late Dio _dio;
 
-  static const String _baseUrl = "https://2fc7-102-47-249-61.ngrok-free.app";
+  static const String _baseUrl = "https://8b3d-35-185-82-107.ngrok-free.app";
 
   ApiService._internal() {
     _dio = Dio(BaseOptions(
