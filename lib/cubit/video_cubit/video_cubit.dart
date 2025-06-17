@@ -263,7 +263,7 @@ class VideoCubit extends Cubit<VideoState> {
       totalDuration = _formatDuration(controller!.value.duration);
 
       nameVideoController.text = await _videoRepository.getNextTitle();
-      String result = await ApiService.uploadVideo(videoFile);
+      String result = await ApiService().uploadVideo(videoFile);
       selectedVideo = VideoModel(
         id: const Uuid().v4(),
         title: nameVideoController.text,

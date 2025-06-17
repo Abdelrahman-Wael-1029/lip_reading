@@ -357,7 +357,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                             const SizedBox(height: 12),
                             Text(
                               // Replace this with actual transcribed text
-                              'This is where the transcribed text from lip reading will appear. The AI model has processed the video and identified the spoken words based on lip movements.',
+                              videoCubit.selectedVideo!.result,
                               style: TextStyle(
                                 fontSize: getMediumFontSize(context),
                                 // color: Colors.black87,

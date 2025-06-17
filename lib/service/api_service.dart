@@ -8,7 +8,7 @@ class ApiService {
   factory ApiService() => _instance;
   static late Dio _dio;
 
-  static const String _baseUrl = "https://2fc7-102-47-249-61.ngrok-free.app";
+  static const String _baseUrl = "https://2158-34-83-251-95.ngrok-free.app";
 
   ApiService._internal() {
     _dio = Dio(BaseOptions(
@@ -21,7 +21,7 @@ class ApiService {
     ));
   }
 
-  static Future<String> uploadVideo(File videoFile) async {
+  Future<String> uploadVideo(File videoFile) async {
     try {
       String fileName = path.basename(videoFile.path);
 
@@ -35,13 +35,14 @@ class ApiService {
 
       Response response = await _dio.post(
         "/transcribe/",
-        data: formData,
+        data: formData, 
         options: Options(
           headers: {
             "Content-Type": "multipart/form-data",
           },
         ),
       );
+      print(response.data);
 
       if (response.statusCode == 200 && response.data['transcript'] != null) {
         return response.data['transcript'];
@@ -49,6 +50,7 @@ class ApiService {
         return "❌ فشل في استخراج النص من الفيديو.";
       }
     } on DioException catch (e) {
+      print(e.toString() + " errrrrrrrrrrrrrrrrrrrrrrrror");
       if (e.response != null &&
           e.response?.data is Map &&
           e.response?.data['error'] != null) {
@@ -56,6 +58,7 @@ class ApiService {
       }
       return "❌ خطأ في الاتصال بالخادم.";
     } catch (e) {
+      print(e.toString() + " errrrrrrrrrrrrrrrrrrrrrrrror");
       return "❗️ حدث خطأ غير متوقع أثناء رفع الفيديو.";
     }
   }
