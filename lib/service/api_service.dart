@@ -1,65 +1,48 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart';
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 
 class ApiService {
-  static final ApiService _instance = ApiService._internal();
-  factory ApiService() => _instance;
-  static late Dio _dio;
+ static Future<String> uploadVideo(File videoFile) async {
+    // Public URL from localtunnel
+    final uri =
+        Uri.parse("https://lip-reading-transcription.loca.lt/transcribe/");
 
-  static const String _baseUrl = "https://2158-34-83-251-95.ngrok-free.app";
-
-  ApiService._internal() {
-    _dio = Dio(BaseOptions(
-      baseUrl: _baseUrl,
-      connectTimeout: Duration(seconds: 10),
-      receiveTimeout: Duration(seconds: 20),
-      headers: {
-        "Accept": "application/json",
-      },
-    ));
-  }
-
-  Future<String> uploadVideo(File videoFile) async {
     try {
-      String fileName = path.basename(videoFile.path);
+      final request = http.MultipartRequest('POST', uri);
 
-      FormData formData = FormData.fromMap({
-        "file": await MultipartFile.fromFile(
-          videoFile.path,
-          filename: fileName,
-          contentType: MediaType('video', 'mp4'),
-        ),
-      });
+      // Prepare file stream
+      final fileStream = http.ByteStream(videoFile.openRead());
+      final length = await videoFile.length();
+      final filename = path.basename(videoFile.path);
 
-      Response response = await _dio.post(
-        "/transcribe/",
-        data: formData, 
-        options: Options(
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        ),
+      final multipartFile = http.MultipartFile(
+        'file',
+        fileStream,
+        length,
+        filename: filename,
       );
-      print(response.data);
 
-      if (response.statusCode == 200 && response.data['transcript'] != null) {
-        return response.data['transcript'];
+      request.files.add(multipartFile);
+
+      // Send request
+      final response = await request.send();
+      print('response::: ${response}');
+
+      // Handle response
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        print("✅ Success: $respStr");
+        // convert from string into json and return key transcript
+        return jsonDecode(respStr)['transcript'];
       } else {
-        return "❌ فشل في استخراج النص من الفيديو.";
+        print("❌ Failed: ${response.statusCode}");
+        return 'حاول مرة أخرى';
       }
-    } on DioException catch (e) {
-      print(e.toString() + " errrrrrrrrrrrrrrrrrrrrrrrror");
-      if (e.response != null &&
-          e.response?.data is Map &&
-          e.response?.data['error'] != null) {
-        return "❗️ ${e.response?.data['error']}";
-      }
-      return "❌ خطأ في الاتصال بالخادم.";
     } catch (e) {
-      print(e.toString() + " errrrrrrrrrrrrrrrrrrrrrrrror");
-      return "❗️ حدث خطأ غير متوقع أثناء رفع الفيديو.";
+      print("❗️ Error uploading video: $e");
+      return 'حدث خطأ في التحميل ، برجاء المحاوله لاحقا';
     }
   }
 }
