@@ -309,12 +309,23 @@ class VideoCubit extends Cubit<VideoState> {
         return;
       }
       VideoModel? video = await _videoRepository.getVideo(selectedVideo!.id);
-      video?.model = selectedModel;
-      if (video != null) {
+      
+      if (video != null && video.model == selectedModel) {
         emit(VideoError('This video is already uploaded'));
         return;
       }
 
+      else if(video != null && video.model != selectedModel) {
+        debugPrint('Video already exists with a different model');
+        debugPrint('Selected model: $selectedModel');
+        debugPrint('Existing video model: ${video.model}');
+        debugPrint('Exsistin selectd video model: ${selectedVideo?.model}');
+        await pauseVideo();
+        selectedVideo?.model = selectedModel;
+        await updateVideoResult(context);
+        
+        return;
+      }
       if (nameVideoController.text.isEmpty) throw Exception('');
       await pauseVideo();
       await _videoRepository.addVideo(selectedVideo!);
@@ -325,6 +336,7 @@ class VideoCubit extends Cubit<VideoState> {
       );
 
       selectedVideo!.url = videoUrl;
+      selectedVideo?.model = selectedModel;
       await _videoRepository.updateVideo(selectedVideo!);
 
       AwesomeDialog(
@@ -338,6 +350,37 @@ class VideoCubit extends Cubit<VideoState> {
     } catch (e) {
       emit(VideoError(
           'you arrive into limit please delete to upload another video'));
+    }
+  }
+
+  Future<void>updateVideoResult(
+      BuildContext context,) async {
+    try {
+      if (!await ConnectivityService().isConnected()) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.error,
+          animType: AnimType.rightSlide,
+          title: 'No internet connection',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+        emit(VideoError('No internet connection'));
+        return;
+      }
+      await _videoRepository.updateVideoResult(selectedVideo!);
+      AwesomeDialog(
+        context: context,
+        dialogType: DialogType.success,
+        animType: AnimType.rightSlide,
+        title: 'Video result updated successfully',
+        btnOkOnPress: () {},
+        btnOkColor: Theme.of(context).primaryColor,
+      ).show();
+      emit(VideoSuccess());
+    } catch (e) {
+      debugPrint(e.toString());
+      emit(VideoError(e.toString()));
     }
   }
 

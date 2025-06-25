@@ -95,6 +95,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     print('rebuild main screen');
 
     return Scaffold(
+      backgroundColor: Theme.of(context).primaryColor,
       appBar: AppBar(
         title:
             const Text('Lip Reading', style: TextStyle(color: AppColors.white)),

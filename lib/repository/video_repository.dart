@@ -88,6 +88,22 @@ class VideoRepository {
     }
   }
 
+  Future<void> 
+  updateVideoResult(VideoModel videoModel) async {
+    try {
+      debugPrint('Updating video results for ${videoModel.id}');
+      await _firestoreService.updateDocument(
+        collection: _collection,
+        documentId: videoModel.id,
+        data: {'results': videoModel.result,
+        'model': videoModel.model.index,
+        },
+      );
+    } catch (e) {
+      throw Exception('Failed to update video results: $e');
+    }
+  }
+
   Future<void> updateVideoTitle(String videoId, String newTitle) async {
     try {
       await _firestoreService.updateDocument(
