@@ -65,6 +65,7 @@ class VideoRepository {
 
   Future<String> addVideo(VideoModel video) async {
     try {
+      print(video);
       return await _firestoreService.setDocument(
         collection: _collection,
         documentId: video.id,
