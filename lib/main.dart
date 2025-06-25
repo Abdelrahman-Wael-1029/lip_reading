@@ -13,7 +13,7 @@ import 'package:responsive_framework/responsive_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-    ConnectivityService().initialize();
+  ConnectivityService().initialize();
 
 // disalbe landscape
   SystemChrome.setPreferredOrientations(

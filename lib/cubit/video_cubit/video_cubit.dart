@@ -5,6 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
+import 'package:lip_reading/enum/model_enum.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
 import 'package:lip_reading/service/api_service.dart';
@@ -269,6 +270,7 @@ class VideoCubit extends Cubit<VideoState> {
         title: nameVideoController.text,
         url: '',
         result: result,
+        model: Model.formating,
       );
 
       await controller!.play();

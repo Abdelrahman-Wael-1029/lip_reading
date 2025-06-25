@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "lip_reading" "\0"
+            VALUE "FileDescription", "windows" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "lip_reading" "\0"
+            VALUE "InternalName", "windows" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "lip_reading.exe" "\0"
-            VALUE "ProductName", "lip_reading" "\0"
+            VALUE "OriginalFilename", "windows.exe" "\0"
+            VALUE "ProductName", "windows" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

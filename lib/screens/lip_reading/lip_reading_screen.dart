@@ -112,8 +112,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ],
       ),
       body: Container(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
