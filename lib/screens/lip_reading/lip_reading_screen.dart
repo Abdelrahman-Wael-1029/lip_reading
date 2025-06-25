@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
+import 'package:lip_reading/components/model_selector.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/screens/lip_reading/history_screen.dart';
@@ -311,6 +312,9 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   color: AppColors.white,
                 ),
               ),
+
+              const SizedBox(height: 16),
+              ModelSelector(),
 
               const SizedBox(height: 16),
 

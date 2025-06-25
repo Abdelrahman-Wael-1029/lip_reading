@@ -16,6 +16,7 @@ import 'package:video_player/video_player.dart';
 class VideoCubit extends Cubit<VideoState> {
   // Repository
   final VideoRepository _videoRepository;
+  Model selectedModel = Model.formating;
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
@@ -89,6 +90,7 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Store selected video before initializing controller
       selectedVideo = video;
+      selectedModel = video.model;
       nameVideoController.text = video.title;
 
       // Create controller with safeguards
@@ -270,7 +272,7 @@ class VideoCubit extends Cubit<VideoState> {
         title: nameVideoController.text,
         url: '',
         result: result,
-        model: Model.formating,
+        model: selectedModel,
       );
 
       await controller!.play();
@@ -306,8 +308,8 @@ class VideoCubit extends Cubit<VideoState> {
         }
         return;
       }
-      final VideoModel? video =
-          await _videoRepository.getVideo(selectedVideo!.id);
+      VideoModel? video = await _videoRepository.getVideo(selectedVideo!.id);
+      video?.model = selectedModel;
       if (video != null) {
         emit(VideoError('This video is already uploaded'));
         return;
