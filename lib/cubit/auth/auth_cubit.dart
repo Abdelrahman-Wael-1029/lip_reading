@@ -28,7 +28,6 @@ class AuthCubit extends Cubit<AuthState> {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       emit(LoginSuccess());
     } catch (e) {
-      print("error$e");
       emit(LoginFailure(errorMessage: 'Cannot login try again'));
     }
   }

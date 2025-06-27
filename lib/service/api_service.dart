@@ -26,7 +26,6 @@ class ApiService {
     required String modelName,
   }) async {
     final url = Uri.parse('$baseUrl/transcribe/');
-    print('my model name $modelName');
 
     final request = http.MultipartRequest('POST', url)
       ..fields['model_name'] = modelName
@@ -42,7 +41,6 @@ class ApiService {
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
-      print('${jsonDecode(response.body)} errrrrrrrrrrrrrrror');
       final decoded = jsonDecode(utf8.decode(response.bodyBytes));
       final transcript = decoded['raw_transcript'] ?? '';
       return transcript;

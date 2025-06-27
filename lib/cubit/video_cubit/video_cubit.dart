@@ -52,7 +52,6 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoInitial());
     }).catchError((e) {
       emit(VideoError('حاول مرة اخرى'));
-      print(e);
     });
   }
 
@@ -128,7 +127,6 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
       return true; // Success indicator
     } catch (e) {
-      debugPrint('Network video initialization error: ${e.toString()}');
       emit(VideoError('Video not exist please try again'));
       return false; // Failure indicator
     }
@@ -148,16 +146,13 @@ class VideoCubit extends Cubit<VideoState> {
         await controller!.seekTo(currentPosition);
         emit(VideoSuccess());
       }
-    } catch (e) {
-      debugPrint('Error seeking to position: ${e.toString()}');
-    }
+    } catch (e) {}
   }
 
   Future<void> cleanupController() async {
     // Cancel subscriptions and timers
     _videoProgressSubscription?.cancel();
     _videoProgressSubscription = null;
-
     _hideControlsTimer?.cancel();
     _hideControlsTimer = null;
 
@@ -183,11 +178,13 @@ class VideoCubit extends Cubit<VideoState> {
 
     _videoProgressSubscription =
         Stream.periodic(const Duration(milliseconds: 200)).listen((_) {
-      if (controller != null &&
-          controller!.value.isInitialized &&
-          controller!.value.isPlaying) {
+      if (controller != null && controller!.value.isInitialized) {
         final position = controller!.value.position;
         final duration = controller!.value.duration;
+        if (position >= duration) {
+          emit(VideoPlaying());
+        }
+        if (!controller!.value.isPlaying) return;
 
         if (duration.inSeconds > 0) {
           videoProgress = position.inSeconds / duration.inSeconds;
@@ -225,9 +222,7 @@ class VideoCubit extends Cubit<VideoState> {
           await _initializeVideoController();
         }
       }
-    } catch (e) {
-      print(e);
-    }
+    } catch (e) {}
   }
 
   Future<void> fetchModels() async {
@@ -253,6 +248,8 @@ class VideoCubit extends Cubit<VideoState> {
         maxDuration: const Duration(minutes: 1),
       );
 
+      print('pickedFile: $pickedFile');
+
       if (pickedFile != null) {
         await cleanupController();
         _currentVideoPath = pickedFile.path;
@@ -265,6 +262,7 @@ class VideoCubit extends Cubit<VideoState> {
           emit(VideoError('Video file not found'));
         }
       } else {
+        print(_currentVideoPath != null);
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
           await reInitializeLastVideo();
@@ -286,11 +284,8 @@ class VideoCubit extends Cubit<VideoState> {
       var temp = VideoPlayerController.file(videoFile!);
       await temp.initialize();
       // check on time duration of video max is 1 minute
-      print("time of video in initialize${temp.value.duration.inMinutes}");
-      print(videoFile != null);
       if (temp.value.duration.inSeconds > 60) {
-        videoFile = null;
-        print(videoFile != null);
+        _currentVideoPath = null;
 
         await cleanupController();
         emit(VideoError('Video duration exceeds 1 minute'));
@@ -314,7 +309,6 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.title = nameVideoController.text;
       selectedVideo?.result = await ApiService.uploadFile(
           file: videoFile!, modelName: selectedModel);
-      
 
       await controller!.play();
       showControls = true;
@@ -322,7 +316,6 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
       return;
     } catch (e) {
-      print('errrrrrrrrrror $e;;)');
       emit(VideoError('Failed to process video try again'));
       return;
     }
@@ -416,7 +409,6 @@ class VideoCubit extends Cubit<VideoState> {
       ).show();
       emit(VideoSuccess());
     } catch (e) {
-      debugPrint(e.toString());
       emit(VideoError(e.toString()));
     }
   }
@@ -543,7 +535,6 @@ class VideoCubit extends Cubit<VideoState> {
 
   Future<void> changeModel(String model) async {
     try {
-      print('start loading $model');
       emit(VideoLoading());
       selectedModel = model;
       selectedVideo?.result = await ApiService.uploadFile(
@@ -552,8 +543,14 @@ class VideoCubit extends Cubit<VideoState> {
       );
       emit(VideoSuccess());
     } catch (e) {
-      print('errrrrrrrrrrrrrror $e');
       emit(VideoError(e.toString()));
     }
+  }
+
+  Future<void> onEnd(double value) async {
+    print('end change');
+    final position = Duration(seconds: (value * totalVideoSeconds).toInt());
+    await controller!.seekTo(position);
+    emit(VideoPlaying());
   }
 }

@@ -53,7 +53,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       }
     }
     if (!isHidden) isHidden = state == AppLifecycleState.hidden;
-    print('previous state $state');
     super.didChangeAppLifecycleState(state);
   }
 
@@ -92,7 +91,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
   Widget _buildBody(BuildContext context, state) {
     final videoController = context.read<VideoCubit>().controller;
-    print('rebuild main screen');
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,

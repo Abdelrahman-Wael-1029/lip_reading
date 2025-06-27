@@ -42,7 +42,7 @@ class _ModelSelectorState extends State<ModelSelector> {
                 borderRadius: BorderRadius.circular(8),
                 onTap: () {
                   setState(() {
-                    // if(isSelected) return;
+                    if (isSelected) return;
                     cubit.changeModel(model);
                   });
                 },

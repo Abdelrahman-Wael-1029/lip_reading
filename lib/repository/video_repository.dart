@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/service/firestore_service.dart';
 import 'package:lip_reading/service/storage_service.dart';
@@ -65,7 +64,6 @@ class VideoRepository {
 
   Future<String> addVideo(VideoModel video) async {
     try {
-      print(video);
       return await _firestoreService.setDocument(
         collection: _collection,
         documentId: video.id,
@@ -91,7 +89,6 @@ class VideoRepository {
   Future<void> 
   updateVideoResult(VideoModel videoModel) async {
     try {
-      debugPrint('Updating video results for ${videoModel.id}');
       await _firestoreService.updateDocument(
         collection: _collection,
         documentId: videoModel.id,
@@ -144,7 +141,6 @@ class VideoRepository {
       return await _firestoreService.getCollectionCount(
           collection: _collection);
     } catch (e) {
-      debugPrint('Error getting videos count: ${e.toString()}');
       return 0;
     }
   }

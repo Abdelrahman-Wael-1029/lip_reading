@@ -41,7 +41,6 @@ class CustomVideoPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<VideoCubit, VideoState>(
       builder: (context, state) {
-        print('rebuild video widget');
         final cubit = context.read<VideoCubit>();
         if (cubit.controller == null) return _emtpyState(context);
         return Stack(
@@ -112,10 +111,7 @@ class CustomVideoPlayer extends StatelessWidget {
                             cubit.updateVideoPosition(value);
                           },
                           onChangeEnd: (value) async {
-                            final position = Duration(
-                                seconds: (value * cubit.totalVideoSeconds)
-                                    .toInt());
-                            await cubit.controller!.seekTo(position);
+                            cubit.onEnd(value);
                           },
                         ),
                       ),
