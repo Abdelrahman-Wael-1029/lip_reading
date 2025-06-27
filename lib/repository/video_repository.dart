@@ -96,7 +96,7 @@ class VideoRepository {
         collection: _collection,
         documentId: videoModel.id,
         data: {'results': videoModel.result,
-        'model': videoModel.model.index,
+        'model': videoModel.model,
         },
       );
     } catch (e) {

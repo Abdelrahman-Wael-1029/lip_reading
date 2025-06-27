@@ -1,14 +1,13 @@
 // lib/models/video_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lip_reading/enum/model_enum.dart';
 
 class VideoModel {
   final String id;
-  final String title;
+  String title;
   String url;
   String result;
   final DateTime? createdAt;
-  Model model;
+  String model;
 
   VideoModel({
     required this.id,
@@ -28,7 +27,7 @@ class VideoModel {
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
           : null,
-      model: Model.values[json['model'] ?? 0],
+      model: json['model'],
     );
   }
 
@@ -40,7 +39,7 @@ class VideoModel {
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
-      'model': model.index
+      'model': model
     };
   }
 

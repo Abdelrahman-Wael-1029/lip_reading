@@ -1,48 +1,53 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart';
 
 class ApiService {
- static Future<String> uploadVideo(File videoFile) async {
-    // Public URL from localtunnel
-    final uri =
-        Uri.parse("https://lip-reading-transcription.loca.lt/transcribe/");
+  static const String baseUrl = "https://arabic-lip-reading.loca.lt";
 
-    try {
-      final request = http.MultipartRequest('POST', uri);
+  // Get models
+  static Future<List<String>> getModels() async {
+    final url = Uri.parse('$baseUrl/config');
+    final response = await http.get(url);
 
-      // Prepare file stream
-      final fileStream = http.ByteStream(videoFile.openRead());
-      final length = await videoFile.length();
-      final filename = path.basename(videoFile.path);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> models = data['model']['available_models'];
+      return models.map((e) => e.toString()).toList();
+    } else {
+      throw Exception("حدث خطأ في جلب الموديلات");
+    }
+  }
 
-      final multipartFile = http.MultipartFile(
-        'file',
-        fileStream,
-        length,
-        filename: filename,
+  // Upload file and transcribe
+  static Future<String> uploadFile({
+    required File file,
+    required String modelName,
+  }) async {
+    final url = Uri.parse('$baseUrl/transcribe/');
+    print('my model name $modelName');
+
+    final request = http.MultipartRequest('POST', url)
+      ..fields['model_name'] = modelName
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          file.path,
+          filename: basename(file.path),
+        ),
       );
 
-      request.files.add(multipartFile);
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
 
-      // Send request
-      final response = await request.send();
-      print('response::: ${response}');
-
-      // Handle response
-      if (response.statusCode == 200) {
-        final respStr = await response.stream.bytesToString();
-        print("✅ Success: $respStr");
-        // convert from string into json and return key transcript
-        return jsonDecode(respStr)['transcript'];
-      } else {
-        print("❌ Failed: ${response.statusCode}");
-        return 'حاول مرة أخرى';
-      }
-    } catch (e) {
-      print("❗️ Error uploading video: $e");
-      return 'حدث خطأ في التحميل ، برجاء المحاوله لاحقا';
+    if (response.statusCode == 200) {
+      print('${jsonDecode(response.body)} errrrrrrrrrrrrrrror');
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      final transcript = decoded['raw_transcript'] ?? '';
+      return transcript;
+    } else {
+      throw Exception("حدث خطأ في الانترنت");
     }
   }
 }

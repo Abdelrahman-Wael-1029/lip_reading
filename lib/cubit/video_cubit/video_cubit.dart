@@ -5,7 +5,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
-import 'package:lip_reading/enum/model_enum.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
 import 'package:lip_reading/service/api_service.dart';
@@ -16,7 +15,8 @@ import 'package:video_player/video_player.dart';
 class VideoCubit extends Cubit<VideoState> {
   // Repository
   final VideoRepository _videoRepository;
-  Model selectedModel = Model.formating;
+  String selectedModel = '';
+  List<String> models = [];
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
@@ -24,6 +24,7 @@ class VideoCubit extends Cubit<VideoState> {
   // Controllers
   VideoPlayerController? controller;
   final nameVideoController = TextEditingController();
+  File? videoFile;
 
   // Video state
   double videoProgress = 0.0;
@@ -43,7 +44,17 @@ class VideoCubit extends Cubit<VideoState> {
 
   VideoCubit({VideoRepository? videoRepository})
       : _videoRepository = videoRepository ?? VideoRepository(),
-        super(VideoInitial());
+        super(VideoInitial()) {
+    emit(VideoLoading());
+    ApiService.getModels().then((v) {
+      models = v;
+      if (models.isNotEmpty) selectedModel = models[2];
+      emit(VideoInitial());
+    }).catchError((e) {
+      emit(VideoError('حاول مرة اخرى'));
+      print(e);
+    });
+  }
 
   // UI Control Methods
   void toggleControls() {
@@ -206,16 +217,37 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> reInitializeLastVideo() async {
-    if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
-      final file = File(_currentVideoPath!);
-      if (await file.exists()) {
-        await _initializeVideoController(file);
+    try {
+      if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
+        final file = File(_currentVideoPath!);
+        if (await file.exists()) {
+          videoFile = file;
+          await _initializeVideoController();
+        }
       }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> fetchModels() async {
+    emit(VideoLoading());
+    models = await ApiService.getModels();
+    if (models.isNotEmpty) {
+      selectedModel = models[2];
+      emit(VideoInitial());
+    } else {
+      emit(VideoError('حاول مرة اخرى'));
+      throw Exception('حدث خطاء في الانترنت');
     }
   }
 
   Future<void> _pickVideo(ImageSource source) async {
     try {
+      if (selectedModel.isEmpty) {
+        await fetchModels();
+      }
+
       final XFile? pickedFile = await _picker.pickVideo(
         source: source,
         maxDuration: const Duration(minutes: 1),
@@ -227,7 +259,8 @@ class VideoCubit extends Cubit<VideoState> {
         final file = File(_currentVideoPath!);
 
         if (await file.exists()) {
-          await _initializeVideoController(file);
+          videoFile = file;
+          await _initializeVideoController();
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -240,21 +273,26 @@ class VideoCubit extends Cubit<VideoState> {
         }
       }
     } catch (e) {
-      emit(VideoError('Failed to load video'));
+      emit(VideoError('حدث خطا في اعداد الفيديو'));
     }
   }
 
-  Future<void> _initializeVideoController(File videoFile) async {
+  Future<void> _initializeVideoController() async {
     if (state is VideoLoading) return;
     emit(VideoLoading());
     try {
       await cleanupController();
 
-      var temp = VideoPlayerController.file(videoFile);
+      var temp = VideoPlayerController.file(videoFile!);
       await temp.initialize();
       // check on time duration of video max is 1 minute
       print("time of video in initialize${temp.value.duration.inMinutes}");
+      print(videoFile != null);
       if (temp.value.duration.inSeconds > 60) {
+        videoFile = null;
+        print(videoFile != null);
+
+        await cleanupController();
         emit(VideoError('Video duration exceeds 1 minute'));
         return;
       }
@@ -265,15 +303,18 @@ class VideoCubit extends Cubit<VideoState> {
       totalVideoSeconds = controller!.value.duration.inSeconds;
       totalDuration = _formatDuration(controller!.value.duration);
 
-      nameVideoController.text = await _videoRepository.getNextTitle();
-      String result = await ApiService.uploadVideo(videoFile);
       selectedVideo = VideoModel(
         id: const Uuid().v4(),
-        title: nameVideoController.text,
+        title: '',
         url: '',
-        result: result,
+        result: '',
         model: selectedModel,
       );
+      nameVideoController.text = await _videoRepository.getNextTitle();
+      selectedVideo?.title = nameVideoController.text;
+      selectedVideo?.result = await ApiService.uploadFile(
+          file: videoFile!, modelName: selectedModel);
+      
 
       await controller!.play();
       showControls = true;
@@ -281,6 +322,7 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
       return;
     } catch (e) {
+      print('errrrrrrrrrror $e;;)');
       emit(VideoError('Failed to process video try again'));
       return;
     }
@@ -309,21 +351,15 @@ class VideoCubit extends Cubit<VideoState> {
         return;
       }
       VideoModel? video = await _videoRepository.getVideo(selectedVideo!.id);
-      
+
       if (video != null && video.model == selectedModel) {
         emit(VideoError('This video is already uploaded'));
         return;
-      }
-
-      else if(video != null && video.model != selectedModel) {
-        debugPrint('Video already exists with a different model');
-        debugPrint('Selected model: $selectedModel');
-        debugPrint('Existing video model: ${video.model}');
-        debugPrint('Exsistin selectd video model: ${selectedVideo?.model}');
+      } else if (video != null && video.model != selectedModel) {
         await pauseVideo();
         selectedVideo?.model = selectedModel;
         await updateVideoResult(context);
-        
+
         return;
       }
       if (nameVideoController.text.isEmpty) throw Exception('');
@@ -353,8 +389,9 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void>updateVideoResult(
-      BuildContext context,) async {
+  Future<void> updateVideoResult(
+    BuildContext context,
+  ) async {
     try {
       if (!await ConnectivityService().isConnected()) {
         AwesomeDialog(
@@ -502,5 +539,21 @@ class VideoCubit extends Cubit<VideoState> {
     await cleanupController();
     nameVideoController.dispose();
     return super.close();
+  }
+
+  Future<void> changeModel(String model) async {
+    try {
+      print('start loading $model');
+      emit(VideoLoading());
+      selectedModel = model;
+      selectedVideo?.result = await ApiService.uploadFile(
+        file: videoFile!,
+        modelName: selectedModel,
+      );
+      emit(VideoSuccess());
+    } catch (e) {
+      print('errrrrrrrrrrrrrror $e');
+      emit(VideoError(e.toString()));
+    }
   }
 }
