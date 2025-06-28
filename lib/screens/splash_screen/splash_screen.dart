@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lip_reading/components/app_shell.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
-import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen>
         Navigator.pushReplacementNamed(
             context,
             authCubit.isAuthenticated()
-                ? LipReadingScreen.routeName
+                ? AppShell.routeName
                 : LoginScreen.routeName);
       }
     });
@@ -187,7 +187,7 @@ class LogoAnimation extends StatelessWidget {
               width: 50,
               height: 10,
               decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(.2),
+                  color: Colors.black.withValues(alpha: .2),
                   borderRadius: BorderRadius.circular(100)),
             ),
         ],
@@ -206,7 +206,7 @@ class TextInSplash extends StatelessWidget {
       textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 24,
-        color: AppColors.white.withOpacity(0.8),
+        color: AppColors.white.withValues(alpha: 0.8),
       ),
       child: AnimatedTextKit(
         totalRepeatCount: 1,

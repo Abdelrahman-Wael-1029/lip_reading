@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lip_reading/components/app_shell.dart';
 import 'package:lip_reading/screens/auth/signup_screen.dart';
 import 'package:lip_reading/screens/lip_reading/history_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
@@ -10,6 +11,8 @@ class AppRoutes {
     switch (settings.name) {
       case SplashScreen.routeName:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
+      case AppShell.routeName:
+        return MaterialPageRoute(builder: (_) => const AppShell());
       case LipReadingScreen.routeName:
         return MaterialPageRoute(builder: (_) => const LipReadingScreen());
       case LoginScreen.routeName:
@@ -17,7 +20,7 @@ class AppRoutes {
       case SignupScreen.routeName:
         return MaterialPageRoute(builder: (_) => SignupScreen());
       case HistoryScreen.routeName:
-        return MaterialPageRoute(builder: (_) => HistoryScreen());
+        return MaterialPageRoute(builder: (_) => const HistoryScreen());
 
       default:
         return MaterialPageRoute(builder: (_) => errorRoute());

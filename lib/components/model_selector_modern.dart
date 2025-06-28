@@ -88,10 +88,10 @@ class _ModelSelectorState extends State<ModelSelector>
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                    color: colorScheme.surfaceVariant.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
+                      color: colorScheme.outline.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -113,7 +113,7 @@ class _ModelSelectorState extends State<ModelSelector>
                             Divider(
                               height: 1,
                               thickness: 1,
-                              color: colorScheme.outline.withValues(alpha: 0.1),
+                              color: colorScheme.outline.withOpacity(0.1),
                             ),
                           _buildModelOption(
                             context,
@@ -174,8 +174,8 @@ class _ModelSelectorState extends State<ModelSelector>
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.2)
-                        : colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                        ? colorScheme.primary.withOpacity(0.2)
+                        : colorScheme.surfaceVariant.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -208,8 +208,7 @@ class _ModelSelectorState extends State<ModelSelector>
                         info['description']!,
                         style: textTheme.bodySmall?.copyWith(
                           color: isSelected
-                              ? colorScheme.onPrimaryContainer
-                                  .withValues(alpha: 0.8)
+                              ? colorScheme.onPrimaryContainer.withOpacity(0.8)
                               : colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -228,7 +227,7 @@ class _ModelSelectorState extends State<ModelSelector>
                     border: isSelected
                         ? null
                         : Border.all(
-                            color: colorScheme.outline.withValues(alpha: 0.5),
+                            color: colorScheme.outline.withOpacity(0.5),
                             width: 2,
                           ),
                   ),
@@ -257,10 +256,10 @@ class _ModelSelectorState extends State<ModelSelector>
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+        color: colorScheme.primaryContainer.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.2),
+          color: colorScheme.primary.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -292,7 +291,7 @@ class _ModelSelectorState extends State<ModelSelector>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

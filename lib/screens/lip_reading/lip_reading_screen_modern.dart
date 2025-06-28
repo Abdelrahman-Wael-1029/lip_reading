@@ -81,6 +81,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   }
 
   Widget _buildBody(BuildContext context, VideoState state) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (state is VideoLoading) {
       return _buildLoadingState(context);
     }
@@ -93,8 +95,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           // Video Player Card
           Card(
             elevation: 4,
-            shadowColor:
-                Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
+            shadowColor: colorScheme.shadow.withValues(alpha: 0.2),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Container(
@@ -104,11 +105,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Theme.of(context)
-                          .colorScheme
-                          .surfaceVariant
-                          .withValues(alpha: 0.3),
-                      Theme.of(context).colorScheme.surface,
+                      colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                      colorScheme.surface,
                     ],
                   ),
                 ),
@@ -130,7 +128,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     children: [
                       Icon(
                         Icons.psychology,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -163,7 +161,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     children: [
                       Icon(
                         Icons.text_format,
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -197,7 +195,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                       children: [
                         Icon(
                           Icons.edit,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: colorScheme.primary,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -235,7 +233,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           // Action Buttons
           _buildActionButtons(context, state),
 
-          const SizedBox(height: 100), // Bottom padding
+          const SizedBox(
+              height: 100), // Bottom padding for floating action button
         ],
       ),
     );
@@ -426,6 +425,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   }
 
   Widget _buildActionButtons(BuildContext context, VideoState state) {
+    // final colorScheme = Theme.of(context).colorScheme;
     final videoCubit = context.read<VideoCubit>();
 
     return Row(

@@ -52,8 +52,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await context.read<VideoCubit>().fetchVideos();
-    _onSearch(searchController.text, context.read<VideoCubit>().videos);
+    if (mounted) await context.read<VideoCubit>().fetchVideos();
+    if (mounted) {
+      _onSearch(searchController.text, context.read<VideoCubit>().videos);
+    }
   }
 
   String formatDate(DateTime? date) {
@@ -241,7 +243,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
               const Divider(),
               const SizedBox(height: 8),
               Text(
@@ -258,8 +259,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? AppColors.backgroundDark.withOpacity(0.5)
-                      : AppColors.backgroundLight.withOpacity(0.5),
+                      ? AppColors.backgroundDark.withValues(alpha: 0.5)
+                      : AppColors.backgroundLight.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: isDarkMode

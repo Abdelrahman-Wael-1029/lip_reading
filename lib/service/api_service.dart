@@ -24,11 +24,13 @@ class ApiService {
   static Future<String> uploadFile({
     required File file,
     required String modelName,
+    bool dia = false, // Changed from diacritized to dia
   }) async {
     final url = Uri.parse('$baseUrl/transcribe/');
 
     final request = http.MultipartRequest('POST', url)
       ..fields['model_name'] = modelName
+      ..fields['dia'] = dia.toString() // Changed field name to dia
       ..files.add(
         await http.MultipartFile.fromPath(
           'file',

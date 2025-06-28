@@ -1,12 +1,12 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lip_reading/components/app_shell.dart';
 import 'package:lip_reading/components/custom_button.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/auth/auth_state.dart';
 import 'package:lip_reading/screens/auth/login_screen.dart';
-import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
 import 'package:lip_reading/utils/utils.dart';
 
 class SignupScreen extends StatelessWidget {
@@ -229,8 +229,7 @@ class SignupScreen extends StatelessWidget {
           BlocConsumer<AuthCubit, AuthState>(
             listener: (context, state) {
               if (state is LoginSuccess) {
-                Navigator.pushReplacementNamed(
-                    context, LipReadingScreen.routeName);
+                Navigator.pushReplacementNamed(context, AppShell.routeName);
               } else if (state is LoginFailure) {
                 AwesomeDialog(
                   context: context,

@@ -17,6 +17,8 @@ class VideoCubit extends Cubit<VideoState> {
   final VideoRepository _videoRepository;
   String selectedModel = '';
   List<String> models = [];
+  bool isDiacritized =
+      false; // Add diacritized state (UI name, but API uses 'dia')
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
@@ -146,7 +148,9 @@ class VideoCubit extends Cubit<VideoState> {
         await controller!.seekTo(currentPosition);
         emit(VideoSuccess());
       }
-    } catch (e) {}
+    } catch (e) {
+      // Do Nothing, just ensure we don't throw an error
+    }
   }
 
   Future<void> cleanupController() async {
@@ -222,7 +226,9 @@ class VideoCubit extends Cubit<VideoState> {
           await _initializeVideoController();
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      // Do Nothing, just ensure we don't throw an error
+    }
   }
 
   Future<void> fetchModels() async {
@@ -248,7 +254,7 @@ class VideoCubit extends Cubit<VideoState> {
         maxDuration: const Duration(minutes: 1),
       );
 
-      print('pickedFile: $pickedFile');
+      debugPrint('pickedFile: $pickedFile');
 
       if (pickedFile != null) {
         await cleanupController();
@@ -262,7 +268,8 @@ class VideoCubit extends Cubit<VideoState> {
           emit(VideoError('Video file not found'));
         }
       } else {
-        print(_currentVideoPath != null);
+        debugPrint(
+            '_currentVideoPath is ${_currentVideoPath != null ? "not null" : "null"}');
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
           await reInitializeLastVideo();
@@ -308,7 +315,7 @@ class VideoCubit extends Cubit<VideoState> {
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
       selectedVideo?.result = await ApiService.uploadFile(
-          file: videoFile!, modelName: selectedModel);
+          file: videoFile!, modelName: selectedModel, dia: isDiacritized);
 
       await controller!.play();
       showControls = true;
@@ -351,8 +358,9 @@ class VideoCubit extends Cubit<VideoState> {
       } else if (video != null && video.model != selectedModel) {
         await pauseVideo();
         selectedVideo?.model = selectedModel;
-        await updateVideoResult(context);
-
+        if (context.mounted) {
+          await updateVideoResult(context);
+        }
         return;
       }
       if (nameVideoController.text.isEmpty) throw Exception('');
@@ -368,13 +376,15 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.model = selectedModel;
       await _videoRepository.updateVideo(selectedVideo!);
 
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: 'Video uploaded successfully',
-        btnOkOnPress: () {},
-      ).show();
+      if (context.mounted) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.success,
+          animType: AnimType.rightSlide,
+          title: 'Video uploaded successfully',
+          btnOkOnPress: () {},
+        ).show();
+      }
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(
@@ -387,26 +397,30 @@ class VideoCubit extends Cubit<VideoState> {
   ) async {
     try {
       if (!await ConnectivityService().isConnected()) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.error,
-          animType: AnimType.rightSlide,
-          title: 'No internet connection',
-          btnOkOnPress: () {},
-          btnOkColor: Theme.of(context).primaryColor,
-        ).show();
+        if (context.mounted) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.rightSlide,
+            title: 'No internet connection',
+            btnOkOnPress: () {},
+            btnOkColor: Theme.of(context).primaryColor,
+          ).show();
+        }
         emit(VideoError('No internet connection'));
         return;
       }
       await _videoRepository.updateVideoResult(selectedVideo!);
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: 'Video result updated successfully',
-        btnOkOnPress: () {},
-        btnOkColor: Theme.of(context).primaryColor,
-      ).show();
+      if (context.mounted) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.success,
+          animType: AnimType.rightSlide,
+          title: 'Video result updated successfully',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+      }
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(e.toString()));
@@ -430,26 +444,30 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> updateVideoTitle(BuildContext context) async {
     try {
       if (selectedVideo == null) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.warning,
-          animType: AnimType.rightSlide,
-          title: 'No video selected',
-          btnOkOnPress: () {},
-          btnOkColor: Theme.of(context).primaryColor,
-        ).show();
+        if (context.mounted) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.warning,
+            animType: AnimType.rightSlide,
+            title: 'No video selected',
+            btnOkOnPress: () {},
+            btnOkColor: Theme.of(context).primaryColor,
+          ).show();
+        }
         return;
       }
       // check on network
       if (!await ConnectivityService().isConnected()) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.warning,
-          animType: AnimType.rightSlide,
-          title: 'No internet connection',
-          btnOkOnPress: () {},
-          btnOkColor: Theme.of(context).primaryColor,
-        ).show();
+        if (context.mounted) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.warning,
+            animType: AnimType.rightSlide,
+            title: 'No internet connection',
+            btnOkOnPress: () {},
+            btnOkColor: Theme.of(context).primaryColor,
+          ).show();
+        }
         return;
       }
       if (nameVideoController.text.isEmpty) throw Exception('');
@@ -459,23 +477,27 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Update local state
       selectedVideo = selectedVideo!.copyWith(title: nameVideoController.text);
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: 'Video title updated successfully',
-        btnOkOnPress: () {},
-        btnOkColor: Theme.of(context).primaryColor,
-      ).show();
+      if (context.mounted) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.success,
+          animType: AnimType.rightSlide,
+          title: 'Video title updated successfully',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+      }
     } catch (e) {
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.error,
-        animType: AnimType.rightSlide,
-        title: 'Failed to update title, Video not exist',
-        btnOkOnPress: () {},
-        btnOkColor: Theme.of(context).primaryColor,
-      ).show();
+      if (context.mounted) {
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.error,
+          animType: AnimType.rightSlide,
+          title: 'Failed to update title, Video not exist',
+          btnOkOnPress: () {},
+          btnOkColor: Theme.of(context).primaryColor,
+        ).show();
+      }
     }
   }
 
@@ -484,14 +506,16 @@ class VideoCubit extends Cubit<VideoState> {
     emit(HistoryLoading());
     try {
       if (!await ConnectivityService().isConnected()) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.error,
-          animType: AnimType.rightSlide,
-          title: 'No internet connection',
-          btnOkOnPress: () {},
-          btnOkColor: Theme.of(context).primaryColor,
-        ).show();
+        if (context.mounted) {
+          AwesomeDialog(
+            context: context,
+            dialogType: DialogType.error,
+            animType: AnimType.rightSlide,
+            title: 'No internet connection',
+            btnOkOnPress: () {},
+            btnOkColor: Theme.of(context).primaryColor,
+          ).show();
+        }
         emit(HistoryError('No internet connection'));
         return;
       }
@@ -540,6 +564,7 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.result = await ApiService.uploadFile(
         file: videoFile!,
         modelName: selectedModel,
+        dia: isDiacritized,
       );
       emit(VideoSuccess());
     } catch (e) {
@@ -548,9 +573,32 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> onEnd(double value) async {
-    print('end change');
+    debugPrint('end change');
     final position = Duration(seconds: (value * totalVideoSeconds).toInt());
     await controller!.seekTo(position);
     emit(VideoPlaying());
+  }
+
+  // Toggle diacritized setting
+  void toggleDiacritized() {
+    isDiacritized = !isDiacritized;
+    emit(VideoSuccess()); // Emit to update UI
+  }
+
+  // Re-process video with current diacritized setting
+  Future<void> reprocessWithDiacritized() async {
+    if (videoFile == null || selectedVideo == null) return;
+
+    try {
+      emit(VideoLoading());
+      selectedVideo?.result = await ApiService.uploadFile(
+        file: videoFile!,
+        modelName: selectedModel,
+        dia: isDiacritized,
+      );
+      emit(VideoSuccess());
+    } catch (e) {
+      emit(VideoError(e.toString()));
+    }
   }
 }

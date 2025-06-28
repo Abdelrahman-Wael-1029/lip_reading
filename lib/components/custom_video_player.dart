@@ -101,7 +101,8 @@ class CustomVideoPlayer extends StatelessWidget {
                               RoundSliderOverlayShape(overlayRadius: 12.0),
                           thumbColor: Colors.red,
                           activeTrackColor: Colors.red,
-                          inactiveTrackColor: Colors.black.withOpacity(0.3),
+                          inactiveTrackColor:
+                              Colors.black.withValues(alpha: 0.3),
                         ),
                         child: Slider(
                           value: cubit.videoProgress,
@@ -122,7 +123,7 @@ class CustomVideoPlayer extends StatelessWidget {
                         "${cubit.currentPosition} / ${cubit.totalDuration}",
                         style: TextStyle(
                           color: Colors.black,
-                          backgroundColor: Colors.white.withOpacity(0.7),
+                          backgroundColor: Colors.white.withValues(alpha: 0.7),
                           fontSize: 12.0,
                           fontWeight: FontWeight.bold,
                         ),
@@ -142,7 +143,7 @@ class CustomVideoPlayer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withValues(alpha: 0.6),
       ),
       child: IconButton(
         iconSize: 30.0,
