@@ -8,6 +8,7 @@ class VideoModel {
   String result;
   final DateTime? createdAt;
   String model;
+  String? fileHash;
 
   VideoModel({
     required this.id,
@@ -16,6 +17,7 @@ class VideoModel {
     required this.result,
     this.createdAt,
     required this.model,
+    this.fileHash,
   });
 
   factory VideoModel.fromJson(Map<String, dynamic> json, {String? docId}) {
@@ -28,6 +30,7 @@ class VideoModel {
           ? (json['createdAt'] as Timestamp).toDate()
           : null,
       model: json['model'],
+      fileHash: json['fileHash'],
     );
   }
 
@@ -39,7 +42,8 @@ class VideoModel {
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
-      'model': model
+      'model': model,
+      'fileHash': fileHash,
     };
   }
 
@@ -55,11 +59,12 @@ class VideoModel {
       result: result ?? this.result,
       createdAt: createdAt,
       model: model,
+      fileHash: fileHash,
     );
   }
 
   @override
   String toString() {
-    return 'VideoModel(id: $id, title: $title, url: $url, result: $result createdAt: $createdAt, model: $model)';
+    return 'VideoModel(id: $id, title: $title, url: $url, result: $result createdAt: $createdAt, model: $model fileHash: $fileHash)';
   }
 }
