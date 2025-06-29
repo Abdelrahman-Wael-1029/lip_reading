@@ -312,15 +312,15 @@ class VideoCubit extends Cubit<VideoState> {
         result: '',
         model: selectedModel,
       );
+      emit(VideoLoading());
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
       selectedVideo?.result = await ApiService.uploadFile(
           file: videoFile!, modelName: selectedModel, dia: isDiacritized);
-      
 
       await controller!.play();
       showControls = true;
-      _resetHideControlsTimer();
+      _resetHideControlsTimer();  
       emit(VideoSuccess());
       return;
     } catch (e) {
