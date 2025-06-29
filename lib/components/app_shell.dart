@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';
-import 'package:lip_reading/screens/lip_reading/history_screen.dart';
+import 'package:lip_reading/screens/splash_screen/history_screen.dart';
 
 /// Modern app shell with bottom navigation
 /// Provides clean architecture for navigation between main app sections

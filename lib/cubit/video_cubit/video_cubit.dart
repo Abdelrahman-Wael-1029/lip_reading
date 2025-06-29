@@ -312,10 +312,17 @@ class VideoCubit extends Cubit<VideoState> {
         result: '',
         model: selectedModel,
       );
+      emit(VideoLoading());
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
-      selectedVideo?.result = await ApiService.uploadFile(
-          file: videoFile!, modelName: selectedModel, dia: isDiacritized);
+      var response = await ApiService.uploadFile(
+          fileHash: selectedVideo?.fileHash,
+          file: videoFile!,
+          modelName: selectedModel,
+          dia: isDiacritized);
+      print('myresponse $response');
+      selectedVideo?.result = response['raw_transcript'] ?? '';
+      selectedVideo?.fileHash = response['video_hash'];
 
       await controller!.play();
       showControls = true;
@@ -561,11 +568,13 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       emit(VideoLoading());
       selectedModel = model;
-      selectedVideo?.result = await ApiService.uploadFile(
-        file: videoFile!,
-        modelName: selectedModel,
-        dia: isDiacritized,
-      );
+      var response = await ApiService.uploadFile(
+          fileHash: selectedVideo?.fileHash,
+          file: videoFile!,
+          modelName: selectedModel,
+          dia: isDiacritized);
+      selectedVideo?.result = response['raw_transcript'] ?? '';
+      selectedVideo?.fileHash = response['video_hash'];
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(e.toString()));
@@ -591,14 +600,16 @@ class VideoCubit extends Cubit<VideoState> {
 
     try {
       emit(VideoLoading());
-      selectedVideo?.result = await ApiService.uploadFile(
-        file: videoFile!,
-        modelName: selectedModel,
-        dia: isDiacritized,
-      );
+      var response = await ApiService.uploadFile(
+          fileHash: selectedVideo?.fileHash,
+          file: videoFile!,
+          modelName: selectedModel,
+          dia: isDiacritized);
+      selectedVideo?.result = response['raw_transcript'] ?? '';
+      selectedVideo?.fileHash = response['video_hash'];
       emit(VideoSuccess());
     } catch (e) {
-      emit(VideoError(e.toString()));
+      emit(VideoError('خطاء في الانترنت'));
     }
   }
 }

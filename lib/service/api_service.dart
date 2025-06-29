@@ -21,31 +21,35 @@ class ApiService {
   }
 
   // Upload file and transcribe
-  static Future<String> uploadFile({
-    required File file,
-    required String modelName,
-    bool dia = false, // Changed from diacritized to dia
-  }) async {
+  static Future<Map<String, dynamic>> uploadFile(
+      {required File file,
+      required String modelName,
+      bool dia = false, // Changed from diacritized to dia
+      String? fileHash}) async {
     final url = Uri.parse('$baseUrl/transcribe/');
 
     final request = http.MultipartRequest('POST', url)
       ..fields['model_name'] = modelName
-      ..fields['dia'] = dia.toString() // Changed field name to dia
-      ..files.add(
+      ..fields['dia'] = dia.toString();
+
+    if (fileHash != null) {
+      print('fileHash: $fileHash');
+      request.fields['file_hash'] = fileHash;
+    } else {
+      print('fileHash is null');
+      request.files.add(
         await http.MultipartFile.fromPath(
           'file',
           file.path,
           filename: basename(file.path),
         ),
       );
+    }
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-
     if (response.statusCode == 200) {
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-      final transcript = decoded['raw_transcript'] ?? '';
-      return transcript;
+      return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
       throw Exception("حدث خطأ في الانترنت");
     }
