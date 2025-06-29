@@ -41,7 +41,13 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       context.read<VideoCubit>().pauseVideo();
     } else if (state == AppLifecycleState.resumed && isHidden) {
       isHidden = false;
+      if (context.read<VideoCubit>().controller != null) {
+        context.read<VideoCubit>().seekToCurrentPosition();
+      }
     }
+    if (!isHidden) isHidden = state == AppLifecycleState.hidden;
+    print('previous state $state');
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
@@ -80,7 +86,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   }
 
   Widget _buildBody(BuildContext context, VideoState state) {
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
