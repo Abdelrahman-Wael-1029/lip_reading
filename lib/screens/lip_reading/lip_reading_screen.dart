@@ -81,6 +81,10 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         builder: (context, state) {
           return _buildBody(context, state);
         },
+        buildWhen: (previous, current) => (current is! VideoPlaying &&
+            current is! HistoryLoading &&
+            current is! HistorySuccess &&
+            current is! HistoryError),
       ),
     );
   }
@@ -250,7 +254,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     final videoCubit = context.read<VideoCubit>();
     final result = videoCubit.selectedVideo?.result ?? '';
     // check if loading state
-    if ((videoCubit.selectedVideo?.result.isEmpty ?? true) ||
+    if ((videoCubit.selectedVideo != null &&
+            (videoCubit.selectedVideo!.result.isEmpty)) ||
         videoCubit.state is VideoLoading) {
       return _buildLoadingState(context);
     }

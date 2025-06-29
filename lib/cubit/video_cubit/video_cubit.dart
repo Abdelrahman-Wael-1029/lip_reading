@@ -322,7 +322,7 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       print('myresponse $response');
       selectedVideo?.result = response['raw_transcript'] ?? '';
-      selectedVideo?.fileHash = response['file_hash'];
+      selectedVideo?.fileHash = response['video_hash'];
 
       await controller!.play();
       showControls = true;
@@ -574,7 +574,7 @@ class VideoCubit extends Cubit<VideoState> {
           modelName: selectedModel,
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
-      selectedVideo?.fileHash = response['file_hash'];
+      selectedVideo?.fileHash = response['video_hash'];
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(e.toString()));
@@ -606,7 +606,7 @@ class VideoCubit extends Cubit<VideoState> {
           modelName: selectedModel,
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
-      selectedVideo?.fileHash = response['file_hash'];
+      selectedVideo?.fileHash = response['video_hash'];
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError('خطاء في الانترنت'));
