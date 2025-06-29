@@ -51,6 +51,19 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Enable bundle builds for smaller download sizes
+        bundle {
+            language {
+                enableSplit = true
+            }
+            density {
+                enableSplit = true
+            }
+            abi {
+                enableSplit = true
+            }
+        }
     }
 
     buildTypes {

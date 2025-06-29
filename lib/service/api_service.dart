@@ -30,7 +30,7 @@ class ApiService {
 
     final request = http.MultipartRequest('POST', url)
       ..fields['model_name'] = modelName
-      ..fields['dia'] = dia.toString();
+      ..fields['diacritized'] = dia.toString();
 
     if (fileHash != null) {
       print('fileHash: $fileHash');
