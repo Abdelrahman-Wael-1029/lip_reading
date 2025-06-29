@@ -316,6 +316,7 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.title = nameVideoController.text;
       selectedVideo?.result = await ApiService.uploadFile(
           file: videoFile!, modelName: selectedModel, dia: isDiacritized);
+      
 
       await controller!.play();
       showControls = true;

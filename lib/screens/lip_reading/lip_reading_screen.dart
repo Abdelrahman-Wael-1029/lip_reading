@@ -7,7 +7,7 @@ import 'package:lip_reading/components/diacritized_toggle.dart';
 import 'package:lip_reading/components/model_selector.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
-import 'package:lip_reading/screens/lip_reading/history_screen.dart';
+import 'package:lip_reading/screens/splash_screen/history_screen.dart';
 
 /// Modern redesigned lip reading screen with improved UI/UX
 /// Features semi-transparent cards, improved typography, and diacritized toggle
@@ -183,52 +183,52 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             ),
           ),
 
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
 
           // Video Name Input (if video is loaded)
-          if (state is VideoSuccess) ...[
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.edit,
-                          color: Theme.of(context).colorScheme.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Video Name',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    customTextFormField(
-                      context: context,
-                      controller:
-                          context.read<VideoCubit>().nameVideoController,
-                      hintText: 'Enter video name',
-                      prefixIcon: const Icon(Icons.videocam),
-                      textInputAction: TextInputAction.done,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          
+            // Card(
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         Row(
+            //           children: [
+            //             Icon(
+            //               Icons.edit,
+            //               color: Theme.of(context).colorScheme.primary,
+            //               size: 20,
+            //             ),
+            //             const SizedBox(width: 8),
+            //             Text(
+            //               'Video Name',
+            //               style:
+            //                   Theme.of(context).textTheme.titleMedium?.copyWith(
+            //                         fontWeight: FontWeight.w600,
+            //                       ),
+            //             ),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 16),
+            //         customTextFormField(
+            //           context: context,
+            //           controller:
+            //               context.read<VideoCubit>().nameVideoController,
+            //           hintText: 'Enter video name',
+            //           prefixIcon: const Icon(Icons.videocam),
+            //           textInputAction: TextInputAction.done,
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
 
             const SizedBox(height: 16),
 
             // Transcription Results Card
             _buildTranscriptionCard(context),
-          ],
+          
 
           const SizedBox(height: 24),
 

@@ -14,6 +14,7 @@ class CustomVideoPlayer extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.history,

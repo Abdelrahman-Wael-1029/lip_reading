@@ -174,14 +174,14 @@ class _ModelSelectorState extends State<ModelSelector>
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? colorScheme.primary.withValues(alpha: 0.2)
+                        ? colorScheme.onPrimary.withValues(alpha: 0.2)
                         : colorScheme.surfaceVariant.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _getModelIcon(model.toLowerCase()),
                     color: isSelected
-                        ? colorScheme.primary
+                        ? colorScheme.onPrimary
                         : colorScheme.onSurfaceVariant,
                     size: 20,
                   ),
@@ -276,7 +276,7 @@ class _ModelSelectorState extends State<ModelSelector>
             child: Text(
               '${info['name']}: ${info['detail']}',
               style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onPrimaryContainer,
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
