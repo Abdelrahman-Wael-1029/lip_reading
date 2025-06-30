@@ -1,2 +1,0 @@
-C:/Users/abdelrahman wael/vscode/flutter/lip_reading/android/app/.cxx/Debug/w636i1cb/armeabi-v7a/CMakeFiles/edit_cache.dir
-C:/Users/abdelrahman wael/vscode/flutter/lip_reading/android/app/.cxx/Debug/w636i1cb/armeabi-v7a/CMakeFiles/rebuild_cache.dir
