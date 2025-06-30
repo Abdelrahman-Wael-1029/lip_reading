@@ -266,9 +266,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     final videoCubit = context.read<VideoCubit>();
     final result = videoCubit.selectedVideo?.result ?? '';
     // check if loading state
-    if ((videoCubit.selectedVideo != null &&
-            (videoCubit.selectedVideo!.result.isEmpty)) ||
-        videoCubit.state is VideoLoading) {
+    if (videoCubit.loading) {
       return _buildLoadingState(context);
     }
 

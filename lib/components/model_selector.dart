@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 
 /// Modern AI model selector with smooth animations and improved design
 class ModelSelector extends StatefulWidget {
@@ -61,82 +62,66 @@ class _ModelSelectorState extends State<ModelSelector>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final videoCubit = context.watch<VideoCubit>();
 
-    if (videoCubit.models.isEmpty) {
-      return _buildLoadingState(context);
-    }
+    return BlocBuilder<VideoCubit, VideoState>(
+      buildWhen: (previous, current) => (current is! VideoPlaying &&
+          current is! HistoryLoading &&
+          current is! HistorySuccess &&
+          current is! HistoryError),
+      builder: (context, state) {
+        final videoCubit = context.read<VideoCubit>();
 
-    return AnimatedBuilder(
-      animation: _slideAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - _slideAnimation.value)),
-          child: Opacity(
-            opacity: _slideAnimation.value,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose AI Model',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: videoCubit.models.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final model = entry.value;
-                      final isSelected = model == videoCubit.selectedModel;
-                      final info = modelInfo[model.toLowerCase()]?? {
-                        'name': model,
-                        'description': 'Ai Model',
-                        'detail': '',
-                      };
+        if (videoCubit.models.isEmpty) {
+          return _buildLoadingState(context);
+        }
 
-                      return Column(
-                        children: [
-                          if (index > 0)
-                            Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: colorScheme.outline.withValues(alpha: 0.1),
-                            ),
-                          _buildModelOption(
-                            context,
-                            model: model,
-                            info: info,
-                            isSelected: isSelected,
-                            onTap: () {
-                              if (!isSelected) {
-                                HapticFeedback.selectionClick();
-                                videoCubit.selectedModel = model;
-                                videoCubit.changeModel(model, context);
-                              }
-                            },
+        return AnimatedBuilder(
+          animation: _slideAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, 20 * (1 - _slideAnimation.value)),
+              child: Opacity(
+                opacity: _slideAnimation.value,
+                child: Column(
+                  children: videoCubit.models.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final model = entry.value;
+                    final isSelected = model == videoCubit.selectedModel;
+                    final info = modelInfo[model.toLowerCase()] ??
+                        {
+                          'name': model,
+                          'description': 'Ai Model',
+                          'detail': '',
+                        };
+
+                    return Column(
+                      children: [
+                        if (index > 0)
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: colorScheme.outline.withValues(alpha: 0.1),
                           ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                        _buildModelOption(
+                          context,
+                          model: model,
+                          info: info,
+                          isSelected: isSelected,
+                          onTap: () {
+                            if (!isSelected) {
+                              HapticFeedback.selectionClick();
+                              videoCubit.selectedModel = model;
+                              videoCubit.changeModel(model, context);
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  }).toList(),
                 ),
-                const SizedBox(height: 12),
-                _buildModelDescription(context, videoCubit.selectedModel),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -175,7 +160,8 @@ class _ModelSelectorState extends State<ModelSelector>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? colorScheme.onPrimary.withValues(alpha: 0.2)
-                        : colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                        : colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -247,52 +233,13 @@ class _ModelSelectorState extends State<ModelSelector>
     );
   }
 
-  Widget _buildModelDescription(BuildContext context, String selectedModel) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final info = modelInfo[selectedModel.toLowerCase()];
-
-    if (info == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${info['name']}: ${info['detail']}',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLoadingState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

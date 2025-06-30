@@ -52,6 +52,7 @@ dependencies:
   google_fonts: ^6.2.1
   go_router: ^14.6.2
   rive: ^0.13.17
+  video_compress:
 
 dev_dependencies:
   flutter_test:
