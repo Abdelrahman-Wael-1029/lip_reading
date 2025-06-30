@@ -301,7 +301,12 @@ class VideoCubit extends Cubit<VideoState> {
 
         if (await file.exists()) {
           videoFile = file;
+           videoModelsCache.clear();
           await _initializeVideoController(context);
+          videoModelsCache.add(selectedVideo!.copyWith());
+          for (final item in videoModelsCache) {
+            debugPrint('Cache item: ${item}');
+          }
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -359,17 +364,21 @@ class VideoCubit extends Cubit<VideoState> {
       if (file != null) {
         videoFile = file;
       }
-
+      debugPrint('isDiacritizeddddddddddddddd $isDiacritized');
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
           file: videoFile!,
           modelName: selectedModel,
           dia: isDiacritized);
+      if(response['error'] != null){
+          loading = false;
+          emit(VideoError(response['error']));
+        }
       debugPrint('myresponse $response');
 
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
-      selectedVideo?.diacritized = response['diacritized'] ?? false;
+      selectedVideo?.diacritized = response['metadata']['diacritized'] ?? false;
       if(context.mounted) await uploadVideo(context);
       await controller!.play();
       showControls = true;
@@ -593,6 +602,10 @@ class VideoCubit extends Cubit<VideoState> {
           file: videoFile!,
           modelName: selectedModel,
           dia: isDiacritized);
+        if(response['error'] != null){
+          loading = false;
+          emit(VideoError(response['error']));
+        }
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       
@@ -616,7 +629,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   // Toggle diacritized setting
-  void toggleDiacritized() {
+  void toggleDiacritized(bool value) {
+    if(isDiacritized == value) return; // No change needed
     isDiacritized = !isDiacritized;
     emit(VideoSuccess()); // Emit to update UI
   }
@@ -627,7 +641,9 @@ class VideoCubit extends Cubit<VideoState> {
     loading = true;
     try {
       emit(VideoLoading());
-      
+      for(int i = 0; i < videoModelsCache.length; i++) {
+        debugPrint('before Cache item $i: ${videoModelsCache[i]}');
+      }
       for (final item in videoModelsCache) {
         
         
@@ -644,11 +660,18 @@ class VideoCubit extends Cubit<VideoState> {
           file: videoFile!,
           modelName: selectedModel,
           dia: isDiacritized);
+        if(response['error'] != null){
+          loading = false;
+          emit(VideoError(response['error']));
+        }
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       debugPrint('Response: ${response['diacritized']}');
         selectedVideo?.diacritized = isDiacritized;
         videoModelsCache.add(selectedVideo!.copyWith());
+        for (final item in videoModelsCache) {
+          debugPrint('after Cache item: ${item}');
+        }
         await updateVideoResult();
       
       loading = false;
