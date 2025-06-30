@@ -44,12 +44,12 @@ class _ModelSelectorState extends State<ModelSelector>
   final Map<String, Map<String, String>> modelInfo = {
     'mstcn': {
       'name': 'MSTCN',
-      'description': 'Multi-Stage Temporal CNN',
+      'description': 'Multi-scale temporal convolutional network',
       'detail': 'Fast & efficient',
     },
-    'dstcn': {
+    'dctcn': {
       'name': 'DSTCN',
-      'description': 'Dense Spatial-Temporal CNN',
+      'description': 'Densely connected temporal convolutional network',
       'detail': 'Balanced accuracy',
     },
     'conformer': {
@@ -62,7 +62,6 @@ class _ModelSelectorState extends State<ModelSelector>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return BlocBuilder<VideoCubit, VideoState>(
       buildWhen: (previous, current) => (current is! VideoPlaying &&
@@ -84,70 +83,41 @@ class _ModelSelectorState extends State<ModelSelector>
               child: Opacity(
                 opacity: _slideAnimation.value,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Choose AI Model',
-                      style: textTheme.labelLarge?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color:
-                            colorScheme.surfaceVariant.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: colorScheme.outline.withValues(alpha: 0.2),
-                          width: 1,
+                  children: videoCubit.models.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final model = entry.value;
+                    final isSelected = model == videoCubit.selectedModel;
+                    final info = modelInfo[model.toLowerCase()] ??
+                        {
+                          'name': model,
+                          'description': 'Ai Model',
+                          'detail': '',
+                        };
+
+                    return Column(
+                      children: [
+                        if (index > 0)
+                          Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: colorScheme.outline.withValues(alpha: 0.1),
+                          ),
+                        _buildModelOption(
+                          context,
+                          model: model,
+                          info: info,
+                          isSelected: isSelected,
+                          onTap: () {
+                            if (!isSelected) {
+                              HapticFeedback.selectionClick();
+                              videoCubit.selectedModel = model;
+                              videoCubit.changeModel(model, context);
+                            }
+                          },
                         ),
-                      ),
-                      child: Column(
-                        children:
-                            videoCubit.models.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final model = entry.value;
-                          final isSelected = model == videoCubit.selectedModel;
-                          final info = modelInfo[model.toLowerCase()] ??
-                              {
-                                'name': model,
-                                'description': 'AI Model',
-                                'detail': 'Processing',
-                              };
-
-                          return Column(
-                            children: [
-                              if (index > 0)
-                                Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: colorScheme.outline
-                                      .withValues(alpha: 0.1),
-                                ),
-                              _buildModelOption(
-                                context,
-                                model: model,
-                                info: info,
-                                isSelected: isSelected,
-                                onTap: () {
-                                  if (videoCubit.loading) return;
-
-                                  if (!isSelected) {
-                                    HapticFeedback.selectionClick();
-                                    videoCubit.changeModel(model);
-                                  }
-                                },
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildModelDescription(context, videoCubit.selectedModel),
-                  ],
+                      ],
+                    );
+                  }).toList(),
                 ),
               ),
             );
@@ -190,7 +160,8 @@ class _ModelSelectorState extends State<ModelSelector>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? colorScheme.onPrimary.withValues(alpha: 0.2)
-                        : colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                        : colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -262,52 +233,13 @@ class _ModelSelectorState extends State<ModelSelector>
     );
   }
 
-  Widget _buildModelDescription(BuildContext context, String selectedModel) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    final info = modelInfo[selectedModel.toLowerCase()];
-
-    if (info == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            size: 16,
-            color: colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              '${info['name']}: ${info['detail']}',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLoadingState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

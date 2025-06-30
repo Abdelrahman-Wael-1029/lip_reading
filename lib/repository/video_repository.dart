@@ -92,8 +92,9 @@ class VideoRepository {
       await _firestoreService.updateDocument(
         collection: _collection,
         documentId: videoModel.id,
-        data: {'results': videoModel.result,
+        data: {'result': videoModel.result,
         'model': videoModel.model,
+        'diacritized': videoModel.diacritized,
         },
       );
     } catch (e) {
