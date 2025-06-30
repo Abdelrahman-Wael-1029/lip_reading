@@ -44,12 +44,12 @@ class _ModelSelectorState extends State<ModelSelector>
   final Map<String, Map<String, String>> modelInfo = {
     'mstcn': {
       'name': 'MSTCN',
-      'description': 'Multi-scale temporal convolutional network',
+      'description': 'Multi-Scale Temporal CNN',
       'detail': 'Fast & efficient',
     },
     'dctcn': {
-      'name': 'DSTCN',
-      'description': 'Densely connected temporal convolutional network',
+      'name': 'DCTCN',
+      'description': 'Densely-Connected Temporal CNN',
       'detail': 'Balanced accuracy',
     },
     'conformer': {
