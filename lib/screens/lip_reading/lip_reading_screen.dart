@@ -1,12 +1,13 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/components/diacritized_toggle.dart';
 import 'package:lip_reading/components/model_selector.dart';
+import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
-import 'package:lip_reading/screens/splash_screen/history_screen.dart';
 
 /// Modern redesigned lip reading screen with improved UI/UX
 /// Features semi-transparent cards, improved typography, and diacritized toggle
@@ -33,6 +34,20 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      animType: AnimType.rightSlide,
+      title: 'Are you sure',
+      desc: 'Do you want to logout?',
+      btnOkOnPress: () => context.read<AuthCubit>().logout(context),
+      btnOkColor: Theme.of(context).colorScheme.error,
+      btnCancelOnPress: () {},
+      btnCancelColor: Theme.of(context).colorScheme.primary,
+    ).show();
   }
 
   @override
@@ -69,11 +84,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, HistoryScreen.routeName);
-            },
-            icon: const Icon(Icons.history),
-            tooltip: 'View History',
+            icon: const Icon(Icons.logout),
+            onPressed: () => _showLogoutDialog(context),
           ),
         ],
       ),
@@ -446,7 +458,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         // Pick Video Button
         Expanded(
           child: FilledButton.icon(
-            onPressed: () => videoCubit.pickVideoFromGallery(),
+            onPressed: () => videoCubit.pickVideoFromGallery(context),
             icon: const Icon(Icons.video_library),
             label: const Text('Pick Video'),
             style: FilledButton.styleFrom(
@@ -460,7 +472,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         // Record Video Button
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () => videoCubit.recordVideo(),
+            onPressed: () => videoCubit.recordVideo(context),
             icon: const Icon(Icons.videocam),
             label: const Text('Record'),
             style: OutlinedButton.styleFrom(

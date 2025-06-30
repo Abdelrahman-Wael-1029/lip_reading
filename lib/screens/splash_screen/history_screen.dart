@@ -2,7 +2,6 @@ import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
-import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
@@ -28,19 +27,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.warning,
-      animType: AnimType.rightSlide,
-      title: 'Are you sure',
-      desc: 'Do you want to logout?',
-      btnOkOnPress: () => context.read<AuthCubit>().logout(context),
-      btnOkColor: Theme.of(context).colorScheme.error,
-      btnCancelOnPress: () {},
-      btnCancelColor: Theme.of(context).colorScheme.primary,
-    ).show();
-  }
+  // void _showLogoutDialog(BuildContext context) {
+  //   AwesomeDialog(
+  //     context: context,
+  //     dialogType: DialogType.warning,
+  //     animType: AnimType.rightSlide,
+  //     title: 'Are you sure',
+  //     desc: 'Do you want to logout?',
+  //     btnOkOnPress: () => context.read<AuthCubit>().logout(context),
+  //     btnOkColor: Theme.of(context).colorScheme.error,
+  //     btnCancelOnPress: () {},
+  //     btnCancelColor: Theme.of(context).colorScheme.primary,
+  //   ).show();
+  // }
 
   void _onSearch(String query, List<VideoModel> videos) {
     setState(() {
@@ -76,12 +75,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       appBar: AppBar(
         title: const Text('History'),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _showLogoutDialog(context),
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(Icons.logout),
+        //     onPressed: () => _showLogoutDialog(context),
+        //   ),
+        // ],
       ),
       body: state is HistoryLoading
           ? const Center(child: CircularProgressIndicator())
@@ -233,7 +232,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       ],
                     ),
                   ),
-                  Text(video.model),
+                  Column(children: [
+                    Text(video.model),
+                    Text(
+                      video.diacritized == true ? 'Diacritized' : 'Plain',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: isDarkMode
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight,
+                          ),
+                    ),
+                  ]),
                   IconButton(
                     icon: const Icon(Icons.delete),
                     color:

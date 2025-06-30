@@ -9,6 +9,7 @@ class VideoModel {
   final DateTime? createdAt;
   String model;
   String? fileHash;
+  bool? diacritized;
 
   VideoModel({
     required this.id,
@@ -18,6 +19,7 @@ class VideoModel {
     this.createdAt,
     required this.model,
     this.fileHash,
+    this.diacritized,
   });
 
   factory VideoModel.fromJson(Map<String, dynamic> json, {String? docId}) {
@@ -31,6 +33,7 @@ class VideoModel {
           : null,
       model: json['model'],
       fileHash: json['fileHash'],
+      diacritized: json['diacritized'] ?? false,
     );
   }
 
@@ -44,6 +47,7 @@ class VideoModel {
           : FieldValue.serverTimestamp(),
       'model': model,
       'fileHash': fileHash,
+      'diacritized': diacritized ?? false,
     };
   }
 
@@ -60,11 +64,12 @@ class VideoModel {
       createdAt: createdAt,
       model: model,
       fileHash: fileHash,
+      diacritized: diacritized,
     );
   }
 
   @override
   String toString() {
-    return 'VideoModel(id: $id, title: $title, url: $url, result: $result createdAt: $createdAt, model: $model fileHash: $fileHash)';
+    return 'VideoModel(id: $id, title: $title, url: $url, result: $result createdAt: $createdAt, model: $model fileHash: $fileHash, diacritized: $diacritized)';
   }
 }

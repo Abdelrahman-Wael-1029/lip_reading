@@ -43,12 +43,12 @@ class _ModelSelectorState extends State<ModelSelector>
   final Map<String, Map<String, String>> modelInfo = {
     'mstcn': {
       'name': 'MSTCN',
-      'description': 'Multi-Stage Temporal CNN',
+      'description': 'Multi-scale temporal convolutional network',
       'detail': 'Fast & efficient',
     },
-    'dstcn': {
+    'dctcn': {
       'name': 'DSTCN',
-      'description': 'Dense Spatial-Temporal CNN',
+      'description': 'Densely connected temporal convolutional network',
       'detail': 'Balanced accuracy',
     },
     'conformer': {
@@ -100,12 +100,11 @@ class _ModelSelectorState extends State<ModelSelector>
                       final index = entry.key;
                       final model = entry.value;
                       final isSelected = model == videoCubit.selectedModel;
-                      final info = modelInfo[model.toLowerCase()] ??
-                          {
-                            'name': model,
-                            'description': 'AI Model',
-                            'detail': 'Processing',
-                          };
+                      final info = modelInfo[model.toLowerCase()]?? {
+                        'name': model,
+                        'description': 'Ai Model',
+                        'detail': '',
+                      };
 
                       return Column(
                         children: [
@@ -123,7 +122,8 @@ class _ModelSelectorState extends State<ModelSelector>
                             onTap: () {
                               if (!isSelected) {
                                 HapticFeedback.selectionClick();
-                                videoCubit.changeModel(model);
+                                videoCubit.selectedModel = model;
+                                videoCubit.changeModel(model, context);
                               }
                             },
                           ),

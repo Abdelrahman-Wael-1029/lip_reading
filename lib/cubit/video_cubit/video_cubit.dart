@@ -207,23 +207,23 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   // Video Pick Methods
-  Future<void> pickVideoFromGallery() async {
+  Future<void> pickVideoFromGallery(BuildContext context) async {
     await pauseVideo();
-    await _pickVideo(ImageSource.gallery);
+    await _pickVideo(ImageSource.gallery, context);
   }
 
-  Future<void> recordVideo() async {
+  Future<void> recordVideo(BuildContext context) async {
     await pauseVideo();
-    await _pickVideo(ImageSource.camera);
+    await _pickVideo(ImageSource.camera,context);
   }
 
-  Future<void> reInitializeLastVideo() async {
+  Future<void> reInitializeLastVideo(BuildContext context) async {
     try {
       if (_currentVideoPath != null && _currentVideoPath!.isNotEmpty) {
         final file = File(_currentVideoPath!);
         if (await file.exists()) {
           videoFile = file;
-          await _initializeVideoController();
+          await _initializeVideoController(context);
         }
       }
     } catch (e) {
@@ -243,7 +243,7 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> _pickVideo(ImageSource source) async {
+  Future<void> _pickVideo(ImageSource source, BuildContext context) async {
     try {
       if (selectedModel.isEmpty) {
         await fetchModels();
@@ -263,7 +263,7 @@ class VideoCubit extends Cubit<VideoState> {
 
         if (await file.exists()) {
           videoFile = file;
-          await _initializeVideoController();
+          await _initializeVideoController(context);
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -272,7 +272,7 @@ class VideoCubit extends Cubit<VideoState> {
             '_currentVideoPath is ${_currentVideoPath != null ? "not null" : "null"}');
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
-          await reInitializeLastVideo();
+          await reInitializeLastVideo(context);
         } else {
           emit(VideoPlaying());
         }
@@ -282,7 +282,7 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> _initializeVideoController() async {
+  Future<void> _initializeVideoController(BuildContext context) async {
     if (state is VideoLoading) return;
     emit(VideoLoading());
     try {
@@ -315,15 +315,19 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoLoading());
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
+      
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
           file: videoFile!,
           modelName: selectedModel,
           dia: isDiacritized);
       print('myresponse $response');
+      
+      
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
-
+      selectedVideo?.diacritized = response['diacritized'] ?? false;
+      await uploadVideo(context);
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
@@ -346,27 +350,14 @@ class VideoCubit extends Cubit<VideoState> {
 
   // Repository Methods
   Future<void> uploadVideo(BuildContext context) async {
-    if (state is VideoLoading) return;
-    emit(VideoLoading());
+    
+    
     try {
       if (!await canUpload()) {
         if (!await ConnectivityService().isConnected()) {
           emit(VideoError('No internet connection'));
         } else {
           emit(VideoError('No video selected'));
-        }
-        return;
-      }
-      VideoModel? video = await _videoRepository.getVideo(selectedVideo!.id);
-
-      if (video != null && video.model == selectedModel) {
-        emit(VideoError('This video is already uploaded'));
-        return;
-      } else if (video != null && video.model != selectedModel) {
-        await pauseVideo();
-        selectedVideo?.model = selectedModel;
-        if (context.mounted) {
-          await updateVideoResult(context);
         }
         return;
       }
@@ -383,16 +374,15 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.model = selectedModel;
       await _videoRepository.updateVideo(selectedVideo!);
 
-      if (context.mounted) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.success,
-          animType: AnimType.rightSlide,
-          title: 'Video uploaded successfully',
-          btnOkOnPress: () {},
-        ).show();
-      }
-      emit(VideoSuccess());
+      // if (context.mounted) {
+      //   AwesomeDialog(
+      //     context: context,
+      //     dialogType: DialogType.success,
+      //     animType: AnimType.rightSlide,
+      //     title: 'Video uploaded successfully',
+      //     btnOkOnPress: () {},
+      //   ).show();
+      // }
     } catch (e) {
       emit(VideoError(
           'you arrive into limit please delete to upload another video'));
@@ -400,35 +390,13 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> updateVideoResult(
-    BuildContext context,
   ) async {
     try {
       if (!await ConnectivityService().isConnected()) {
-        if (context.mounted) {
-          AwesomeDialog(
-            context: context,
-            dialogType: DialogType.error,
-            animType: AnimType.rightSlide,
-            title: 'No internet connection',
-            btnOkOnPress: () {},
-            btnOkColor: Theme.of(context).primaryColor,
-          ).show();
-        }
         emit(VideoError('No internet connection'));
         return;
       }
       await _videoRepository.updateVideoResult(selectedVideo!);
-      if (context.mounted) {
-        AwesomeDialog(
-          context: context,
-          dialogType: DialogType.success,
-          animType: AnimType.rightSlide,
-          title: 'Video result updated successfully',
-          btnOkOnPress: () {},
-          btnOkColor: Theme.of(context).primaryColor,
-        ).show();
-      }
-      emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(e.toString()));
     }
@@ -564,7 +532,7 @@ class VideoCubit extends Cubit<VideoState> {
     return super.close();
   }
 
-  Future<void> changeModel(String model) async {
+  Future<void> changeModel(String model, BuildContext context) async {
     try {
       emit(VideoLoading());
       selectedModel = model;
@@ -575,6 +543,11 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
+      if(selectedVideo?.model != selectedModel){
+        selectedVideo?.model = selectedModel;
+        updateVideoResult();
+      }
+      
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError(e.toString()));
@@ -607,6 +580,10 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
+      if(selectedVideo?.diacritized != isDiacritized) {
+        selectedVideo?.diacritized = isDiacritized;
+        await updateVideoResult();
+      }
       emit(VideoSuccess());
     } catch (e) {
       emit(VideoError('خطاء في الانترنت'));
