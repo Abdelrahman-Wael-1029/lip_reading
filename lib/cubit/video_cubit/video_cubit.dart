@@ -41,6 +41,7 @@ class VideoCubit extends Cubit<VideoState> {
   // Data
   List<VideoModel> videos = [];
   VideoModel? selectedVideo;
+  List<VideoModel> videoModelsCache = [];
 
   // Timers and subscriptions
   Timer? _hideControlsTimer;
@@ -300,7 +301,9 @@ class VideoCubit extends Cubit<VideoState> {
 
         if (await file.exists()) {
           videoFile = file;
+          videoModelsCache.clear();
           await _initializeVideoController(context);
+          videoModelsCache.add(selectedVideo!.copyWith());
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -578,6 +581,14 @@ class VideoCubit extends Cubit<VideoState> {
     loading = true;
     try {
       emit(VideoLoading());
+      for (final item in videoModelsCache) {
+        if (item.model == model && item.diacritized == isDiacritized) {
+          selectedVideo = item.copyWith();
+          loading = false;
+          emit(VideoSuccess());
+          return;
+        }
+      }
       selectedModel = model;
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
@@ -586,10 +597,10 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
-      if (selectedVideo?.model != selectedModel) {
+      
         selectedVideo?.model = selectedModel;
+        videoModelsCache.add(selectedVideo!.copyWith());
         updateVideoResult();
-      }
 
       loading = false;
       emit(VideoSuccess());
@@ -618,6 +629,18 @@ class VideoCubit extends Cubit<VideoState> {
     loading = true;
     try {
       emit(VideoLoading());
+      
+      for (final item in videoModelsCache) {
+        
+        
+        if (item.model == selectedModel && item.diacritized == isDiacritized) {
+          debugPrint('Matched item: ${item}');
+          selectedVideo = item.copyWith();
+          loading = false;
+          emit(VideoSuccess());
+          return;
+        }
+      }
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
           file: videoFile!,
@@ -625,10 +648,11 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
-      if (selectedVideo?.diacritized != isDiacritized) {
+      debugPrint('Response: ${response['diacritized']}');
         selectedVideo?.diacritized = isDiacritized;
+        videoModelsCache.add(selectedVideo!.copyWith());
         await updateVideoResult();
-      }
+      
       loading = false;
       emit(VideoSuccess());
     } catch (e) {
