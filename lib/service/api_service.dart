@@ -23,7 +23,7 @@ class ApiService {
 
   // Upload file and transcribe
   static Future<Map<String, dynamic>> uploadFile(
-      {required File file,
+      {File? file,
       required String modelName,
       bool dia = false, // Changed from diacritized to dia
       String? fileHash}) async {
@@ -36,7 +36,7 @@ class ApiService {
     if (fileHash != null) {
       debugPrint('fileHash: $fileHash');
       request.fields['file_hash'] = fileHash;
-    } else {
+    } else if (file != null) {
       debugPrint('fileHash is null');
       request.files.add(
         await http.MultipartFile.fromPath(

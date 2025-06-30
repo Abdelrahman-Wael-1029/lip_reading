@@ -70,8 +70,10 @@ class _ModelSelectorState extends State<ModelSelector>
           current is! HistoryError),
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();
-
-        if (videoCubit.models.isEmpty) {
+        if (videoCubit.models == null) {
+          return _buildErrorState(context);
+        }
+        if (videoCubit.models!.isEmpty) {
           return _buildLoadingState(context);
         }
 
@@ -84,7 +86,7 @@ class _ModelSelectorState extends State<ModelSelector>
                 opacity: _slideAnimation.value,
                 child: Column(
                   children: [
-                    ...videoCubit.models.asMap().entries.map((entry) {
+                    ...videoCubit.models!.asMap().entries.map((entry) {
                       final index = entry.key;
                       final model = entry.value;
                       final isSelected = model == videoCubit.selectedModel;
@@ -109,6 +111,7 @@ class _ModelSelectorState extends State<ModelSelector>
                             info: info,
                             isSelected: isSelected,
                             onTap: () {
+                              if (videoCubit.loading) return;
                               if (!isSelected) {
                                 HapticFeedback.selectionClick();
                                 videoCubit.selectedModel = model;
@@ -296,7 +299,7 @@ class _ModelSelectorState extends State<ModelSelector>
           ),
           const SizedBox(width: 12),
           Text(
-            'Loading AI models...',
+            'Loading AI mo!dels...',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -317,5 +320,22 @@ class _ModelSelectorState extends State<ModelSelector>
       default:
         return Icons.psychology;
     }
+  }
+
+  Widget _buildErrorState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        'Error loading AI models. Please try again later.',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+      ),
+    );
   }
 }

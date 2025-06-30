@@ -27,20 +27,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  // void _showLogoutDialog(BuildContext context) {
-  //   AwesomeDialog(
-  //     context: context,
-  //     dialogType: DialogType.warning,
-  //     animType: AnimType.rightSlide,
-  //     title: 'Are you sure',
-  //     desc: 'Do you want to logout?',
-  //     btnOkOnPress: () => context.read<AuthCubit>().logout(context),
-  //     btnOkColor: Theme.of(context).colorScheme.error,
-  //     btnCancelOnPress: () {},
-  //     btnCancelColor: Theme.of(context).colorScheme.primary,
-  //   ).show();
-  // }
-
   void _onSearch(String query, List<VideoModel> videos) {
     setState(() {
       filteredVideos = videos
@@ -181,11 +167,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          final bool success =
-              await context.read<VideoCubit>().initializeNetworkVideo(video);
-          if (context.mounted && success) {
-            Navigator.pop(context);
-          }
+          if (context.read<VideoCubit>().loading) return;
+          await context.read<VideoCubit>().initializeNetworkVideo(video);
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
