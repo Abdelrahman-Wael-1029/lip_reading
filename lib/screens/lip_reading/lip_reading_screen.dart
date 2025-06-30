@@ -61,7 +61,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       }
     }
     if (!isHidden) isHidden = state == AppLifecycleState.hidden;
-    print('previous state $state');
+    debugPrint('previous state $state');
     super.didChangeAppLifecycleState(state);
   }
 

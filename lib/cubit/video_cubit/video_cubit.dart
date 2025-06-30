@@ -227,13 +227,13 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> pickVideoFromGallery(BuildContext context) async {
     if (loading) return;
     await pauseVideo();
-    await _pickVideo(ImageSource.gallery, context);
+    if(context.mounted) await _pickVideo(ImageSource.gallery, context);
   }
 
   Future<void> recordVideo(BuildContext context) async {
     if (loading) return;
     await pauseVideo();
-    await _pickVideo(ImageSource.camera, context);
+    if(context.mounted) await _pickVideo(ImageSource.camera, context);
   }
 
   Future<void> reInitializeLastVideo(BuildContext context) async {
@@ -242,7 +242,7 @@ class VideoCubit extends Cubit<VideoState> {
         final file = File(_currentVideoPath!);
         if (await file.exists()) {
           videoFile = file;
-          await _initializeVideoController(context);
+          if(context.mounted) await _initializeVideoController(context);
         }
       }
     } catch (e) {
@@ -275,7 +275,7 @@ class VideoCubit extends Cubit<VideoState> {
         return info.file!;
       }
     } catch (e) {
-      print('Error compressing video: $e');
+      debugPrint('Error compressing video: $e');
     }
     return null;
   }
@@ -301,9 +301,7 @@ class VideoCubit extends Cubit<VideoState> {
 
         if (await file.exists()) {
           videoFile = file;
-          videoModelsCache.clear();
           await _initializeVideoController(context);
-          videoModelsCache.add(selectedVideo!.copyWith());
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -312,7 +310,7 @@ class VideoCubit extends Cubit<VideoState> {
             '_currentVideoPath is ${_currentVideoPath != null ? "not null" : "null"}');
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
-          await reInitializeLastVideo(context);
+          if(context.mounted) await reInitializeLastVideo(context);
         } else {
           emit(VideoPlaying());
         }
@@ -367,12 +365,12 @@ class VideoCubit extends Cubit<VideoState> {
           file: videoFile!,
           modelName: selectedModel,
           dia: isDiacritized);
-      print('myresponse $response');
+      debugPrint('myresponse $response');
 
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       selectedVideo?.diacritized = response['diacritized'] ?? false;
-      await uploadVideo(context);
+      if(context.mounted) await uploadVideo(context);
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
