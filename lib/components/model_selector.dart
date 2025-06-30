@@ -71,10 +71,10 @@ class _ModelSelectorState extends State<ModelSelector>
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();
         if (videoCubit.models == null) {
-          return _buildErrorState(context);
+          return _buildLoadingState(context);
         }
         if (videoCubit.models!.isEmpty) {
-          return _buildLoadingState(context);
+          return _buildErrorState(context);
         }
 
         return AnimatedBuilder(
