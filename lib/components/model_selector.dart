@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 
 /// Modern AI model selector with smooth animations and improved design
 class ModelSelector extends StatefulWidget {
@@ -62,81 +63,95 @@ class _ModelSelectorState extends State<ModelSelector>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final videoCubit = context.watch<VideoCubit>();
 
-    if (videoCubit.models.isEmpty) {
-      return _buildLoadingState(context);
-    }
+    return BlocBuilder<VideoCubit, VideoState>(
+      buildWhen: (previous, current) => (current is! VideoPlaying &&
+          current is! HistoryLoading &&
+          current is! HistorySuccess &&
+          current is! HistoryError),
+      builder: (context, state) {
+        final videoCubit = context.read<VideoCubit>();
 
-    return AnimatedBuilder(
-      animation: _slideAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - _slideAnimation.value)),
-          child: Opacity(
-            opacity: _slideAnimation.value,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Choose AI Model',
-                  style: textTheme.labelLarge?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                      width: 1,
+        if (videoCubit.models.isEmpty) {
+          return _buildLoadingState(context);
+        }
+
+        return AnimatedBuilder(
+          animation: _slideAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, 20 * (1 - _slideAnimation.value)),
+              child: Opacity(
+                opacity: _slideAnimation.value,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Choose AI Model',
+                      style: textTheme.labelLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    children: videoCubit.models.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final model = entry.value;
-                      final isSelected = model == videoCubit.selectedModel;
-                      final info = modelInfo[model.toLowerCase()] ??
-                          {
-                            'name': model,
-                            'description': 'AI Model',
-                            'detail': 'Processing',
-                          };
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color:
+                            colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.outline.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children:
+                            videoCubit.models.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final model = entry.value;
+                          final isSelected = model == videoCubit.selectedModel;
+                          final info = modelInfo[model.toLowerCase()] ??
+                              {
+                                'name': model,
+                                'description': 'AI Model',
+                                'detail': 'Processing',
+                              };
 
-                      return Column(
-                        children: [
-                          if (index > 0)
-                            Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: colorScheme.outline.withValues(alpha: 0.1),
-                            ),
-                          _buildModelOption(
-                            context,
-                            model: model,
-                            info: info,
-                            isSelected: isSelected,
-                            onTap: () {
-                              if (!isSelected) {
-                                HapticFeedback.selectionClick();
-                                videoCubit.changeModel(model);
-                              }
-                            },
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  ),
+                          return Column(
+                            children: [
+                              if (index > 0)
+                                Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: colorScheme.outline
+                                      .withValues(alpha: 0.1),
+                                ),
+                              _buildModelOption(
+                                context,
+                                model: model,
+                                info: info,
+                                isSelected: isSelected,
+                                onTap: () {
+                                  if (videoCubit.loading) return;
+
+                                  if (!isSelected) {
+                                    HapticFeedback.selectionClick();
+                                    videoCubit.changeModel(model);
+                                  }
+                                },
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModelDescription(context, videoCubit.selectedModel),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                _buildModelDescription(context, videoCubit.selectedModel),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

@@ -19,6 +19,7 @@ class VideoCubit extends Cubit<VideoState> {
   List<String> models = [];
   bool isDiacritized =
       false; // Add diacritized state (UI name, but API uses 'dia')
+  bool loading = false;
 
   // Image picker
   final ImagePicker _picker = ImagePicker();
@@ -186,6 +187,7 @@ class VideoCubit extends Cubit<VideoState> {
         final position = controller!.value.position;
         final duration = controller!.value.duration;
         if (position >= duration) {
+          controller!.seekTo(Duration.zero);
           emit(VideoPlaying());
         }
         if (!controller!.value.isPlaying) return;
@@ -283,7 +285,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> _initializeVideoController() async {
-    if (state is VideoLoading) return;
+    if (state is VideoLoading || loading) return;
+    loading = true;
     emit(VideoLoading());
     try {
       await cleanupController();
@@ -327,9 +330,11 @@ class VideoCubit extends Cubit<VideoState> {
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
+      loading = false;
       emit(VideoSuccess());
       return;
     } catch (e) {
+      loading = false;
       emit(VideoError('Failed to process video try again'));
       return;
     }
@@ -565,6 +570,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> changeModel(String model) async {
+    if (state is VideoLoading || loading) return;
+    loading = true;
     try {
       emit(VideoLoading());
       selectedModel = model;
@@ -575,9 +582,11 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
+      loading = false;
       emit(VideoSuccess());
     } catch (e) {
-      emit(VideoError(e.toString()));
+      loading = false;
+      emit(VideoError('خطاء في الانترنت'));
     }
   }
 
@@ -596,8 +605,8 @@ class VideoCubit extends Cubit<VideoState> {
 
   // Re-process video with current diacritized setting
   Future<void> reprocessWithDiacritized() async {
-    if (videoFile == null || selectedVideo == null) return;
-
+    if (videoFile == null || selectedVideo == null || loading) return;
+    loading = true;
     try {
       emit(VideoLoading());
       var response = await ApiService.uploadFile(
@@ -607,8 +616,10 @@ class VideoCubit extends Cubit<VideoState> {
           dia: isDiacritized);
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
+      loading = false;
       emit(VideoSuccess());
     } catch (e) {
+      loading = false;
       emit(VideoError('خطاء في الانترنت'));
     }
   }

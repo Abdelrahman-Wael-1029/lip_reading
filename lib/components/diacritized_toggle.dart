@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
+import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 
 /// Modern segmented control for diacritized text toggle
 /// Provides clear visual feedback and smooth animations
@@ -12,80 +13,91 @@ class DiacritizedToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final videoCubit = context.watch<VideoCubit>();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Text Style',
-          style: textTheme.labelLarge?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.2),
-              width: 1,
+    return BlocBuilder<VideoCubit, VideoState>(
+      buildWhen: (previous, current) => (current is! VideoPlaying &&
+          current is! HistoryLoading &&
+          current is! HistorySuccess &&
+          current is! HistoryError),
+      builder: (context, state) {
+        final videoCubit = context.read<VideoCubit>();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Text Style',
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildSegment(
-                  context,
-                  label: 'Plain',
-                  subtitle: 'Without diacritics',
-                  icon: Icons.text_fields,
-                  isSelected: !videoCubit.isDiacritized,
-                  onTap: () {
-                    if (videoCubit.isDiacritized) {
-                      HapticFeedback.selectionClick();
-                      videoCubit.toggleDiacritized();
-                      videoCubit.reprocessWithDiacritized();
-                    }
-                  },
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                  width: 1,
                 ),
               ),
-              Container(
-                width: 1,
-                height: 48,
-                color: colorScheme.outline.withValues(alpha: 0.2),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSegment(
+                      context,
+                      label: 'Plain',
+                      subtitle: 'Without diacritics',
+                      icon: Icons.text_fields,
+                      isSelected: !videoCubit.isDiacritized,
+                      onTap: () {
+                        if (videoCubit.loading) return;
+
+                        if (videoCubit.isDiacritized) {
+                          HapticFeedback.selectionClick();
+                          videoCubit.toggleDiacritized();
+                          videoCubit.reprocessWithDiacritized();
+                        }
+                      },
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 48,
+                    color: colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                  Expanded(
+                    child: _buildSegment(
+                      context,
+                      label: 'Diacritized',
+                      subtitle: 'With harakat',
+                      icon: Icons.text_snippet,
+                      isSelected: videoCubit.isDiacritized,
+                      onTap: () {
+                        if (videoCubit.loading) return;
+                        if (!videoCubit.isDiacritized) {
+                          HapticFeedback.selectionClick();
+                          videoCubit.toggleDiacritized();
+                          videoCubit.reprocessWithDiacritized();
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: _buildSegment(
-                  context,
-                  label: 'Diacritized',
-                  subtitle: 'With harakat',
-                  icon: Icons.text_snippet,
-                  isSelected: videoCubit.isDiacritized,
-                  onTap: () {
-                    if (!videoCubit.isDiacritized) {
-                      HapticFeedback.selectionClick();
-                      videoCubit.toggleDiacritized();
-                      videoCubit.reprocessWithDiacritized();
-                    }
-                  },
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              videoCubit.isDiacritized
+                  ? 'Arabic text will include diacritical marks (حركات)'
+                  : 'Arabic text will be displayed without diacritical marks',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          videoCubit.isDiacritized
-              ? 'Arabic text will include diacritical marks (حركات)'
-              : 'Arabic text will be displayed without diacritical marks',
-          style: textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
