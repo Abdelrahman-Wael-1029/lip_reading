@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
 
@@ -33,10 +34,10 @@ class ApiService {
       ..fields['diacritized'] = dia.toString();
 
     if (fileHash != null) {
-      print('fileHash: $fileHash');
+      debugPrint('fileHash: $fileHash');
       request.fields['file_hash'] = fileHash;
     } else {
-      print('fileHash is null');
+      debugPrint('fileHash is null');
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',
