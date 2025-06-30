@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:video_compress/video_compress.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
@@ -208,13 +209,29 @@ class VideoCubit extends Cubit<VideoState> {
     return "$minutes:$seconds";
   }
 
+  // show popup to tell user wait for process video
+  void showLoadingPopup(context) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Row(
+        children: const [
+          CircularProgressIndicator(),
+          SizedBox(width: 10),
+          Text('Processing video please wait...')
+        ],
+      ),
+    ));
+  }
+
   // Video Pick Methods
   Future<void> pickVideoFromGallery() async {
+    if(loading) return;
     await pauseVideo();
     await _pickVideo(ImageSource.gallery);
   }
 
   Future<void> recordVideo() async {
+    if(loading) return;
+
     await pauseVideo();
     await _pickVideo(ImageSource.camera);
   }
@@ -245,6 +262,24 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
+  Future<File?> compressAndUploadVideo(String videoPath) async {
+    try {
+      // Start compression
+      final info = await VideoCompress.compressVideo(
+        videoPath,
+        quality: VideoQuality.MediumQuality,
+        deleteOrigin: false,
+      );
+
+      if (info != null && info.file != null) {
+        return info.file!;
+      }
+    } catch (e) {
+      print('Error compressing video: $e');
+    }
+    return null;
+  }
+
   Future<void> _pickVideo(ImageSource source) async {
     try {
       if (selectedModel.isEmpty) {
@@ -261,6 +296,7 @@ class VideoCubit extends Cubit<VideoState> {
       if (pickedFile != null) {
         await cleanupController();
         _currentVideoPath = pickedFile.path;
+
         final file = File(_currentVideoPath!);
 
         if (await file.exists()) {
@@ -318,6 +354,10 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoLoading());
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
+      File? file = await compressAndUploadVideo(videoFile!.path);
+      if (file != null) {
+        videoFile = file;
+      }
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
           file: videoFile!,
