@@ -55,7 +55,7 @@ class DiacritizedToggle extends StatelessWidget {
 
                         if (videoCubit.isDiacritized) {
                           HapticFeedback.selectionClick();
-                          videoCubit.toggleDiacritized();
+                          videoCubit.toggleDiacritized(false);
                           videoCubit.reprocessWithDiacritized();
                         }
                       },
@@ -77,7 +77,7 @@ class DiacritizedToggle extends StatelessWidget {
                         if (videoCubit.loading) return;
                         if (!videoCubit.isDiacritized) {
                           HapticFeedback.selectionClick();
-                          videoCubit.toggleDiacritized();
+                          videoCubit.toggleDiacritized(true);
                           videoCubit.reprocessWithDiacritized();
                         }
                       },
