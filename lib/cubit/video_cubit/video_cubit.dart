@@ -308,10 +308,10 @@ class VideoCubit extends Cubit<VideoState> {
         if (await file.exists()) {
           videoFile = file;
           videoModelsCache.clear();
-          await _initializeVideoController(context);
+          if (context.mounted) await _initializeVideoController(context);
           videoModelsCache.add(selectedVideo!.copyWith());
           for (final item in videoModelsCache) {
-            debugPrint('Cache item: ${item}');
+            debugPrint('Cache item: $item');
           }
         } else {
           emit(VideoError('Video file not found'));
@@ -631,7 +631,7 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
     } catch (e) {
       loading = false;
-      print('errror: $e');
+      debugPrint('errror: $e');
       emit(VideoError('خطاء في الانترنت'));
     }
   }
@@ -661,7 +661,7 @@ class VideoCubit extends Cubit<VideoState> {
       }
       for (final item in videoModelsCache) {
         if (item.model == selectedModel && item.diacritized == isDiacritized) {
-          debugPrint('Matched item: ${item}');
+          debugPrint('Matched item: $item');
           selectedVideo = item.copyWith();
           loading = false;
           emit(VideoSuccess());
@@ -683,7 +683,7 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.diacritized = isDiacritized;
       videoModelsCache.add(selectedVideo!.copyWith());
       for (final item in videoModelsCache) {
-        debugPrint('after Cache item: ${item}');
+        debugPrint('after Cache item: $item');
       }
       await updateVideoResult();
 
@@ -691,7 +691,7 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
     } catch (e) {
       loading = false;
-      print('errror' + e.toString());
+      debugPrint('errror ${e.toString()}');
       emit(VideoError('خطاء في الانترنت'));
     }
   }
