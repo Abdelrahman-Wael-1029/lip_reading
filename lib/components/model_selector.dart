@@ -299,7 +299,7 @@ class _ModelSelectorState extends State<ModelSelector>
           ),
           const SizedBox(width: 12),
           Text(
-            'Loading AI mo!dels...',
+            'Loading AI models...',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
