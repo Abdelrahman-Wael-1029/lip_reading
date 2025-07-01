@@ -69,24 +69,25 @@ class MyBlocObserver extends BlocObserver {
   @override
   void onCreate(BlocBase bloc) {
     super.onCreate(bloc);
-    debugPrint('onCreate -- ${bloc.runtimeType}');
+    debugPrint('[Bloc] Created: ${bloc.runtimeType}');
   }
 
   @override
   void onChange(BlocBase bloc, Change change) {
     super.onChange(bloc, change);
-    debugPrint('onChange -- ${bloc.runtimeType}, $change');
+    debugPrint(
+        '[Bloc] ${bloc.runtimeType} changed: ${change.currentState.runtimeType} → ${change.nextState.runtimeType}');
   }
 
   @override
   void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
-    debugPrint('onError -- ${bloc.runtimeType}, $error');
+    debugPrint('[Bloc] Error in ${bloc.runtimeType}: $error');
     super.onError(bloc, error, stackTrace);
   }
 
   @override
   void onClose(BlocBase bloc) {
     super.onClose(bloc);
-    debugPrint('onClose -- ${bloc.runtimeType}');
+    debugPrint('[Bloc] Closed: ${bloc.runtimeType}');
   }
 }

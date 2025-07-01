@@ -200,7 +200,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           if (context.read<VideoCubit>().loading) return;
           bool success =
               await context.read<VideoCubit>().initializeNetworkVideo(video);
-          if (success) {
+          if (success && context.mounted) {
             context.read<NavigationCubit>().setTab(0);
           }
         },

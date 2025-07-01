@@ -88,19 +88,19 @@ double? getSizeImage(BuildContext context) {
 
   return ResponsiveValue<double>(
     context,
-    defaultValue: screenHeight * 0.4, // 40% من ارتفاع الشاشة
+    defaultValue: screenHeight * 0.4, // 40% of screen height
     valueWhen: [
       Condition.smallerThan(
         name: MOBILE,
-        value: screenHeight * 0.3, // 30% من ارتفاع الشاشة
+        value: screenHeight * 0.3, // 30% of screen height
       ),
       Condition.smallerThan(
         name: TABLET,
-        value: screenHeight * 0.35, // 35% من ارتفاع الشاشة
+        value: screenHeight * 0.35, // 35% of screen height
       ),
       Condition.smallerThan(
         name: DESKTOP,
-        value: screenHeight * 0.4, // 40% من ارتفاع الشاشة
+        value: screenHeight * 0.4, // 40% of screen height
       ),
     ],
   ).value;

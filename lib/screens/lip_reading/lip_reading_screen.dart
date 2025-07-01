@@ -61,7 +61,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       }
     }
     if (!isHidden) isHidden = state == AppLifecycleState.hidden;
-    debugPrint('previous state $state');
+    debugPrint('[LipReadingScreen] App lifecycle state changed to: $state');
     super.didChangeAppLifecycleState(state);
   }
 
@@ -90,27 +90,26 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ],
       ),
       body: BlocListener<VideoCubit, VideoState>(
-    listener: (context, state) {
-      if (state is VideoError) {
-        // Show a toast or Snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.errorMessage)),
-        );
-        // OR if you use `fluttertoast`:
-        // Fluttertoast.showToast(msg: state.message);
-      }
-    },
-    child: BlocBuilder<VideoCubit, VideoState>(
-      buildWhen: (previous, current) =>
-          (current is! VideoPlaying &&
-           current is! HistoryLoading &&
-           current is! HistoryFetchedSuccess &&
-           current is! HistoryError),
-      builder: (context, state) {
-        return _buildBody(context, state);
-      },
-    ),
-  ),
+        listener: (context, state) {
+          if (state is VideoError) {
+            // Show a toast or Snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage)),
+            );
+            // OR if you use `fluttertoast`:
+            // Fluttertoast.showToast(msg: state.message);
+          }
+        },
+        child: BlocBuilder<VideoCubit, VideoState>(
+          buildWhen: (previous, current) => (current is! VideoPlaying &&
+              current is! HistoryLoading &&
+              current is! HistoryFetchedSuccess &&
+              current is! HistoryError),
+          builder: (context, state) {
+            return _buildBody(context, state);
+          },
+        ),
+      ),
     );
   }
 

@@ -17,7 +17,7 @@ class ApiService {
       final List<dynamic> models = data['model']['available_models'];
       return models.map((e) => e.toString()).toList();
     } else {
-      throw Exception("حدث خطأ في جلب الموديلات");
+      throw Exception("Failed to fetch available models");
     }
   }
 
@@ -34,10 +34,10 @@ class ApiService {
       ..fields['diacritized'] = dia.toString();
 
     if (fileHash != null) {
-      debugPrint('fileHash: $fileHash');
+      debugPrint('[ApiService] Using cached file hash: $fileHash');
       request.fields['file_hash'] = fileHash;
     } else if (file != null) {
-      debugPrint('fileHash is null');
+      debugPrint('[ApiService] No cached hash, uploading file: ${file.path}');
       request.files.add(
         await http.MultipartFile.fromPath(
           'file',
@@ -52,7 +52,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } else {
-      throw Exception("حدث خطأ في الانترنت");
+      throw Exception("Network error occurred during transcription");
     }
   }
 }

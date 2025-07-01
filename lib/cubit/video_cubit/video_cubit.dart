@@ -58,7 +58,7 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoInitial());
     }).catchError((e) {
       models = [];
-      emit(VideoError('حاول مرة اخرى'));
+      emit(VideoError('Please try again'));
     });
   }
 
@@ -265,11 +265,11 @@ class VideoCubit extends Cubit<VideoState> {
         selectedModel = models![2];
         emit(VideoInitial());
       } else {
-        emit(VideoError('حاول مرة اخرى'));
+        emit(VideoError('Please try again'));
         models = [];
       }
     } catch (e) {
-      emit(VideoError('حدث خطاء في الانترنت'));
+      emit(VideoError('Network error occurred'));
       models = [];
     }
   }
@@ -287,7 +287,7 @@ class VideoCubit extends Cubit<VideoState> {
         return info.file!;
       }
     } catch (e) {
-      debugPrint('Error compressing video: $e');
+      debugPrint('[VideoCompress] Error compressing video: $e');
     }
     return null;
   }
@@ -303,7 +303,7 @@ class VideoCubit extends Cubit<VideoState> {
         maxDuration: const Duration(minutes: 1),
       );
 
-      debugPrint('pickedFile: $pickedFile');
+      debugPrint('[VideoPicker] Selected file: $pickedFile');
 
       if (pickedFile != null) {
         await cleanupController();
@@ -317,14 +317,14 @@ class VideoCubit extends Cubit<VideoState> {
           if (context.mounted) await _initializeVideoController(context);
           videoModelsCache.add(selectedVideo!.copyWith());
           for (final item in videoModelsCache) {
-            debugPrint('Cache item: $item');
+            debugPrint('[VideoCache] Cache item: $item');
           }
         } else {
           emit(VideoError('Video file not found'));
         }
       } else {
         debugPrint(
-            '_currentVideoPath is ${_currentVideoPath != null ? "not null" : "null"}');
+            '[VideoPicker] Current video path status: ${_currentVideoPath != null ? "available" : "null"}');
         // User canceled picking video
         if (controller == null && _currentVideoPath != null) {
           if (context.mounted) await reInitializeLastVideo(context);
@@ -333,7 +333,7 @@ class VideoCubit extends Cubit<VideoState> {
         }
       }
     } catch (e) {
-      emit(VideoError('حدث خطا في اعداد الفيديو'));
+      emit(VideoError('Failed to setup video'));
     }
   }
 
@@ -376,7 +376,7 @@ class VideoCubit extends Cubit<VideoState> {
       if (file != null) {
         videoFile = file;
       }
-      debugPrint('isDiacritizeddddddddddddddd $isDiacritized');
+      debugPrint('[VideoCubit] Diacritized setting: $isDiacritized');
       var response = await ApiService.uploadFile(
           fileHash: selectedVideo?.fileHash,
           file: videoFile,
@@ -386,12 +386,13 @@ class VideoCubit extends Cubit<VideoState> {
         loading = false;
         emit(VideoError(response['error']));
       }
-      debugPrint('myresponse $response');
+      debugPrint(
+          '[VideoCubit] API response received: ${response.keys.toList()}');
 
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       selectedVideo?.diacritized = response['metadata']['diacritized'] ?? false;
-      uploadVideo(context);
+      if (context.mounted) uploadVideo(context);
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
@@ -461,7 +462,7 @@ class VideoCubit extends Cubit<VideoState> {
       }
       await _videoRepository.updateVideoResult(selectedVideo!);
     } catch (e) {
-      emit(VideoError('حدث خطاء في الانترنت اثناء حفظ الفيديو'));
+      emit(VideoError('Network error occurred while saving video'));
     }
   }
 
@@ -557,13 +558,14 @@ class VideoCubit extends Cubit<VideoState> {
         emit(HistoryError('No internet connection'));
         return;
       }
-      if(videoId == selectedVideo?.id) {
-        debugPrint('selectedVideo is same id');
+      if (videoId == selectedVideo?.id) {
+        debugPrint('[VideoDelete] Selected video has same ID as deleted video');
         await cleanupController();
         videoFile = null;
         _currentVideoPath = null;
+      } else {
+        debugPrint('[VideoDelete] Selected video has different ID');
       }
-      else debugPrint('selectedVideo is not same id');
       await _videoRepository.deleteVideo(videoId);
 
       // Update local state
@@ -574,7 +576,6 @@ class VideoCubit extends Cubit<VideoState> {
 
       emit(DeleteHistoryItemSuccess());
     } catch (e) {
-      
       emit(HistoryError(e.toString()));
     }
   }
@@ -645,13 +646,13 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
     } catch (e) {
       loading = false;
-      debugPrint('errror: $e');
-      emit(VideoError('خطاء في الانترنت'));
+      debugPrint('[VideoCubit] Error in changeModel: $e');
+      emit(VideoError('Network error occurred'));
     }
   }
 
   Future<void> onEnd(double value) async {
-    debugPrint('end change');
+    debugPrint('[VideoSlider] Position changed to: $value');
     final position = Duration(seconds: (value * totalVideoSeconds).toInt());
     await controller!.seekTo(position);
     emit(VideoPlaying());
@@ -671,11 +672,11 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       emit(VideoLoading());
       for (int i = 0; i < videoModelsCache.length; i++) {
-        debugPrint('before Cache item $i: ${videoModelsCache[i]}');
+        debugPrint('[VideoDiacritized] Cache item $i: ${videoModelsCache[i]}');
       }
       for (final item in videoModelsCache) {
         if (item.model == selectedModel && item.diacritized == isDiacritized) {
-          debugPrint('Matched item: $item');
+          debugPrint('[VideoDiacritized] Found matching cached item: $item');
           selectedVideo = item.copyWith();
           loading = false;
           emit(VideoSuccess());
@@ -693,11 +694,12 @@ class VideoCubit extends Cubit<VideoState> {
       }
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
-      debugPrint('Response: ${response['diacritized']}');
+      debugPrint(
+          '[VideoDiacritized] API response diacritized status: ${response['diacritized']}');
       selectedVideo?.diacritized = isDiacritized;
       videoModelsCache.add(selectedVideo!.copyWith());
       for (final item in videoModelsCache) {
-        debugPrint('after Cache item: $item');
+        debugPrint('[VideoDiacritized] Updated cache item: $item');
       }
       await updateVideoResult();
 
@@ -705,8 +707,8 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
     } catch (e) {
       loading = false;
-      debugPrint('errror ${e.toString()}');
-      emit(VideoError('خطاء في الانترنت'));
+      debugPrint('[VideoDiacritized] Error: ${e.toString()}');
+      emit(VideoError('Network error occurred'));
     }
   }
 }

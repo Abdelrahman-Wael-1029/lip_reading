@@ -89,7 +89,7 @@ class DiacritizedToggle extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               videoCubit.isDiacritized
-                  ? 'Arabic text will include diacritical marks (حركات)'
+                  ? 'Arabic text will include diacritical marks (harakat)'
                   : 'Arabic text will be displayed without diacritical marks',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
