@@ -4,7 +4,6 @@ import 'package:lip_reading/utils/utils.dart';
 import 'package:responsive_framework/responsive_value.dart';
 import 'package:responsive_framework/responsive_wrapper.dart';
 
-
 Widget customTextFormField({
   required BuildContext context,
   String? hintText,
@@ -34,7 +33,7 @@ Widget customTextFormField({
   AutovalidateMode? autovalidateMode,
 }) {
   return TextFormField(
-    autovalidateMode: autovalidateMode?? AutovalidateMode.onUserInteraction,
+    autovalidateMode: autovalidateMode ?? AutovalidateMode.onUserInteraction,
     textInputAction: textInputAction ?? TextInputAction.next,
     onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
     textDirection: textDirection,
@@ -87,8 +86,9 @@ Widget customTextFormField({
         fontWeight: FontWeight.w300,
         color: hintColor ?? AppColors.grey,
       ),
-      contentPadding: padding ??=
-           EdgeInsets.symmetric(horizontal: getPadding(context)??14, vertical: getPadding(context)??20),
+      contentPadding: padding ??= EdgeInsets.symmetric(
+          horizontal: getPadding(context) ?? 14,
+          vertical: getPadding(context) ?? 20),
       suffixIcon: suffixIcon,
       prefixIcon: prefixIcon,
       errorStyle: TextStyle(
@@ -116,8 +116,7 @@ Widget customTextFormField({
       fillColor: backgroundColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadius ?? 8),
-        borderSide: BorderSide(
-        ),
+        borderSide: BorderSide(),
       ),
     ),
     validator: validator,

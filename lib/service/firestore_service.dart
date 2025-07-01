@@ -10,7 +10,8 @@ class FirestoreService {
     required String documentId,
   }) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection(collection).doc(documentId).get();
+      DocumentSnapshot doc =
+          await _firestore.collection(collection).doc(documentId).get();
       return doc.exists ? doc.data() as Map<String, dynamic> : null;
     } catch (e) {
       throw Exception('Failed to get document: $e');
@@ -64,7 +65,10 @@ class FirestoreService {
     bool merge = true,
   }) async {
     try {
-      await _firestore.collection(collection).doc(documentId).set(data, SetOptions(merge: merge));
+      await _firestore
+          .collection(collection)
+          .doc(documentId)
+          .set(data, SetOptions(merge: merge));
       return documentId;
     } catch (e) {
       throw Exception('Failed to set document: $e');
@@ -145,7 +149,8 @@ class FirestoreService {
 
     try {
       for (var op in operations) {
-        final ref = _firestore.collection(op['collection']).doc(op['documentId']);
+        final ref =
+            _firestore.collection(op['collection']).doc(op['documentId']);
 
         switch (op['type']) {
           case 'set':

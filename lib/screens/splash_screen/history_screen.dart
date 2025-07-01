@@ -51,123 +51,112 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
-    
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
         centerTitle: true,
-        // actions: [
-        //   IconButton(
-        //     icon: const Icon(Icons.logout),
-        //     onPressed: () => _showLogoutDialog(context),
-        //   ),
-        // ],
       ),
       body: BlocListener<VideoCubit, VideoState>(
-    listener: (context, state) {
-      if (state is HistoryError) {
-        // Show a toast or Snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.errorMessage)),
-        );
-        // OR if you use `fluttertoast`:
-        // Fluttertoast.showToast(msg: state.message);
-      }
-    },
-    child: BlocBuilder<VideoCubit, VideoState>(
-      buildWhen: (previous, current) =>
-          (current is HistoryError ||
-           current is HistoryLoading ||
-           current is HistoryFetchedSuccess ||
-           current is DeleteHistoryItemSuccess),
-      builder: (context, state) {
-        var videoCubit = context.read<VideoCubit>();
-        return _buildBody(context, state,videoCubit);
-      },
-    ),
-  ),
+        listener: (context, state) {
+          if (state is HistoryError) {
+            // Show a toast or Snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage)),
+            );
+            // OR if you use `fluttertoast`:
+            // Fluttertoast.showToast(msg: state.message);
+          }
+        },
+        child: BlocBuilder<VideoCubit, VideoState>(
+          buildWhen: (previous, current) => (current is HistoryError ||
+              current is HistoryLoading ||
+              current is HistoryFetchedSuccess ||
+              current is DeleteHistoryItemSuccess),
+          builder: (context, state) {
+            var videoCubit = context.read<VideoCubit>();
+            return _buildBody(context, state, videoCubit);
+          },
+        ),
+      ),
     );
-
-
   }
 
-
-  Widget _buildBody(BuildContext context, VideoState state, VideoCubit videoCubit) {
+  Widget _buildBody(
+      BuildContext context, VideoState state, VideoCubit videoCubit) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final state = videoCubit.state;
     final videos = videoCubit.videos;
     final displayVideos =
         searchController.text.isEmpty ? videos : filteredVideos;
     return state is HistoryLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _onRefresh,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (videos.isNotEmpty) ...[
-                    customTextFormField(
-                      context: context,
-                      controller: searchController,
-                      hintText: "Search videos",
-                      onChanged: (query) => _onSearch(query, videos),
-                      prefixIcon: const Icon(Icons.search),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  if (displayVideos.isEmpty && videos.isNotEmpty)
-                    Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 64,
-                            color: isDarkMode
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text('No result found'),
-                        ],
-                      ),
-                    )
-                  else if (videos.isEmpty)
-                    Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.history,
-                            size: 64,
-                            color: isDarkMode
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No history found',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Your lip reading results will appear here',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ...displayVideos.map((video) => _buildVideoHistoryItem(
-                          context,
-                          video,
-                          isDarkMode,
-                        )),
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (videos.isNotEmpty) ...[
+                  customTextFormField(
+                    context: context,
+                    controller: searchController,
+                    hintText: "Search videos",
+                    onChanged: (query) => _onSearch(query, videos),
+                    prefixIcon: const Icon(Icons.search),
+                  ),
+                  const SizedBox(height: 16),
                 ],
-              ),
-            );
+                if (displayVideos.isEmpty && videos.isNotEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: isDarkMode
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('No result found'),
+                      ],
+                    ),
+                  )
+                else if (videos.isEmpty)
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.history,
+                          size: 64,
+                          color: isDarkMode
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No history found',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Your lip reading results will appear here',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...displayVideos.map((video) => _buildVideoHistoryItem(
+                        context,
+                        video,
+                        isDarkMode,
+                      )),
+              ],
+            ),
+          );
   }
+
   void _showDeleteDialog(BuildContext context, VideoModel video) {
     AwesomeDialog(
       context: context,

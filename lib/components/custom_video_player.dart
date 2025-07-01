@@ -125,7 +125,8 @@ class CustomVideoPlayer extends StatelessWidget {
                           "${cubit.currentPosition} / ${cubit.totalDuration}",
                           style: TextStyle(
                             color: Colors.black,
-                            backgroundColor: Colors.white.withValues(alpha: 0.7),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.7),
                             fontSize: 12.0,
                             fontWeight: FontWeight.bold,
                           ),

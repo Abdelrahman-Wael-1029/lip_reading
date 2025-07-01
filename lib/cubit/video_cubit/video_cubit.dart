@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:video_compress/video_compress.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
-import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lip_reading/cubit/progress/progress_cubit.dart';
+import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
@@ -372,32 +374,28 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoLoading());
       nameVideoController.text = await _videoRepository.getNextTitle();
       selectedVideo?.title = nameVideoController.text;
-      File? file = await compressAndUploadVideo(videoFile!.path);
-      if (file != null) {
-        videoFile = file;
-      }
-      debugPrint('[VideoCubit] Diacritized setting: $isDiacritized');
-      var response = await ApiService.uploadFile(
-          fileHash: selectedVideo?.fileHash,
-          file: videoFile,
-          modelName: selectedModel,
-          dia: isDiacritized);
-      if (response['error'] != null) {
-        loading = false;
-        emit(VideoError(response['error']));
-      }
-      debugPrint(
-          '[VideoCubit] API response received: ${response.keys.toList()}');
 
-      selectedVideo?.result = response['raw_transcript'] ?? '';
-      selectedVideo?.fileHash = response['video_hash'];
-      selectedVideo?.diacritized = response['metadata']['diacritized'] ?? false;
-      if (context.mounted) uploadVideo(context);
+      // Only compress video if we don't have a cached hash
+      if (selectedVideo?.fileHash == null) {
+        File? file = await compressAndUploadVideo(videoFile!.path);
+        if (file != null) {
+          videoFile = file;
+        }
+      }
+
+      // Start transcription using the new progress system
+      if (context.mounted) {
+        debugPrint(
+            '[VideoCubit] Starting transcription with progress tracking');
+        await startTranscriptionWithProgress(context);
+      }
+
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
-      loading = false;
-      emit(VideoSuccess());
+
+      // Don't emit VideoSuccess immediately - wait for transcription to complete
+      // The success will be emitted when progress completes in startTranscriptionWithProgress
       return;
     } catch (e) {
       loading = false;
@@ -438,16 +436,6 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo!.url = videoUrl;
       selectedVideo?.model = selectedModel;
       await _videoRepository.updateVideo(selectedVideo!);
-
-      // if (context.mounted) {
-      //   AwesomeDialog(
-      //     context: context,
-      //     dialogType: DialogType.success,
-      //     animType: AnimType.rightSlide,
-      //     title: 'Video uploaded successfully',
-      //     btnOkOnPress: () {},
-      //   ).show();
-      // }
     } catch (e) {
       emit(VideoError(
           'you arrive into limit please delete to upload another video'));
@@ -460,8 +448,17 @@ class VideoCubit extends Cubit<VideoState> {
         emit(VideoError('No internet connection'));
         return;
       }
+
+      // Check if video has been uploaded to Firestore (has URL)
+      if (selectedVideo == null || selectedVideo!.url.isEmpty) {
+        debugPrint(
+            '[VideoCubit] Skipping Firestore update - video not uploaded yet');
+        return;
+      }
+
       await _videoRepository.updateVideoResult(selectedVideo!);
     } catch (e) {
+      debugPrint('[VideoCubit] Repository update error: $e');
       emit(VideoError('Network error occurred while saving video'));
     }
   }
@@ -709,6 +706,103 @@ class VideoCubit extends Cubit<VideoState> {
       loading = false;
       debugPrint('[VideoDiacritized] Error: ${e.toString()}');
       emit(VideoError('Network error occurred'));
+    }
+  }
+
+  /// Update video results from progress system
+  void updateVideoResultFromProgress({
+    required String rawTranscript,
+    String? videoHash,
+    Map<String, dynamic>? metadata,
+  }) {
+    if (selectedVideo != null) {
+      debugPrint('[VideoCubit] Updating video results from progress');
+      debugPrint('[VideoCubit] Raw transcript: $rawTranscript');
+      debugPrint('[VideoCubit] Video hash: $videoHash');
+      debugPrint('[VideoCubit] Metadata: $metadata');
+
+      selectedVideo!.result = rawTranscript;
+      selectedVideo!.fileHash = videoHash;
+      if (metadata != null) {
+        selectedVideo!.diacritized = metadata['diacritized'] ?? isDiacritized;
+      } else {
+        selectedVideo!.diacritized = isDiacritized;
+      }
+
+      loading = false;
+      emit(VideoSuccess());
+    }
+  }
+
+  /// Start transcription using the new progress system
+  Future<void> startTranscriptionWithProgress(BuildContext context) async {
+    if (videoFile == null || selectedModel.isEmpty) {
+      emit(VideoError('Please select a video and model'));
+      return;
+    }
+
+    try {
+      // Get progress cubit
+      final progressCubit = context.read<ProgressCubit>();
+
+      // Listen to progress state changes
+      late StreamSubscription progressSubscription;
+      progressSubscription = progressCubit.stream.listen((progressState) async {
+        if (progressState is ProgressCompleted) {
+          debugPrint('[VideoCubit] Progress completed, updating video results');
+          debugPrint('[VideoCubit] Results: ${progressState.result}');
+
+          // Extract results from progress completion
+          final result = progressState.result;
+          if (result.containsKey('raw_transcript')) {
+            final rawTranscript = result['raw_transcript'] as String? ?? '';
+            final videoHash = result['video_hash'] as String?;
+            final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
+
+            // Update video results
+            updateVideoResultFromProgress(
+              rawTranscript: rawTranscript,
+              videoHash: videoHash,
+              metadata: metadata,
+            );
+
+            // Cache the result
+            if (selectedVideo != null) {
+              selectedVideo!.diacritized = isDiacritized;
+              videoModelsCache.add(selectedVideo!.copyWith());
+              debugPrint('[VideoCubit] Added to cache: ${selectedVideo!}');
+            }
+
+            // Try to save to repository
+            try {
+              await updateVideoResult();
+            } catch (e) {
+              debugPrint('[VideoCubit] Repository update failed: $e');
+              // This is expected for videos that haven't been uploaded to Firestore yet
+            }
+          }
+
+          // Cancel subscription
+          progressSubscription.cancel();
+        } else if (progressState is ProgressFailed) {
+          debugPrint(
+              '[VideoCubit] Progress failed: ${progressState.errorMessage}');
+          loading = false;
+          emit(VideoError(
+              'Transcription failed: ${progressState.errorMessage}'));
+          progressSubscription.cancel();
+        }
+      });
+
+      // Start transcription with progress tracking
+      await progressCubit.startTranscription(
+        videoFile: videoFile!,
+        modelName: selectedModel,
+        diacritized: isDiacritized,
+        fileHash: selectedVideo?.fileHash,
+      );
+    } catch (e) {
+      emit(VideoError('Failed to start transcription: ${e.toString()}'));
     }
   }
 }

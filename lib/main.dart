@@ -4,11 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/navigation_cubit/navigation_cubit.dart';
+import 'package:lip_reading/cubit/progress/progress_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/firebase_options.dart';
 import 'package:lip_reading/service/connectivity_service.dart';
 import 'package:lip_reading/utils/app_route.dart';
-import 'package:lip_reading/utils/theme.dart';
+import 'package:lip_reading/utils/app_theme.dart';
 import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
 import 'package:responsive_framework/responsive_wrapper.dart';
 
@@ -29,6 +30,7 @@ void main() async {
       BlocProvider(create: (context) => VideoCubit()),
       BlocProvider(create: (context) => AuthCubit()),
       BlocProvider(create: (context) => NavigationCubit()),
+      BlocProvider(create: (context) => ProgressCubit()),
     ],
     child: const MyApp(),
   ));

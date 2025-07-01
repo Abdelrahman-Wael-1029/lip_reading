@@ -46,7 +46,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '923125462848',
     projectId: 'fir-d2868',
     authDomain: 'fir-d2868.firebaseapp.com',
-    databaseURL: 'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'fir-d2868.appspot.com',
     measurementId: 'G-EN1LGSSX03',
   );
@@ -56,7 +57,8 @@ class DefaultFirebaseOptions {
     appId: '1:923125462848:android:342b0fa8a7d2bd8cf16ca5',
     messagingSenderId: '923125462848',
     projectId: 'fir-d2868',
-    databaseURL: 'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'fir-d2868.appspot.com',
   );
 
@@ -65,10 +67,13 @@ class DefaultFirebaseOptions {
     appId: '1:923125462848:ios:0cd01e24bf08118bf16ca5',
     messagingSenderId: '923125462848',
     projectId: 'fir-d2868',
-    databaseURL: 'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'fir-d2868.appspot.com',
-    androidClientId: '923125462848-qp5u99vdi3ihimlpe7v9ssqltkbp23d2.apps.googleusercontent.com',
-    iosClientId: '923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com',
+    androidClientId:
+        '923125462848-qp5u99vdi3ihimlpe7v9ssqltkbp23d2.apps.googleusercontent.com',
+    iosClientId:
+        '923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com',
     iosBundleId: 'com.example.lipReading',
   );
 
@@ -77,10 +82,13 @@ class DefaultFirebaseOptions {
     appId: '1:923125462848:ios:0cd01e24bf08118bf16ca5',
     messagingSenderId: '923125462848',
     projectId: 'fir-d2868',
-    databaseURL: 'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'fir-d2868.appspot.com',
-    androidClientId: '923125462848-qp5u99vdi3ihimlpe7v9ssqltkbp23d2.apps.googleusercontent.com',
-    iosClientId: '923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com',
+    androidClientId:
+        '923125462848-qp5u99vdi3ihimlpe7v9ssqltkbp23d2.apps.googleusercontent.com',
+    iosClientId:
+        '923125462848-sfnd2f64qn0oepv2gcjqk1pigtq9fg9c.apps.googleusercontent.com',
     iosBundleId: 'com.example.lipReading',
   );
 
@@ -90,7 +98,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '923125462848',
     projectId: 'fir-d2868',
     authDomain: 'fir-d2868.firebaseapp.com',
-    databaseURL: 'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://fir-d2868-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'fir-d2868.appspot.com',
     measurementId: 'G-Y3VC0LRBC5',
   );

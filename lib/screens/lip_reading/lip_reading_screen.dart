@@ -5,7 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/components/diacritized_toggle.dart';
 import 'package:lip_reading/components/model_selector.dart';
+import 'package:lip_reading/components/modern_progress_bar.dart';
+import 'package:lip_reading/components/progress_notification.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
+import 'package:lip_reading/cubit/progress/progress_cubit.dart';
+import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 
@@ -89,17 +93,61 @@ class _LipReadingScreenState extends State<LipReadingScreen>
           ),
         ],
       ),
-      body: BlocListener<VideoCubit, VideoState>(
-        listener: (context, state) {
-          if (state is VideoError) {
-            // Show a toast or Snackbar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage)),
-            );
-            // OR if you use `fluttertoast`:
-            // Fluttertoast.showToast(msg: state.message);
-          }
-        },
+      body: MultiBlocListener(
+        listeners: [
+          // Video cubit listener for errors
+          BlocListener<VideoCubit, VideoState>(
+            listener: (context, state) {
+              if (state is VideoError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.errorMessage)),
+                );
+              }
+            },
+          ),
+          // Progress cubit listener for notifications
+          BlocListener<ProgressCubit, ProgressState>(
+            listener: (context, state) {
+              if (state is ProgressCompleted) {
+                // Extract result and update video cubit
+                final result = state.result;
+                final rawTranscript = result['raw_transcript'] as String? ?? '';
+                final videoHash = result['video_hash'] as String?;
+                final metadata = result['metadata'] as Map<String, dynamic>?;
+
+                // Update video cubit with results
+                context.read<VideoCubit>().updateVideoResultFromProgress(
+                      rawTranscript: rawTranscript,
+                      videoHash: videoHash,
+                      metadata: metadata,
+                    );
+
+                // Show success notification
+                ProgressNotification.showSuccess(
+                  context,
+                  'Lip reading completed successfully!',
+                );
+
+                // Reset progress after short delay
+                Future.delayed(const Duration(seconds: 2), () {
+                  if (context.mounted) {
+                    context.read<ProgressCubit>().resetProgress();
+                  }
+                });
+              } else if (state is ProgressFailed) {
+                // Show error notification with retry option
+                ProgressNotification.showError(
+                  context,
+                  'Processing failed: ${state.errorMessage}',
+                  onRetry: () {
+                    // Reset progress and let user try again
+                    context.read<ProgressCubit>().resetProgress();
+                  },
+                );
+              }
+            },
+          ),
+        ],
         child: BlocBuilder<VideoCubit, VideoState>(
           buildWhen: (previous, current) => (current is! VideoPlaying &&
               current is! HistoryLoading &&
@@ -230,52 +278,18 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               ),
             ),
           ),
-
-          // const SizedBox(height: 24),
-
-          // Video Name Input (if video is loaded)
-
-          // Card(
-          //   child: Padding(
-          //     padding: const EdgeInsets.all(16),
-          //     child: Column(
-          //       crossAxisAlignment: CrossAxisAlignment.start,
-          //       children: [
-          //         Row(
-          //           children: [
-          //             Icon(
-          //               Icons.edit,
-          //               color: Theme.of(context).colorScheme.primary,
-          //               size: 20,
-          //             ),
-          //             const SizedBox(width: 8),
-          //             Text(
-          //               'Video Name',
-          //               style:
-          //                   Theme.of(context).textTheme.titleMedium?.copyWith(
-          //                         fontWeight: FontWeight.w600,
-          //                       ),
-          //             ),
-          //           ],
-          //         ),
-          //         const SizedBox(height: 16),
-          //         customTextFormField(
-          //           context: context,
-          //           controller:
-          //               context.read<VideoCubit>().nameVideoController,
-          //           hintText: 'Enter video name',
-          //           prefixIcon: const Icon(Icons.videocam),
-          //           textInputAction: TextInputAction.done,
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-
           const SizedBox(height: 16),
 
-          // Transcription Results Card
-          _buildTranscriptionCard(context),
+          // Progress Bar or Transcription Results Card
+          BlocBuilder<ProgressCubit, ProgressState>(
+            builder: (context, progressState) {
+              if (progressState is ProgressLoading) {
+                return const ModernProgressBar();
+              }
+              // If not processing, show transcription card
+              return _buildTranscriptionCard(context);
+            },
+          ),
 
           const SizedBox(height: 24),
 
@@ -479,34 +493,43 @@ class _LipReadingScreenState extends State<LipReadingScreen>
   Widget _buildActionButtons(BuildContext context, VideoState state) {
     final videoCubit = context.read<VideoCubit>();
 
-    return Row(
-      children: [
-        // Pick Video Button
-        Expanded(
-          child: FilledButton.icon(
-            onPressed: () => videoCubit.pickVideoFromGallery(context),
-            icon: const Icon(Icons.video_library),
-            label: const Text('Pick Video'),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
+    return BlocBuilder<ProgressCubit, ProgressState>(
+      builder: (context, progressState) {
+        final isProcessing = progressState is ProgressLoading;
 
-        const SizedBox(width: 16),
-
-        // Record Video Button
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () => videoCubit.recordVideo(context),
-            icon: const Icon(Icons.videocam),
-            label: const Text('Record'),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+        return Row(
+          children: [
+            // Pick Video Button
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: isProcessing
+                    ? null
+                    : () => videoCubit.pickVideoFromGallery(context),
+                icon: const Icon(Icons.video_library),
+                label: const Text('Pick Video'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+
+            const SizedBox(width: 16),
+
+            // Record Video Button
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed:
+                    isProcessing ? null : () => videoCubit.recordVideo(context),
+                icon: const Icon(Icons.videocam),
+                label: const Text('Record'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

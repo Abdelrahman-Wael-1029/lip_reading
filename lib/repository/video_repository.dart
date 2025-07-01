@@ -23,22 +23,6 @@ class VideoRepository {
     return 'users/${user.uid}/videos';
   }
 
-  Future<VideoModel?> getVideo(String videoId) async {
-    try {
-      final videoData = await _firestoreService.getDocument(
-        collection: _collection,
-        documentId: videoId,
-      );
-
-      if (videoData != null) {
-        return VideoModel.fromJson(videoData, docId: videoId);
-      }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get video: $e');
-    }
-  }
-
   Future<List<VideoModel>> getVideoHistory({
     String? orderBy = 'createdAt',
     bool descending = true,
@@ -86,15 +70,15 @@ class VideoRepository {
     }
   }
 
-  Future<void> 
-  updateVideoResult(VideoModel videoModel) async {
+  Future<void> updateVideoResult(VideoModel videoModel) async {
     try {
       await _firestoreService.updateDocument(
         collection: _collection,
         documentId: videoModel.id,
-        data: {'result': videoModel.result,
-        'model': videoModel.model,
-        'diacritized': videoModel.diacritized,
+        data: {
+          'result': videoModel.result,
+          'model': videoModel.model,
+          'diacritized': videoModel.diacritized,
         },
       );
     } catch (e) {
@@ -149,7 +133,9 @@ class VideoRepository {
   Future<String> getNextTitle() async {
     try {
       int count = await getVideosCount();
-      if(count > 15) throw Exception("You have reached the maximum number of videos");
+      if (count > 15) {
+        throw Exception("You have reached the maximum number of videos");
+      }
       return "Video ${count + 1}";
     } catch (e) {
       return "";
