@@ -17,7 +17,9 @@ class VideoError extends VideoState {
 
 class HistoryLoading extends VideoState {}
 
-class HistorySuccess extends VideoState {}
+class HistoryFetchedSuccess extends VideoState {}
+
+class DeleteHistoryItemSuccess extends VideoState {}
 
 class HistoryError extends VideoState {
   final String errorMessage;

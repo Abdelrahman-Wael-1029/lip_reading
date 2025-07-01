@@ -467,7 +467,7 @@ class VideoCubit extends Cubit<VideoState> {
         throw Exception('No internet connection');
       }
       videos = await _videoRepository.getVideoHistory();
-      emit(HistorySuccess());
+      emit(HistoryFetchedSuccess());
     } catch (e) {
       emit(HistoryError(e.toString()));
     }
@@ -559,7 +559,7 @@ class VideoCubit extends Cubit<VideoState> {
         selectedVideo = null;
       }
 
-      emit(HistorySuccess());
+      emit(DeleteHistoryItemSuccess());
     } catch (e) {
       emit(HistoryError(e.toString()));
     }

@@ -17,7 +17,7 @@ class DiacritizedToggle extends StatelessWidget {
     return BlocBuilder<VideoCubit, VideoState>(
       buildWhen: (previous, current) => (current is! VideoPlaying &&
           current is! HistoryLoading &&
-          current is! HistorySuccess &&
+          current is! HistoryFetchedSuccess &&
           current is! HistoryError),
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();

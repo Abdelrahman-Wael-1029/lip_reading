@@ -50,12 +50,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final videoCubit = context.watch<VideoCubit>();
-    final state = videoCubit.state;
-    final videos = videoCubit.videos;
-    final displayVideos =
-        searchController.text.isEmpty ? videos : filteredVideos;
+    
+    
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +64,42 @@ class _HistoryScreenState extends State<HistoryScreen> {
         //   ),
         // ],
       ),
-      body: state is HistoryLoading
+      body: BlocListener<VideoCubit, VideoState>(
+    listener: (context, state) {
+      if (state is HistoryError) {
+        // Show a toast or Snackbar
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(state.errorMessage)),
+        );
+        // OR if you use `fluttertoast`:
+        // Fluttertoast.showToast(msg: state.message);
+      }
+    },
+    child: BlocBuilder<VideoCubit, VideoState>(
+      buildWhen: (previous, current) =>
+          (current is HistoryError &&
+           current is HistoryLoading &&
+           current is HistoryFetchedSuccess &&
+           current is DeleteHistoryItemSuccess),
+      builder: (context, state) {
+        return _buildBody(context, state);
+      },
+    ),
+  ),
+    );
+
+
+  }
+
+
+  Widget _buildBody(BuildContext context, VideoState state){
+    var videoCubit = context.read<VideoCubit>();
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final state = videoCubit.state;
+    final videos = videoCubit.videos;
+    final displayVideos =
+        searchController.text.isEmpty ? videos : filteredVideos;
+    return state is HistoryLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _onRefresh,
@@ -134,10 +165,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         )),
                 ],
               ),
-            ),
-    );
+            );
   }
-
   void _showDeleteDialog(BuildContext context, VideoModel video) {
     AwesomeDialog(
       context: context,

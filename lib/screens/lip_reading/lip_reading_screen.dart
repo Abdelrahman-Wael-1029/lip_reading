@@ -104,7 +104,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       buildWhen: (previous, current) =>
           (current is! VideoPlaying &&
            current is! HistoryLoading &&
-           current is! HistorySuccess &&
+           current is! HistoryFetchedSuccess &&
            current is! HistoryError),
       builder: (context, state) {
         return _buildBody(context, state);
