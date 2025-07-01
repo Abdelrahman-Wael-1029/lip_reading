@@ -90,27 +90,26 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         ],
       ),
       body: BlocListener<VideoCubit, VideoState>(
-    listener: (context, state) {
-      if (state is VideoError) {
-        // Show a toast or Snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.errorMessage)),
-        );
-        // OR if you use `fluttertoast`:
-        // Fluttertoast.showToast(msg: state.message);
-      }
-    },
-    child: BlocBuilder<VideoCubit, VideoState>(
-      buildWhen: (previous, current) =>
-          (current is! VideoPlaying &&
-           current is! HistoryLoading &&
-           current is! HistorySuccess &&
-           current is! HistoryError),
-      builder: (context, state) {
-        return _buildBody(context, state);
-      },
-    ),
-  ),
+        listener: (context, state) {
+          if (state is VideoError) {
+            // Show a toast or Snackbar
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.errorMessage)),
+            );
+            // OR if you use `fluttertoast`:
+            // Fluttertoast.showToast(msg: state.message);
+          }
+        },
+        child: BlocBuilder<VideoCubit, VideoState>(
+          buildWhen: (previous, current) => (current is! VideoPlaying &&
+              current is! HistoryLoading &&
+              current is! HistorySuccess &&
+              current is! HistoryError),
+          builder: (context, state) {
+            return _buildBody(context, state);
+          },
+        ),
+      ),
     );
   }
 
@@ -167,13 +166,29 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'AI Model',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      Expanded(
+                        child: Text(
+                          'AI Model',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
                       ),
+                      if (context.read<VideoCubit>().models?.isEmpty ?? false)
+                        IconButton(
+                          icon: Icon(
+                            Icons.refresh,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () {
+                            context.read<VideoCubit>().fetchModels();
+                          },
+                        ),
+                      if (context.read<VideoCubit>().models == null)
+                        CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),

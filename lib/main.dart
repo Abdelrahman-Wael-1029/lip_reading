@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
+import 'package:lip_reading/cubit/navigation_cubit/navigation_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/firebase_options.dart';
 import 'package:lip_reading/service/connectivity_service.dart';
@@ -27,6 +28,7 @@ void main() async {
     providers: [
       BlocProvider(create: (context) => VideoCubit()),
       BlocProvider(create: (context) => AuthCubit()),
+      BlocProvider(create: (context) => NavigationCubit()),
     ],
     child: const MyApp(),
   ));
