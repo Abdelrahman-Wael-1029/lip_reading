@@ -78,12 +78,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     },
     child: BlocBuilder<VideoCubit, VideoState>(
       buildWhen: (previous, current) =>
-          (current is HistoryError &&
-           current is HistoryLoading &&
-           current is HistoryFetchedSuccess &&
+          (current is HistoryError ||
+           current is HistoryLoading ||
+           current is HistoryFetchedSuccess ||
            current is DeleteHistoryItemSuccess),
       builder: (context, state) {
-        return _buildBody(context, state);
+        var videoCubit = context.read<VideoCubit>();
+        return _buildBody(context, state,videoCubit);
       },
     ),
   ),
@@ -93,8 +94,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
 
-  Widget _buildBody(BuildContext context, VideoState state){
-    var videoCubit = context.read<VideoCubit>();
+  Widget _buildBody(BuildContext context, VideoState state, VideoCubit videoCubit) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final state = videoCubit.state;
     final videos = videoCubit.videos;

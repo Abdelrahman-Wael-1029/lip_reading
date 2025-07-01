@@ -557,6 +557,13 @@ class VideoCubit extends Cubit<VideoState> {
         emit(HistoryError('No internet connection'));
         return;
       }
+      if(videoId == selectedVideo?.id) {
+        debugPrint('selectedVideo is same id');
+        await cleanupController();
+        videoFile = null;
+        _currentVideoPath = null;
+      }
+      else debugPrint('selectedVideo is not same id');
       await _videoRepository.deleteVideo(videoId);
 
       // Update local state
@@ -567,6 +574,7 @@ class VideoCubit extends Cubit<VideoState> {
 
       emit(DeleteHistoryItemSuccess());
     } catch (e) {
+      
       emit(HistoryError(e.toString()));
     }
   }
