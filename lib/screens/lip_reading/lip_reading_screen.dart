@@ -167,13 +167,29 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'AI Model',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      Expanded(
+                        child: Text(
+                          'AI Model',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
                       ),
+                      if (context.read<VideoCubit>().models?.isEmpty ?? false)
+                        IconButton(
+                          icon: Icon(
+                            Icons.refresh,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          onPressed: () {
+                            context.read<VideoCubit>().fetchModels();
+                          },
+                        ),
+                      if (context.read<VideoCubit>().models == null)
+                        CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 16),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lip_reading/components/app_shell.dart';
+import 'package:lip_reading/screens/layout/app_shell.dart';
 import 'package:lip_reading/screens/auth/signup_screen.dart';
 import 'package:lip_reading/screens/splash_screen/history_screen.dart';
 import 'package:lip_reading/screens/lip_reading/lip_reading_screen.dart';

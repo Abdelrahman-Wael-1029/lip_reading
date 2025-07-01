@@ -50,6 +50,7 @@ class VideoCubit extends Cubit<VideoState> {
   VideoCubit({VideoRepository? videoRepository})
       : _videoRepository = videoRepository ?? VideoRepository(),
         super(VideoInitial()) {
+    models = null;
     emit(VideoLoading());
     ApiService.getModels().then((v) {
       models = v;
@@ -256,15 +257,20 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   Future<void> fetchModels() async {
-    emit(VideoLoading());
-    models = await ApiService.getModels();
-    if (models!.isNotEmpty) {
-      selectedModel = models![2];
-      emit(VideoInitial());
-    } else {
-      emit(VideoError('حاول مرة اخرى'));
+    try {
+      models = null;
+      emit(VideoLoading());
+      models = await ApiService.getModels();
+      if (models!.isNotEmpty) {
+        selectedModel = models![2];
+        emit(VideoInitial());
+      } else {
+        emit(VideoError('حاول مرة اخرى'));
+        models = [];
+      }
+    } catch (e) {
+      emit(VideoError('حدث خطاء في الانترنت'));
       models = [];
-      throw Exception('حدث خطاء في الانترنت');
     }
   }
 
@@ -289,7 +295,7 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> _pickVideo(ImageSource source, BuildContext context) async {
     try {
       if (selectedModel.isEmpty) {
-        await fetchModels();
+        return;
       }
 
       final XFile? pickedFile = await _picker.pickVideo(
@@ -385,7 +391,7 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo?.result = response['raw_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       selectedVideo?.diacritized = response['metadata']['diacritized'] ?? false;
-      if (context.mounted) await uploadVideo(context);
+      uploadVideo(context);
       await controller!.play();
       showControls = true;
       _resetHideControlsTimer();
@@ -455,7 +461,7 @@ class VideoCubit extends Cubit<VideoState> {
       }
       await _videoRepository.updateVideoResult(selectedVideo!);
     } catch (e) {
-      emit(VideoError(e.toString()));
+      emit(VideoError('حدث خطاء في الانترنت اثناء حفظ الفيديو'));
     }
   }
 
