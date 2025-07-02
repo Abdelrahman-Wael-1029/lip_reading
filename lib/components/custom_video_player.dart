@@ -17,7 +17,7 @@ class CustomVideoPlayer extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.history,
+            Icons.video_library_outlined,
             size: 64,
             color: isDarkMode
                 ? AppColors.textSecondaryDark
@@ -25,13 +25,75 @@ class CustomVideoPlayer extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No video found',
+            'No Video Selected',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           Text(
-            'Video not Found Please try again',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'Choose a video to start lip reading analysis',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: isDarkMode
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _loadingState(BuildContext context, VideoCubit cubit) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    // Determine loading message based on context
+    String loadingTitle = 'Loading video...';
+    String loadingSubtitle = 'Please wait while we prepare your video';
+
+    if (cubit.selectedVideo != null) {
+      // Check if the video has a meaningful title
+      if (cubit.selectedVideo!.title.isNotEmpty) {
+        loadingTitle = 'Loading "${cubit.selectedVideo!.title}"';
+        loadingSubtitle = 'Preparing video from your history';
+      } else {
+        // For new videos without a title yet
+        loadingTitle = 'Processing new video...';
+        loadingSubtitle = 'Analyzing and preparing your video';
+      }
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            loadingTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            loadingSubtitle,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -43,7 +105,26 @@ class CustomVideoPlayer extends StatelessWidget {
     return BlocBuilder<VideoCubit, VideoState>(
       builder: (context, state) {
         final cubit = context.read<VideoCubit>();
+
+        // Show loading state when video is being loaded
+        if (state is VideoLoading) {
+          return _loadingState(context, cubit);
+        }
+
+        // Show loading state when controller is null but we have a selected video (initialization in progress)
+        if (cubit.controller == null && cubit.selectedVideo != null) {
+          return _loadingState(context, cubit);
+        }
+
+        // Show loading state when controller exists but is not initialized yet
+        if (cubit.controller != null &&
+            !cubit.controller!.value.isInitialized) {
+          return _loadingState(context, cubit);
+        }
+
+        // Show empty state when no video controller is available
         if (cubit.controller == null) return _emtpyState(context);
+
         return GestureDetector(
           child: Stack(
             alignment: Alignment.center,

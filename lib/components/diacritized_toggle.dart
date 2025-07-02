@@ -21,6 +21,8 @@ class DiacritizedToggle extends StatelessWidget {
           current is! HistoryError),
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();
+        final isProcessing = state is ModelProcessing;
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -50,6 +52,7 @@ class DiacritizedToggle extends StatelessWidget {
                       subtitle: 'Without diacritics',
                       icon: Icons.text_fields,
                       isSelected: !videoCubit.isDiacritized,
+                      isProcessing: isProcessing && !videoCubit.isDiacritized,
                       onTap: () {
                         if (videoCubit.loading) return;
 
@@ -73,6 +76,7 @@ class DiacritizedToggle extends StatelessWidget {
                       subtitle: 'With harakat',
                       icon: Icons.text_snippet,
                       isSelected: videoCubit.isDiacritized,
+                      isProcessing: isProcessing && videoCubit.isDiacritized,
                       onTap: () {
                         if (videoCubit.loading) return;
                         if (!videoCubit.isDiacritized) {
@@ -107,6 +111,7 @@ class DiacritizedToggle extends StatelessWidget {
     required String subtitle,
     required IconData icon,
     required bool isSelected,
+    required bool isProcessing,
     required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -131,13 +136,24 @@ class DiacritizedToggle extends StatelessWidget {
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
-                      child: Icon(
-                        icon,
-                        size: 18,
-                        color: isSelected
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurfaceVariant,
-                      ),
+                      child: isProcessing
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: isSelected
+                                    ? colorScheme.onPrimaryContainer
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                            )
+                          : Icon(
+                              icon,
+                              size: 18,
+                              color: isSelected
+                                  ? colorScheme.onPrimaryContainer
+                                  : colorScheme.onSurfaceVariant,
+                            ),
                     ),
                     const SizedBox(width: 8),
                     Text(

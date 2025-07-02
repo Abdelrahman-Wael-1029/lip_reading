@@ -186,11 +186,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          if (context.read<VideoCubit>().loading) return;
-          bool success =
-              await context.read<VideoCubit>().initializeNetworkVideo(video);
-          if (success && context.mounted) {
-            context.read<NavigationCubit>().setTab(0);
+          final videoCubit = context.read<VideoCubit>();
+          final navigationCubit = context.read<NavigationCubit>();
+          
+          if (videoCubit.loading) return;
+          
+          // First navigate to the record page to show loading state
+          navigationCubit.setTab(0);
+          
+          // Then initialize the video
+          bool success = await videoCubit.initializeNetworkVideo(video);
+          
+          if (!success && context.mounted) {
+            // If initialization failed, show error
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to load video. Please try again.'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
         },
         child: Padding(

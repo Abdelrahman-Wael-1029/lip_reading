@@ -14,31 +14,42 @@ class ModelSelector extends StatefulWidget {
 
 class _ModelSelectorState extends State<ModelSelector>
     with TickerProviderStateMixin {
-  late AnimationController _animationController;
+  late AnimationController _loadingAnimationController;
+  late AnimationController _slideAnimationController;
   late Animation<double> _slideAnimation;
   bool _isLoadingAnimationActive = false;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(
-          milliseconds: 2000), // Increased duration for loading animation
+
+    // Loading animation controller - faster for loading indicator
+    _loadingAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
       vsync: this,
     );
+
+    // Slide animation controller - slower for smooth transitions
+    _slideAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
     _slideAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
-      parent: _animationController,
+      parent: _slideAnimationController,
       curve: Curves.easeInOut,
     ));
-    _animationController.forward();
+
+    // Don't start slide animation immediately - wait for models to load
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _loadingAnimationController.dispose();
+    _slideAnimationController.dispose();
     super.dispose();
   }
 
@@ -66,28 +77,30 @@ class _ModelSelectorState extends State<ModelSelector>
     final colorScheme = Theme.of(context).colorScheme;
 
     return BlocBuilder<VideoCubit, VideoState>(
-      buildWhen: (previous, current) => (current is! VideoPlaying &&
-          current is! HistoryLoading &&
-          current is! HistoryFetchedSuccess &&
-          current is! HistoryError),
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();
 
-        // Handle loading animation
-        if (videoCubit.models == null) {
+        // Handle loading animation for model fetching
+        if (videoCubit.models == null || state is ModelLoading) {
           // Start repeating animation for loading
           if (!_isLoadingAnimationActive) {
             _isLoadingAnimationActive = true;
-            _animationController.repeat();
+            _loadingAnimationController.repeat();
           }
           return _buildLoadingState(context);
         } else {
           // Stop repeating and reset for normal use
           if (_isLoadingAnimationActive) {
             _isLoadingAnimationActive = false;
-            _animationController.stop();
-            _animationController.reset();
-            _animationController.forward();
+            _loadingAnimationController.stop();
+            _loadingAnimationController.reset();
+          }
+
+          // Always ensure slide animation is properly started
+          if (!_slideAnimationController.isAnimating &&
+              _slideAnimationController.status != AnimationStatus.completed) {
+            _slideAnimationController.reset();
+            _slideAnimationController.forward();
           }
         }
 
@@ -101,17 +114,19 @@ class _ModelSelectorState extends State<ModelSelector>
             return Transform.translate(
               offset: Offset(0, 20 * (1 - _slideAnimation.value)),
               child: Opacity(
-                opacity: _slideAnimation.value,
+                opacity: _slideAnimation.value.clamp(0.0, 1.0),
                 child: Column(
                   children: [
                     ...videoCubit.models!.asMap().entries.map((entry) {
                       final index = entry.key;
                       final model = entry.value;
                       final isSelected = model == videoCubit.selectedModel;
+                      final isProcessing =
+                          state is ModelProcessing && isSelected;
                       final info = modelInfo[model.toLowerCase()] ??
                           {
                             'name': model,
-                            'description': 'Ai Model',
+                            'description': 'AI Model',
                             'detail': '',
                           };
 
@@ -128,6 +143,7 @@ class _ModelSelectorState extends State<ModelSelector>
                             model: model,
                             info: info,
                             isSelected: isSelected,
+                            isProcessing: isProcessing,
                             onTap: () {
                               if (videoCubit.loading) return;
                               if (!isSelected) {
@@ -157,6 +173,7 @@ class _ModelSelectorState extends State<ModelSelector>
     required String model,
     required Map<String, String> info,
     required bool isSelected,
+    required bool isProcessing,
     required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -242,12 +259,22 @@ class _ModelSelectorState extends State<ModelSelector>
                             width: 2,
                           ),
                   ),
-                  child: Icon(
-                    Icons.check,
-                    size: 16,
-                    color:
-                        isSelected ? colorScheme.onPrimary : Colors.transparent,
-                  ),
+                  child: isProcessing
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: colorScheme.onPrimary,
+                          ),
+                        )
+                      : Icon(
+                          Icons.check,
+                          size: 16,
+                          color: isSelected
+                              ? colorScheme.onPrimary
+                              : Colors.transparent,
+                        ),
                 ),
               ],
             ),
@@ -346,10 +373,10 @@ class _ModelSelectorState extends State<ModelSelector>
               borderRadius: BorderRadius.circular(2),
             ),
             child: AnimatedBuilder(
-              animation: _animationController,
+              animation: _loadingAnimationController,
               builder: (context, child) {
                 return FractionallySizedBox(
-                  widthFactor: _animationController.value,
+                  widthFactor: _loadingAnimationController.value,
                   alignment: Alignment.centerLeft,
                   child: Container(
                     decoration: BoxDecoration(

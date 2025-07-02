@@ -4,6 +4,10 @@ class VideoInitial extends VideoState {}
 
 class VideoLoading extends VideoState {}
 
+class ModelLoading extends VideoState {}
+
+class ModelProcessing extends VideoState {}
+
 // for name and result
 class VideoSuccess extends VideoState {}
 

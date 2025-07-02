@@ -53,7 +53,7 @@ class VideoCubit extends Cubit<VideoState> {
       : _videoRepository = videoRepository ?? VideoRepository(),
         super(VideoInitial()) {
     models = null;
-    emit(VideoLoading());
+    emit(ModelLoading());
     ApiService.getModels().then((v) {
       models = v;
       if (models!.isNotEmpty) selectedModel = models![2];
@@ -98,7 +98,15 @@ class VideoCubit extends Cubit<VideoState> {
   // Video Controller Methods
   Future<bool> initializeNetworkVideo(VideoModel video) async {
     if (state is VideoLoading) return false;
+
+    // Store selected video first before cleanup and emit loading state
+    selectedVideo = video;
+    selectedModel = video.model;
+    nameVideoController.text = video.title;
+    isDiacritized = video.diacritized ?? true;
+
     emit(VideoLoading());
+
     try {
       if (video.url.isEmpty) throw Exception('Video URL is empty');
       if (!await ConnectivityService().isConnected()) {
@@ -107,14 +115,8 @@ class VideoCubit extends Cubit<VideoState> {
       }
       videoFile = null;
       _currentVideoPath = null;
-      await cleanupController();
+      await cleanupController(clearSelectedVideo: false);
       videoModelsCache.clear();
-
-      // Store selected video before initializing controller
-      selectedVideo = video;
-      selectedModel = video.model;
-      nameVideoController.text = video.title;
-      isDiacritized = video.diacritized ?? true;
 
       // Create controller with safeguards
       final VideoPlayerController newController =
@@ -140,6 +142,9 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoSuccess());
       return true; // Success indicator
     } catch (e) {
+      // Reset selected video on error to avoid showing stale loading state
+      selectedVideo = null;
+      nameVideoController.clear();
       emit(VideoError('Video not exist please try again'));
       return false; // Failure indicator
     }
@@ -164,7 +169,7 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<void> cleanupController() async {
+  Future<void> cleanupController({bool clearSelectedVideo = true}) async {
     // Cancel subscriptions and timers
     _videoProgressSubscription?.cancel();
     _videoProgressSubscription = null;
@@ -183,9 +188,11 @@ class VideoCubit extends Cubit<VideoState> {
       await tempController.dispose();
     }
 
-    // Reset state
-    selectedVideo = null;
-    nameVideoController.clear();
+    // Reset state conditionally
+    if (clearSelectedVideo) {
+      selectedVideo = null;
+      nameVideoController.clear();
+    }
   }
 
   void _setupVideoProgressTracking() {
@@ -261,7 +268,7 @@ class VideoCubit extends Cubit<VideoState> {
   Future<void> fetchModels() async {
     try {
       models = null;
-      emit(VideoLoading());
+      emit(ModelLoading());
       models = await ApiService.getModels();
       if (models!.isNotEmpty) {
         selectedModel = models![2];
@@ -609,11 +616,12 @@ class VideoCubit extends Cubit<VideoState> {
     // if not select video
     if (selectedVideo == null) {
       loading = false;
-      emit(VideoSuccess());
+      emit(
+          VideoInitial()); // Use VideoInitial instead of VideoSuccess when no video
       return;
     }
     try {
-      emit(VideoLoading());
+      emit(ModelProcessing()); // Use ModelProcessing instead of VideoLoading
       for (final item in videoModelsCache) {
         if (item.model == model && item.diacritized == isDiacritized) {
           selectedVideo = item.copyWith();
@@ -667,7 +675,7 @@ class VideoCubit extends Cubit<VideoState> {
     if (selectedVideo == null || loading) return;
     loading = true;
     try {
-      emit(VideoLoading());
+      emit(ModelProcessing()); // Use ModelProcessing instead of VideoLoading
       for (int i = 0; i < videoModelsCache.length; i++) {
         debugPrint('[VideoDiacritized] Cache item $i: ${videoModelsCache[i]}');
       }
@@ -755,7 +763,8 @@ class VideoCubit extends Cubit<VideoState> {
           // Extract results from progress completion
           final result = progressState.result;
           if (result.containsKey('enhanced_transcript')) {
-            final rawTranscript = result['enhanced_transcript'] as String? ?? '';
+            final rawTranscript =
+                result['enhanced_transcript'] as String? ?? '';
             final videoHash = result['video_hash'] as String?;
             final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
 
