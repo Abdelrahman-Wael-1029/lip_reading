@@ -6,12 +6,12 @@ import 'package:lip_reading/components/custom_video_player.dart';
 import 'package:lip_reading/components/diacritized_toggle.dart';
 import 'package:lip_reading/components/model_selector.dart';
 import 'package:lip_reading/components/modern_progress_bar.dart';
-import 'package:lip_reading/components/progress_notification.dart';
 import 'package:lip_reading/cubit/auth/auth_cubit.dart';
 import 'package:lip_reading/cubit/progress/progress_cubit.dart';
 import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 /// Modern redesigned lip reading screen with improved UI/UX
 /// Features semi-transparent cards, improved typography, and diacritized toggle
@@ -95,16 +95,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       ),
       body: MultiBlocListener(
         listeners: [
-          // Video cubit listener for errors
-          BlocListener<VideoCubit, VideoState>(
-            listener: (context, state) {
-              if (state is VideoError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.errorMessage)),
-                );
-              }
-            },
-          ),
           // Progress cubit listener for notifications
           BlocListener<ProgressCubit, ProgressState>(
             listener: (context, state) {
@@ -129,14 +119,21 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
                 // Show appropriate notification based on result
                 if (videoCubit.isNoLipMovementsDetected(finalTranscript)) {
-                  ProgressNotification.showInfo(
-                    context,
-                    'Processing completed, but no clear lip movements were detected in the video.',
+                  Fluttertoast.showToast(
+                    msg:
+                        'Processing completed, but no clear lip movements were detected in the video.',
+                    toastLength: Toast.LENGTH_LONG,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: colorScheme.error,
+                    textColor: colorScheme.onError,
                   );
                 } else {
-                  ProgressNotification.showSuccess(
-                    context,
-                    'Lip reading completed successfully!',
+                  Fluttertoast.showToast(
+                    msg: 'Lip reading completed successfully!',
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: colorScheme.primary,
+                    textColor: colorScheme.onPrimary,
                   );
                 }
 
@@ -151,15 +148,17 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                 final userFriendlyError =
                     _getUserFriendlyErrorMessage(state.errorMessage);
 
-                // Show error notification with retry option
-                ProgressNotification.showError(
-                  context,
-                  userFriendlyError,
-                  onRetry: () {
-                    // Reset progress and let user try again
-                    context.read<ProgressCubit>().resetProgress();
-                  },
+                // Show error toast like the no lip movements case
+                Fluttertoast.showToast(
+                  msg: userFriendlyError,
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.BOTTOM,
+                  backgroundColor: colorScheme.error.withValues(alpha: 0.8),
+                  textColor: colorScheme.onError,
                 );
+
+                // Don't automatically reset progress for errors
+                // Let the user manually trigger a new process or navigate away
               }
             },
           ),
@@ -289,7 +288,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                 return const ModernProgressBar();
               }
               // If not processing, show transcription card
-              return _buildTranscriptionCard(context);
+              return _buildTranscriptionCard(context, progressState);
             },
           ),
 
@@ -304,7 +303,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     );
   }
 
-  Widget _buildTranscriptionCard(BuildContext context) {
+  Widget _buildTranscriptionCard(BuildContext context,
+      [ProgressState? progressState]) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final videoCubit = context.read<VideoCubit>();
@@ -313,6 +313,11 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     if (videoCubit.loading) {
       return _buildLoadingState(context);
     }
+
+    // Check if there's an error from progress state
+    bool hasProgressError = progressState is ProgressFailed;
+    String? progressErrorMessage =
+        hasProgressError ? progressState.errorMessage : null;
 
     return Card(
       child: Container(
@@ -418,97 +423,104 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                     color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
-                child: result.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.text_snippet_outlined,
-                              size: 48,
-                              color: colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Transcription will appear here',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : videoCubit.isNoLipMovementsDetected(result)
+                child: hasProgressError
+                    ? _buildErrorState(
+                        context,
+                        _getErrorTypeFromMessage(progressErrorMessage ?? ''),
+                        _getUserFriendlyErrorMessage(
+                            progressErrorMessage ?? ''))
+                    : result.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.visibility_off,
+                                  Icons.text_snippet_outlined,
                                   size: 48,
-                                  color: colorScheme.secondary,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No Lip Movements Detected',
-                                  style: textTheme.titleMedium?.copyWith(
-                                    color: colorScheme.secondary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  color: colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5),
                                 ),
                                 const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  child: Text(
-                                    'The AI could not detect clear lip movements in this video. Please try with a video that contains visible lip movements and clear pronunciation.',
-                                    textAlign: TextAlign.center,
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onSurfaceVariant,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.secondaryContainer
-                                        .withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.lightbulb_outline,
-                                        size: 16,
-                                        color: colorScheme.secondary,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Try a different video or model',
-                                        style: textTheme.bodySmall?.copyWith(
-                                          color: colorScheme.secondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
+                                Text(
+                                  'Transcription will appear here',
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
                           )
-                        : SingleChildScrollView(
-                            child: SelectableText(
-                              result,
-                              style: textTheme.bodyLarge?.copyWith(
-                                height: 1.6,
-                                letterSpacing: 0.5,
+                        : videoCubit.isNoLipMovementsDetected(result)
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.visibility_off,
+                                      size: 48,
+                                      color: colorScheme.secondary,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'No Lip Movements Detected',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color: colorScheme.secondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      child: Text(
+                                        'The AI could not detect clear lip movements in this video. Please try with a video that contains visible lip movements and clear pronunciation.',
+                                        textAlign: TextAlign.center,
+                                        style: textTheme.bodyMedium?.copyWith(
+                                          color: colorScheme.onSurfaceVariant,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.secondaryContainer
+                                            .withValues(alpha: 0.3),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.lightbulb_outline,
+                                            size: 16,
+                                            color: colorScheme.secondary,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Try a different video or model',
+                                            style:
+                                                textTheme.bodySmall?.copyWith(
+                                              color: colorScheme.secondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : SingleChildScrollView(
+                                child: SelectableText(
+                                  result,
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    height: 1.6,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
               ),
             ],
           ),
@@ -568,7 +580,11 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               child: FilledButton.icon(
                 onPressed: isProcessing
                     ? null
-                    : () => videoCubit.pickVideoFromGallery(context),
+                    : () {
+                        // Reset progress state when starting new video operation
+                        context.read<ProgressCubit>().resetProgress();
+                        videoCubit.pickVideoFromGallery(context);
+                      },
                 icon: const Icon(Icons.video_library),
                 label: const Text('Pick Video'),
                 style: FilledButton.styleFrom(
@@ -582,8 +598,13 @@ class _LipReadingScreenState extends State<LipReadingScreen>
             // Record Video Button
             Expanded(
               child: OutlinedButton.icon(
-                onPressed:
-                    isProcessing ? null : () => videoCubit.recordVideo(context),
+                onPressed: isProcessing
+                    ? null
+                    : () {
+                        // Reset progress state when starting new video operation
+                        context.read<ProgressCubit>().resetProgress();
+                        videoCubit.recordVideo(context);
+                      },
                 icon: const Icon(Icons.videocam),
                 label: const Text('Record'),
                 style: OutlinedButton.styleFrom(
@@ -632,5 +653,149 @@ class _LipReadingScreenState extends State<LipReadingScreen>
 
     // Default fallback for unknown errors
     return 'Processing failed. Please try again or contact support if the issue persists.';
+  }
+
+  /// Helper method to get error type from error message
+  String _getErrorTypeFromMessage(String errorMessage) {
+    final lowerError = errorMessage.toLowerCase();
+
+    if (lowerError.contains('no face detected') ||
+        lowerError.contains('no landmarks detected')) {
+      return 'no_face';
+    }
+    if (lowerError.contains('connection') || lowerError.contains('network')) {
+      return 'network';
+    }
+    if (lowerError.contains('timeout') || lowerError.contains('timed out')) {
+      return 'timeout';
+    }
+    if (lowerError.contains('format') || lowerError.contains('codec')) {
+      return 'format';
+    }
+    if (lowerError.contains('size') || lowerError.contains('large')) {
+      return 'file_size';
+    }
+    if (lowerError.contains('upload') || lowerError.contains('file')) {
+      return 'upload';
+    }
+    if (lowerError.contains('failed to preprocess')) {
+      return 'preprocessing';
+    }
+
+    return 'general';
+  }
+
+  /// Builds error state UI similar to the no lip movements detected case
+  Widget _buildErrorState(
+      BuildContext context, String errorType, String errorMessage) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    print('Error Type: $errorType');
+
+    // Get error-specific icon and title
+    IconData errorIcon;
+    String errorTitle;
+    String actionHint;
+
+    switch (errorType) {
+      case 'no_face':
+        errorIcon = Icons.face_retouching_off;
+        errorTitle = 'No Face Detected';
+        actionHint = 'Ensure face is visible';
+        break;
+      case 'network':
+        errorIcon = Icons.wifi_off;
+        errorTitle = 'Connection Issue';
+        actionHint = 'Check your internet';
+        break;
+      case 'timeout':
+        errorIcon = Icons.access_time;
+        errorTitle = 'Processing Timeout';
+        actionHint = 'Try a shorter video';
+        break;
+      case 'format':
+        errorIcon = Icons.video_file;
+        errorTitle = 'Format Not Supported';
+        actionHint = 'Use MP4, MOV, or AVI';
+        break;
+      case 'file_size':
+        errorIcon = Icons.file_present;
+        errorTitle = 'File Too Large';
+        actionHint = 'Compress the video';
+        break;
+      case 'upload':
+        errorIcon = Icons.cloud_upload;
+        errorTitle = 'Upload Failed';
+        actionHint = 'Try a smaller file';
+        break;
+      case 'preprocessing':
+        errorIcon = Icons.video_settings;
+        errorTitle = 'Processing Failed';
+        actionHint = 'Try a different video';
+        break;
+      default:
+        errorIcon = Icons.error_outline;
+        errorTitle = 'Processing Error';
+        actionHint = 'Try again or contact support';
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            errorIcon,
+            size: 48,
+            color: colorScheme.error,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            errorTitle,
+            style: textTheme.titleMedium?.copyWith(
+              color: colorScheme.error,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.errorContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  actionHint,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

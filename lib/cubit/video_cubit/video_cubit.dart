@@ -285,11 +285,12 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<File?> compressVideo(String videoPath, {Function()? onProgress}) async {
+  Future<File?> compressVideo(String videoPath,
+      {Function()? onProgress}) async {
     try {
       // Emit progress during compression
       onProgress?.call(); // Starting compression
-      
+
       // Start compression
       final info = await VideoCompress.compressVideo(
         videoPath,
@@ -314,7 +315,7 @@ class VideoCubit extends Cubit<VideoState> {
 
       final XFile? pickedFile = await _picker.pickVideo(
         source: source,
-        maxDuration: const Duration(minutes: 1),
+        maxDuration: const Duration(seconds: 10),
       );
 
       debugPrint('[VideoPicker] Selected file: $pickedFile');
@@ -356,18 +357,18 @@ class VideoCubit extends Cubit<VideoState> {
     loading = true;
     if (state is VideoLoading) return;
     emit(VideoLoading());
-    
+
     // Start progress tracking immediately when video processing begins
     final progressCubit = context.read<ProgressCubit>();
     final taskId = DateTime.now().millisecondsSinceEpoch.toString();
-    
+
     // Emit initial progress
     progressCubit.emitLocalProgress(
       taskId: taskId,
       step: ProgressStep.initializing,
       message: 'Starting video processing...',
     );
-    
+
     try {
       await cleanupController();
 
@@ -383,15 +384,6 @@ class VideoCubit extends Cubit<VideoState> {
 
       var temp = VideoPlayerController.file(videoFile!);
       await temp.initialize();
-      
-      // check on time duration of video max is 1 minute
-      if (temp.value.duration.inSeconds > 60) {
-        _currentVideoPath = null;
-
-        await cleanupController();
-        emit(VideoError('Video duration exceeds 1 minute'));
-        return;
-      }
 
       controller = temp;
       _setupVideoProgressTracking();
@@ -418,7 +410,7 @@ class VideoCubit extends Cubit<VideoState> {
           step: ProgressStep.compressingVideo,
           message: 'Compressing video for better quality...',
         );
-        
+
         File? file = await compressVideo(videoFile!.path, onProgress: () {
           // Update compression progress
           progressCubit.emitLocalProgress(
@@ -430,7 +422,7 @@ class VideoCubit extends Cubit<VideoState> {
         if (file != null) {
           videoFile = file;
         }
-        
+
         // Add a small delay to show compression completion
         await Future.delayed(const Duration(milliseconds: 300));
       }
@@ -762,13 +754,13 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       final progressCubit = context.read<ProgressCubit>();
       await progressCubit.cancelTranscription();
-      
+
       // Set loading to false to show the transcription result widget
       loading = false;
-      
+
       // Emit VideoSuccess to show the result widget
       emit(VideoSuccess());
-      
+
       debugPrint('[VideoCubit] Transcription cancelled successfully');
     } catch (e) {
       debugPrint('[VideoCubit] Error cancelling transcription: $e');
@@ -778,7 +770,8 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   /// Start transcription using the new progress system
-  Future<void> startTranscriptionWithProgress(BuildContext context, {String? existingTaskId}) async {
+  Future<void> startTranscriptionWithProgress(BuildContext context,
+      {String? existingTaskId}) async {
     if (selectedVideo == null || selectedModel.isEmpty) {
       emit(VideoError('Please select a video and model'));
       return;
@@ -815,7 +808,7 @@ class VideoCubit extends Cubit<VideoState> {
             selectedVideo!.diacritized = isDiacritized;
             videoModelsCache.add(selectedVideo!.copyWith());
             debugPrint('[VideoCubit] Added to cache: ${selectedVideo!}');
-            if(context.mounted) await uploadVideo(context);
+            if (context.mounted) await uploadVideo(context);
           }
 
           // Try to save to repository

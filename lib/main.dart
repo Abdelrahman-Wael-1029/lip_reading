@@ -11,7 +11,7 @@ import 'package:lip_reading/service/connectivity_service.dart';
 import 'package:lip_reading/utils/app_route.dart';
 import 'package:lip_reading/utils/app_theme.dart';
 import 'package:lip_reading/screens/splash_screen/splash_screen.dart';
-import 'package:responsive_framework/responsive_wrapper.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,19 +44,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
-        child: ResponsiveWrapper.builder(
-          child,
-          maxWidth: 1800,
-          minWidth: 400,
-          defaultScale: true,
-          breakpoints: [
-            const ResponsiveBreakpoint.resize(400, name: MOBILE),
-            const ResponsiveBreakpoint.resize(800, name: TABLET),
-            const ResponsiveBreakpoint.resize(1200, name: DESKTOP),
-          ],
-        ),
+      builder: (context, child) => ResponsiveBreakpoints.builder(
+        child: child!,
+        breakpoints: [
+          const Breakpoint(start: 0, end: 450, name: MOBILE),
+          const Breakpoint(start: 451, end: 800, name: TABLET),
+          const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+          const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+        ],
       ),
       onGenerateRoute: AppRoutes.onGenerateRoute,
       theme: AppTheme.lightTheme,

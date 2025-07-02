@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lip_reading/utils/app_colors.dart';
 import 'package:lip_reading/utils/utils.dart';
-import 'package:responsive_framework/responsive_value.dart';
-import 'package:responsive_framework/responsive_wrapper.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 Widget customTextFormField({
   required BuildContext context,
@@ -44,7 +43,7 @@ Widget customTextFormField({
       fontSize: ResponsiveValue<double>(
         context,
         defaultValue: 16.0,
-        valueWhen: [
+        conditionalValues: [
           const Condition.smallerThan(
             name: MOBILE,
             value: 16.0,
@@ -68,7 +67,7 @@ Widget customTextFormField({
         fontSize: ResponsiveValue<double>(
           context,
           defaultValue: 16.0,
-          valueWhen: [
+          conditionalValues: [
             const Condition.smallerThan(
               name: MOBILE,
               value: 16.0,
@@ -95,7 +94,7 @@ Widget customTextFormField({
         fontSize: ResponsiveValue<double>(
           context,
           defaultValue: 16.0,
-          valueWhen: [
+          conditionalValues: [
             const Condition.smallerThan(
               name: MOBILE,
               value: 16.0,

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:responsive_framework/responsive_value.dart';
-import 'package:responsive_framework/responsive_wrapper.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 double? getSizedBox(context) {
   return ResponsiveValue<double>(
     context,
     defaultValue: 28.0,
-    valueWhen: [
+    conditionalValues: [
       const Condition.smallerThan(
         name: MOBILE,
         value: 20.0,
@@ -27,7 +26,7 @@ double? getPadding(context) {
   return ResponsiveValue<double>(
     context,
     defaultValue: 20.0,
-    valueWhen: [
+    conditionalValues: [
       const Condition.smallerThan(
         name: MOBILE,
         value: 8.0,
@@ -48,7 +47,7 @@ double? getMediumFontSize(context) {
   return ResponsiveValue<double>(
     context,
     defaultValue: 16.0,
-    valueWhen: [
+    conditionalValues: [
       const Condition.smallerThan(
         name: MOBILE,
         value: 12.0,
@@ -69,7 +68,7 @@ double? getLargeFontSize(context) {
   return ResponsiveValue<double>(
     context,
     defaultValue: 20.0,
-    valueWhen: [
+    conditionalValues: [
       const Condition.smallerThan(name: MOBILE, value: 18),
       const Condition.smallerThan(
         name: TABLET,
@@ -89,7 +88,7 @@ double? getSizeImage(BuildContext context) {
   return ResponsiveValue<double>(
     context,
     defaultValue: screenHeight * 0.4, // 40% of screen height
-    valueWhen: [
+    conditionalValues: [
       Condition.smallerThan(
         name: MOBILE,
         value: screenHeight * 0.3, // 30% of screen height

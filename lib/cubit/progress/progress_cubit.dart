@@ -99,6 +99,7 @@ class ProgressCubit extends Cubit<ProgressState> {
       // Update progress to uploading
       final uploadingProgress = ProgressModel.create(
         taskId: taskId,
+        status: ProgressStatus.uploading,
         currentStep: ProgressStep.uploading,
         message: 'Uploading to server...',
       );

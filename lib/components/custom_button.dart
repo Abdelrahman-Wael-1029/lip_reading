@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:responsive_framework/responsive_value.dart';
-import 'package:responsive_framework/responsive_wrapper.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -73,7 +72,7 @@ class CustomButton extends StatelessWidget {
                   ResponsiveValue<double>(
                     context,
                     defaultValue: 16.0,
-                    valueWhen: [
+                    conditionalValues: [
                       const Condition.smallerThan(
                         name: MOBILE,
                         value: 16.0,
