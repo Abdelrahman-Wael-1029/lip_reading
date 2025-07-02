@@ -39,7 +39,7 @@ class ApiService {
     required String modelName,
     bool dia = false,
     String? fileHash,
-    String? videoUrl, // Firebase storage URL for history videos
+    String? videoUrl,
     bool enhance = false,
     bool includeSummary = false,
     bool includeTranslation = false,
@@ -138,21 +138,6 @@ class ApiService {
     }
   }
 
-  /// Get single progress status
-  static Future<ProgressModel> getProgressStatus(String taskId) async {
-    final url = Uri.parse('$baseUrl/progress/$taskId/status');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return ProgressModel.fromBackendData(taskId, data);
-    } else if (response.statusCode == 404) {
-      throw Exception("Task not found");
-    } else {
-      throw Exception("Failed to get progress: ${response.body}");
-    }
-  }
-
   /// Stream progress updates using Server-Sent Events
   static Stream<ProgressModel> streamProgress(String taskId) async* {
     final url = Uri.parse('$baseUrl/progress/$taskId');
@@ -185,17 +170,6 @@ class ApiService {
               final data = jsonDecode(jsonData);
               debugPrint('[ApiService] Parsed data: $data');
 
-              // Check for errors - only throw if error is present and not null
-              if (data.containsKey('error')) {
-                if (data['error'] != null) {
-                  debugPrint('[ApiService] Backend error: ${data['error']}');
-                  throw Exception(data['error']);
-                } else {
-                  debugPrint(
-                      '[ApiService] Error key present but null (normal)');
-                }
-              }
-
               // Validate required fields
               if (data is! Map<String, dynamic>) {
                 debugPrint(
@@ -204,11 +178,34 @@ class ApiService {
               }
 
               final progress = ProgressModel.fromBackendData(taskId, data);
+
+              // Handle failed status specifically
+              if (progress.status == ProgressStatus.failed) {
+                debugPrint(
+                    '[ApiService] Backend processing failed: ${progress.errorMessage}');
+                yield progress; // Yield the failed progress to let the cubit handle it
+                break; // Stop streaming after failure
+              }
+
+              // Check for errors in non-failed statuses
+              if (data.containsKey('error') && data['error'] != null) {
+                debugPrint('[ApiService] Backend error: ${data['error']}');
+                // Create a failed progress model with the error
+                final failedProgress = ProgressModel.create(
+                  taskId: taskId,
+                  status: ProgressStatus.failed,
+                  currentStep: progress.currentStep,
+                  errorMessage: data['error'].toString(),
+                  message: 'Processing failed',
+                );
+                yield failedProgress;
+                break;
+              }
+
               yield progress;
 
-              // Stop streaming if completed or failed
-              if (progress.status == ProgressStatus.completed ||
-                  progress.status == ProgressStatus.failed) {
+              // Stop streaming if completed
+              if (progress.status == ProgressStatus.completed) {
                 debugPrint(
                     '[ApiService] Stream completed with status: ${progress.status}');
                 break;
@@ -216,7 +213,26 @@ class ApiService {
             } catch (e) {
               debugPrint('[ApiService] Error parsing progress data: $e');
               debugPrint('[ApiService] Raw data that failed: "$jsonData"');
-              continue;
+
+              // Try to create a failed progress model if we can parse basic info
+              try {
+                final data = jsonDecode(jsonData);
+                if (data is Map<String, dynamic>) {
+                  final errorMessage =
+                      data['error']?.toString() ?? e.toString();
+                  final failedProgress = ProgressModel.create(
+                    taskId: taskId,
+                    status: ProgressStatus.failed,
+                    errorMessage: errorMessage,
+                    message: 'Processing failed',
+                  );
+                  yield failedProgress;
+                  break;
+                }
+              } catch (_) {
+                // If we can't parse anything, continue to next chunk
+                continue;
+              }
             }
           }
         }

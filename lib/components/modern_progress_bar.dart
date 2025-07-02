@@ -60,9 +60,7 @@ class _ModernProgressBarState extends State<ModernProgressBar>
   }
 
   void _updateProgress(double targetProgress) {
-    if (targetProgress > _progressAnimation.value) {
-      _progressController.animateTo(targetProgress / 100.0);
-    }
+    _progressController.animateTo(targetProgress / 100.0);
   }
 
   @override
@@ -77,11 +75,15 @@ class _ModernProgressBarState extends State<ModernProgressBar>
         } else if (state is ProgressCompleted) {
           _updateProgress(100.0);
           _pulseController.stop();
-        } else if (state is ProgressFailed) {
+        } else if (state is ProgressFailed || state is ProgressCancelled) {
           _pulseController.stop();
+        } else if (state is ProgressInitial) {
+          _progressController.reset();
         }
       },
       child: BlocBuilder<ProgressCubit, ProgressState>(
+        buildWhen: (previous, current) =>
+            true, // Always rebuild on state changes
         builder: (context, state) {
           if (state is ProgressInitial) {
             return const SizedBox.shrink();
@@ -95,6 +97,11 @@ class _ModernProgressBarState extends State<ModernProgressBar>
             progress = state.progress;
             progressColor = colorScheme.primary;
             statusIcon = _getStepIcon(progress.currentStep);
+
+            // Ensure progress is updated even if listener didn't fire
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _updateProgress(progress!.progress);
+            });
           } else if (state is ProgressCompleted) {
             progress = state.progress;
             progressColor = colorScheme.tertiary;
@@ -109,7 +116,9 @@ class _ModernProgressBarState extends State<ModernProgressBar>
             statusIcon = Icons.cancel;
           }
 
-          if (progress == null) return const SizedBox.shrink();
+          if (progress == null) {
+            return const SizedBox.shrink();
+          }
 
           return Container(
             margin: const EdgeInsets.all(16),
@@ -309,12 +318,9 @@ class _ModernProgressBarState extends State<ModernProgressBar>
     switch (step) {
       case ProgressStep.initializing:
         return Icons.play_circle_outline;
-      case ProgressStep.compressing:
-        return Icons.compress;
       case ProgressStep.uploading:
         return Icons.cloud_upload;
       case ProgressStep.backendInitializing:
-      case ProgressStep.videoServiceInit:
         return Icons.settings;
       case ProgressStep.videoPreprocessing:
         return Icons.video_settings;
@@ -328,8 +334,6 @@ class _ModernProgressBarState extends State<ModernProgressBar>
         return Icons.psychology;
       case ProgressStep.aiEnhancement:
         return Icons.auto_awesome;
-      case ProgressStep.finalizing:
-        return Icons.check_circle_outline;
       case ProgressStep.completed:
         return Icons.check_circle;
     }
@@ -338,8 +342,6 @@ class _ModernProgressBarState extends State<ModernProgressBar>
   String _getStatusTitle(ProgressState state) {
     if (state is ProgressLoading) {
       switch (state.progress.status) {
-        case ProgressStatus.compressing:
-          return 'Compressing Video';
         case ProgressStatus.uploading:
           return 'Uploading';
         case ProgressStatus.processing:

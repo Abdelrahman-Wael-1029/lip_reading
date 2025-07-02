@@ -143,9 +143,10 @@ class VideoCubit extends Cubit<VideoState> {
       return true; // Success indicator
     } catch (e) {
       // Reset selected video on error to avoid showing stale loading state
+      debugPrint('[VideoCubit] Error initializing video: $e');
       selectedVideo = null;
       nameVideoController.clear();
-      emit(VideoError('Video not exist please try again'));
+      emit(VideoError('Video doesn\'t exist please try again'));
       return false; // Failure indicator
     }
   }
@@ -283,7 +284,7 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<File?> compressAndUploadVideo(String videoPath) async {
+  Future<File?> compressVideo(String videoPath) async {
     try {
       // Start compression
       final info = await VideoCompress.compressVideo(
@@ -384,7 +385,7 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Only compress video if we don't have a cached hash
       if (selectedVideo?.fileHash == null) {
-        File? file = await compressAndUploadVideo(videoFile!.path);
+        File? file = await compressVideo(videoFile!.path);
         if (file != null) {
           videoFile = file;
         }
@@ -434,7 +435,8 @@ class VideoCubit extends Cubit<VideoState> {
       if (nameVideoController.text.isEmpty) throw Exception('');
       await pauseVideo();
       await _videoRepository.addVideo(selectedVideo!);
-
+      debugPrint(
+          '[VideoCubit] Video added to repository: ${selectedVideo!.id}');
       String videoUrl = await _videoRepository.uploadVideoFile(
         File(_currentVideoPath!),
         selectedVideo!.id,
@@ -443,6 +445,7 @@ class VideoCubit extends Cubit<VideoState> {
       selectedVideo!.url = videoUrl;
       selectedVideo?.model = selectedModel;
       await _videoRepository.updateVideo(selectedVideo!);
+      debugPrint('[VideoCubit] Video uploaded successfully: $videoUrl');
     } catch (e) {
       emit(VideoError(
           'you arrive into limit please delete to upload another video'));
@@ -654,41 +657,8 @@ class VideoCubit extends Cubit<VideoState> {
     emit(VideoSuccess()); // Emit to update UI
   }
 
-  // Re-process video with current diacritized setting
-  Future<void> reprocessWithDiacritized() async {
-    if (selectedVideo == null || loading) return;
-    loading = true;
-    try {
-      emit(ModelProcessing()); // Use ModelProcessing instead of VideoLoading
-      for (int i = 0; i < videoModelsCache.length; i++) {
-        debugPrint('[VideoDiacritized] Cache item $i: ${videoModelsCache[i]}');
-      }
-      for (final item in videoModelsCache) {
-        if (item.model == selectedModel && item.diacritized == isDiacritized) {
-          debugPrint('[VideoDiacritized] Found matching cached item: $item');
-          selectedVideo = item.copyWith();
-          loading = false;
-          emit(VideoSuccess());
-          return;
-        }
-      }
-
-      // Use the new progress-based transcription system
-      // Note: This method needs a BuildContext, so it should be called from UI with context
-      debugPrint(
-          '[VideoDiacritized] No cached result found, need to reprocess with progress system');
-      loading = false;
-      emit(VideoError('Please use the diacritized toggle to reprocess'));
-    } catch (e) {
-      loading = false;
-      debugPrint('[VideoDiacritized] Error: ${e.toString()}');
-      emit(VideoError('Network error occurred'));
-    }
-  }
-
   // Re-process video with current diacritized setting using progress system
-  Future<void> reprocessWithDiacritizedUsingProgress(
-      BuildContext context) async {
+  Future<void> changeTextStyle(BuildContext context) async {
     if (selectedVideo == null || loading) return;
     loading = true;
     try {
@@ -726,7 +696,10 @@ class VideoCubit extends Cubit<VideoState> {
       debugPrint('[VideoCubit] Video hash: $videoHash');
       debugPrint('[VideoCubit] Metadata: $metadata');
 
-      selectedVideo!.result = enhancedTranscript;
+      // Handle empty transcript case
+      selectedVideo!.result = processTranscriptResult(
+          result: {'enhanced_transcript': enhancedTranscript});
+
       selectedVideo!.fileHash = videoHash;
       if (metadata != null) {
         selectedVideo!.diacritized = metadata['diacritized'] ?? isDiacritized;
@@ -741,7 +714,7 @@ class VideoCubit extends Cubit<VideoState> {
 
   /// Start transcription using the new progress system
   Future<void> startTranscriptionWithProgress(BuildContext context) async {
-    if (videoFile == null || selectedModel.isEmpty) {
+    if (selectedVideo == null || selectedModel.isEmpty) {
       emit(VideoError('Please select a video and model'));
       return;
     }
@@ -759,33 +732,33 @@ class VideoCubit extends Cubit<VideoState> {
 
           // Extract results from progress completion
           final result = progressState.result;
-          if (result.containsKey('enhanced_transcript')) {
-            final enhancedTranscript =
-                result['enhanced_transcript'] as String? ?? '';
-            final videoHash = result['video_hash'] as String?;
-            final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
 
-            // Update video results
-            updateVideoResultFromProgress(
-              enhancedTranscript: enhancedTranscript,
-              videoHash: videoHash,
-              metadata: metadata,
-            );
+          // Use helper method to process transcript results
+          final finalTranscript = processTranscriptResult(result: result);
+          final videoHash = result['video_hash'] as String?;
+          final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
 
-            // Cache the result
-            if (selectedVideo != null) {
-              selectedVideo!.diacritized = isDiacritized;
-              videoModelsCache.add(selectedVideo!.copyWith());
-              debugPrint('[VideoCubit] Added to cache: ${selectedVideo!}');
-            }
+          // Update video results
+          updateVideoResultFromProgress(
+            enhancedTranscript: finalTranscript,
+            videoHash: videoHash,
+            metadata: metadata,
+          );
+          debugPrint('[VideoCubit] Final transcript: $selectedVideo');
+          // Cache the result
+          if (selectedVideo != null) {
+            selectedVideo!.diacritized = isDiacritized;
+            videoModelsCache.add(selectedVideo!.copyWith());
+            debugPrint('[VideoCubit] Added to cache: ${selectedVideo!}');
+            if(context.mounted) await uploadVideo(context);
+          }
 
-            // Try to save to repository
-            try {
-              await updateVideoResult();
-            } catch (e) {
-              debugPrint('[VideoCubit] Repository update failed: $e');
-              // This is expected for videos that haven't been uploaded to Firestore yet
-            }
+          // Try to save to repository
+          try {
+            await updateVideoResult();
+          } catch (e) {
+            debugPrint('[VideoCubit] Repository update failed: $e');
+            // This is expected for videos that haven't been uploaded to Firestore yet
           }
 
           // Cancel subscription
@@ -802,7 +775,7 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Start transcription with progress tracking
       await progressCubit.startTranscription(
-        videoFile: videoFile!,
+        videoFile: videoFile,
         modelName: selectedModel,
         diacritized: isDiacritized,
         fileHash: selectedVideo?.fileHash,
@@ -813,4 +786,44 @@ class VideoCubit extends Cubit<VideoState> {
       emit(VideoError('Failed to start transcription: ${e.toString()}'));
     }
   }
+
+  /// Helper method to process and validate transcript results
+  String processTranscriptResult({
+    required Map<String, dynamic> result,
+    String? fallbackMessage,
+  }) {
+    final String defaultFallback = fallbackMessage ?? _noLipMovementsMessage;
+
+    // Try enhanced transcript first
+    String transcript = result['enhanced_transcript'] as String? ?? '';
+
+    if (transcript.trim().isEmpty) {
+      debugPrint(
+          '[VideoCubit] Enhanced transcript is empty, checking raw transcript');
+
+      // Try raw transcript as fallback
+      if (result.containsKey('raw_transcript')) {
+        transcript = result['raw_transcript'] as String? ?? '';
+      }
+
+      if (transcript.trim().isEmpty) {
+        debugPrint(
+            '[VideoCubit] Both transcripts are empty, using fallback message');
+        return defaultFallback;
+      } else {
+        debugPrint('[VideoCubit] Using raw transcript as fallback');
+      }
+    }
+
+    return transcript;
+  }
+
+  /// Helper method to check if the result is the fallback message (no lip movements detected)
+  bool isNoLipMovementsDetected(String? result) {
+    return result?.contains('No lip movements detected') == true;
+  }
+
+  // Constants
+  static const String _noLipMovementsMessage =
+      'No lip movements detected in the video. Please try with a video that contains clear and visible lip movements.';
 }

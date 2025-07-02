@@ -1,7 +1,6 @@
 /// Progress status enumeration
 enum ProgressStatus {
   idle,
-  compressing,
   uploading,
   processing,
   completed,
@@ -13,19 +12,16 @@ enum ProgressStatus {
 enum ProgressStep {
   // Flutter steps
   initializing,
-  compressing,
   uploading,
 
   // Backend steps
   backendInitializing,
-  videoServiceInit,
   videoPreprocessing,
   analyzingFrames,
   detectingLandmarks,
   extractingMouth,
   runningInference,
   aiEnhancement,
-  finalizing,
   completed,
 }
 
@@ -34,14 +30,10 @@ extension ProgressStepExtension on ProgressStep {
     switch (this) {
       case ProgressStep.initializing:
         return 'Initializing...';
-      case ProgressStep.compressing:
-        return 'Compressing video...';
       case ProgressStep.uploading:
         return 'Uploading to server...';
       case ProgressStep.backendInitializing:
         return 'Starting processing...';
-      case ProgressStep.videoServiceInit:
-        return 'Initializing AI model...';
       case ProgressStep.videoPreprocessing:
         return 'Preprocessing video...';
       case ProgressStep.analyzingFrames:
@@ -54,39 +46,31 @@ extension ProgressStepExtension on ProgressStep {
         return 'Running lip reading...';
       case ProgressStep.aiEnhancement:
         return 'Enhancing with AI...';
-      case ProgressStep.finalizing:
-        return 'Finalizing results...';
       case ProgressStep.completed:
         return 'Completed successfully!';
     }
   }
 
-  int get progressValue {
+  double get progressValue {
     switch (this) {
       case ProgressStep.initializing:
         return 0;
-      case ProgressStep.compressing:
-        return 10;
       case ProgressStep.uploading:
-        return 20;
+        return 25;
       case ProgressStep.backendInitializing:
-        return 30;
-      case ProgressStep.videoServiceInit:
-        return 35;
-      case ProgressStep.videoPreprocessing:
-        return 40;
-      case ProgressStep.analyzingFrames:
         return 50;
-      case ProgressStep.detectingLandmarks:
+      case ProgressStep.videoPreprocessing:
         return 60;
-      case ProgressStep.extractingMouth:
+      case ProgressStep.analyzingFrames:
+        return 65;
+      case ProgressStep.detectingLandmarks:
         return 70;
+      case ProgressStep.extractingMouth:
+        return 75;
       case ProgressStep.runningInference:
-        return 80;
+        return 85;
       case ProgressStep.aiEnhancement:
         return 90;
-      case ProgressStep.finalizing:
-        return 95;
       case ProgressStep.completed:
         return 100;
     }
@@ -119,24 +103,21 @@ class ProgressModel {
     this.elapsedTime,
   });
 
-  /// Create initial progress model
-  factory ProgressModel.initial(String taskId) {
-    return ProgressModel(
-      taskId: taskId,
-      status: ProgressStatus.idle,
-      currentStep: ProgressStep.initializing,
-      progress: 0.0,
-      message: 'Preparing...',
-      startTime: DateTime.now(),
-    );
-  }
-
   /// Create from backend progress data
   factory ProgressModel.fromBackendData(
       String taskId, Map<String, dynamic> data) {
     final status = _parseStatus(data['status'] as String?);
-    final progress = (data['percentage'] as num?)?.toDouble() ?? 0.0;
     final message = data['current_step'] as String? ?? '';
+    final progress = _parseStepFromMessage(message).progressValue;
+
+    // Extract error message more comprehensively
+    String? errorMessage;
+    if (data.containsKey('error') && data['error'] != null) {
+      errorMessage = data['error'].toString();
+    } else if (status == ProgressStatus.failed && message.isNotEmpty) {
+      // If status is failed but no explicit error, use the message
+      errorMessage = message;
+    }
 
     return ProgressModel(
       taskId: taskId,
@@ -144,43 +125,48 @@ class ProgressModel {
       currentStep: _parseStepFromMessage(message),
       progress: progress,
       message: message,
-      errorMessage: data['error'] as String?,
+      errorMessage: errorMessage,
       elapsedTime: (data['elapsed_time'] as num?)?.toDouble(),
       result: data['result'] as Map<String, dynamic>?,
     );
   }
 
   /// Copy with updated values
-  ProgressModel copyWith({
-    String? taskId,
+  factory ProgressModel.create({
+    required String taskId,
     ProgressStatus? status,
     ProgressStep? currentStep,
-    double? progress,
     String? message,
     String? errorMessage,
-    DateTime? startTime,
-    DateTime? endTime,
-    Map<String, dynamic>? result,
-    double? elapsedTime,
   }) {
-    return ProgressModel(
-      taskId: taskId ?? this.taskId,
-      status: status ?? this.status,
-      currentStep: currentStep ?? this.currentStep,
-      progress: progress ?? this.progress,
-      message: message ?? this.message,
-      errorMessage: errorMessage ?? this.errorMessage,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
-      result: result ?? this.result,
-      elapsedTime: elapsedTime ?? this.elapsedTime,
-    );
+    if (message != null) {
+      final step = currentStep ?? _parseStepFromMessage(message);
+      return ProgressModel(
+        taskId: taskId,
+        status: status ?? ProgressStatus.uploading,
+        currentStep: step,
+        progress: step.progressValue,
+        message: message,
+        errorMessage: errorMessage,
+        startTime: DateTime.now(),
+      );
+    }
+    else {
+      return ProgressModel(
+        taskId: taskId,
+        status: status ?? ProgressStatus.idle,
+        currentStep: currentStep ?? ProgressStep.initializing,
+        progress: 0.0,
+        message: 'Preparing...',
+        errorMessage: errorMessage,
+        startTime: DateTime.now(),
+      );
+    }
   }
 
   /// Check if processing is in progress
   bool get isProcessing {
-    return status == ProgressStatus.compressing ||
-        status == ProgressStatus.uploading ||
+    return status == ProgressStatus.uploading ||
         status == ProgressStatus.processing;
   }
 
@@ -215,6 +201,8 @@ class ProgressModel {
         return ProgressStatus.completed;
       case 'failed':
         return ProgressStatus.failed;
+      case 'cancelled':
+        return ProgressStatus.cancelled;
       default:
         return ProgressStatus.processing;
     }
@@ -224,12 +212,20 @@ class ProgressModel {
   static ProgressStep _parseStepFromMessage(String message) {
     final lowercaseMessage = message.toLowerCase();
 
+    // Handle explicit failure states
+    if (lowercaseMessage.contains('failed') ||
+        lowercaseMessage.contains('error')) {
+      return ProgressStep.completed; // Use completed to show final state
+    }
+
     if (lowercaseMessage.contains('initializing') ||
         lowercaseMessage.contains('starting')) {
-      if (lowercaseMessage.contains('video service')) {
-        return ProgressStep.videoServiceInit;
-      }
       return ProgressStep.backendInitializing;
+    }
+
+    if (lowercaseMessage.contains('uploading') ||
+        lowercaseMessage.contains('upload')) {
+      return ProgressStep.uploading;
     }
 
     if (lowercaseMessage.contains('preprocess')) {
@@ -261,17 +257,12 @@ class ProgressModel {
       return ProgressStep.aiEnhancement;
     }
 
-    if (lowercaseMessage.contains('finalizing') ||
-        lowercaseMessage.contains('completing')) {
-      return ProgressStep.finalizing;
-    }
-
     if (lowercaseMessage.contains('completed') ||
         lowercaseMessage.contains('success')) {
       return ProgressStep.completed;
     }
 
-    return ProgressStep.backendInitializing;
+    return ProgressStep.initializing;
   }
 
   @override

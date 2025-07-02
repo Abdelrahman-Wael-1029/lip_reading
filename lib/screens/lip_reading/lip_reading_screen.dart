@@ -111,23 +111,34 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               if (state is ProgressCompleted) {
                 // Extract result and update video cubit
                 final result = state.result;
-                final enhancedTranscript =
-                    result['enhanced_transcript'] as String? ?? '';
+
+                // Process transcript with fallback handling
+                final videoCubit = context.read<VideoCubit>();
+                final finalTranscript =
+                    videoCubit.processTranscriptResult(result: result);
+
                 final videoHash = result['video_hash'] as String?;
                 final metadata = result['metadata'] as Map<String, dynamic>?;
 
                 // Update video cubit with results
                 context.read<VideoCubit>().updateVideoResultFromProgress(
-                      enhancedTranscript: enhancedTranscript,
+                      enhancedTranscript: finalTranscript,
                       videoHash: videoHash,
                       metadata: metadata,
                     );
 
-                // Show success notification
-                ProgressNotification.showSuccess(
-                  context,
-                  'Lip reading completed successfully!',
-                );
+                // Show appropriate notification based on result
+                if (videoCubit.isNoLipMovementsDetected(finalTranscript)) {
+                  ProgressNotification.showInfo(
+                    context,
+                    'Processing completed, but no clear lip movements were detected in the video.',
+                  );
+                } else {
+                  ProgressNotification.showSuccess(
+                    context,
+                    'Lip reading completed successfully!',
+                  );
+                }
 
                 // Reset progress after short delay
                 Future.delayed(const Duration(seconds: 2), () {
@@ -136,10 +147,14 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                   }
                 });
               } else if (state is ProgressFailed) {
+                // Get user-friendly error message
+                final userFriendlyError =
+                    _getUserFriendlyErrorMessage(state.errorMessage);
+
                 // Show error notification with retry option
                 ProgressNotification.showError(
                   context,
-                  'Processing failed: ${state.errorMessage}',
+                  userFriendlyError,
                   onRetry: () {
                     // Reset progress and let user try again
                     context.read<ProgressCubit>().resetProgress();
@@ -366,7 +381,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         ],
                       ),
                     ),
-                    if (result.isNotEmpty)
+                    if (result.isNotEmpty &&
+                        !videoCubit.isNoLipMovementsDetected(result))
                       IconButton(
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: result));
@@ -423,15 +439,76 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                           ],
                         ),
                       )
-                    : SingleChildScrollView(
-                        child: SelectableText(
-                          result,
-                          style: textTheme.bodyLarge?.copyWith(
-                            height: 1.6,
-                            letterSpacing: 0.5,
+                    : videoCubit.isNoLipMovementsDetected(result)
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.visibility_off,
+                                  size: 48,
+                                  color: colorScheme.secondary,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'No Lip Movements Detected',
+                                  style: textTheme.titleMedium?.copyWith(
+                                    color: colorScheme.secondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  child: Text(
+                                    'The AI could not detect clear lip movements in this video. Please try with a video that contains visible lip movements and clear pronunciation.',
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.secondaryContainer
+                                        .withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.lightbulb_outline,
+                                        size: 16,
+                                        color: colorScheme.secondary,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Try a different video or model',
+                                        style: textTheme.bodySmall?.copyWith(
+                                          color: colorScheme.secondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : SingleChildScrollView(
+                            child: SelectableText(
+                              result,
+                              style: textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
               ),
             ],
           ),
@@ -518,5 +595,42 @@ class _LipReadingScreenState extends State<LipReadingScreen>
         );
       },
     );
+  }
+
+  /// Helper method to convert technical error messages to user-friendly ones
+  String _getUserFriendlyErrorMessage(String errorMessage) {
+    final lowerError = errorMessage.toLowerCase();
+
+    // Handle specific error cases
+    if (lowerError.contains('no landmarks detected')) {
+      return 'No face detected in the video. Please ensure the person\'s face is clearly visible throughout the video.';
+    }
+
+    if (lowerError.contains('failed to preprocess video')) {
+      return 'Unable to process the video. Please try uploading a different video with better quality.';
+    }
+
+    if (lowerError.contains('connection') || lowerError.contains('network')) {
+      return 'Network connection issue. Please check your internet connection and try again.';
+    }
+
+    if (lowerError.contains('upload') || lowerError.contains('file')) {
+      return 'Failed to upload the video. Please try again with a smaller video file.';
+    }
+
+    if (lowerError.contains('timeout') || lowerError.contains('timed out')) {
+      return 'Processing took too long. Please try again with a shorter video.';
+    }
+
+    if (lowerError.contains('format') || lowerError.contains('codec')) {
+      return 'Video format not supported. Please use MP4, MOV, or AVI format.';
+    }
+
+    if (lowerError.contains('size') || lowerError.contains('large')) {
+      return 'Video file is too large. Please compress the video or use a shorter clip.';
+    }
+
+    // Default fallback for unknown errors
+    return 'Processing failed. Please try again or contact support if the issue persists.';
   }
 }

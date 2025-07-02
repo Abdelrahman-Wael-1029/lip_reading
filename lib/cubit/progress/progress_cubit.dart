@@ -5,18 +5,18 @@ import 'package:flutter/foundation.dart';
 import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/model/progress_model.dart';
 import 'package:lip_reading/service/api_service.dart';
-import 'package:video_compress/video_compress.dart';
 
 class ProgressCubit extends Cubit<ProgressState> {
   ProgressCubit() : super(ProgressInitial());
 
   String? _currentTaskId;
+  String? _backendTaskId;
   StreamSubscription? _progressSubscription;
   bool _isCancelled = false;
 
   /// Start the complete transcription process with progress tracking
   Future<void> startTranscription({
-    required File videoFile,
+    required File? videoFile,
     required String modelName,
     bool diacritized = false,
     String? fileHash,
@@ -34,24 +34,12 @@ class ProgressCubit extends Cubit<ProgressState> {
       _currentTaskId = taskId;
 
       // Start with initial progress
-      final initialProgress = ProgressModel.initial(taskId);
+      final initialProgress = ProgressModel.create(taskId: taskId);
       emit(ProgressLoading(initialProgress));
-
-      File? processedFile = videoFile;
-
-      // Step 1: Video Compression (if needed)
-      if (fileHash == null) {
-        await _compressVideo(videoFile, taskId);
-        if (_isCancelled) return;
-
-        // Use compressed file if compression was successful
-        // Note: video_compress plugin handles compression internally
-        processedFile = videoFile;
-      }
 
       // Step 2: Upload and start backend processing
       await _uploadAndProcess(
-        file: processedFile,
+        file: videoFile,
         modelName: modelName,
         diacritized: diacritized,
         fileHash: fileHash,
@@ -65,7 +53,8 @@ class ProgressCubit extends Cubit<ProgressState> {
     } catch (e) {
       debugPrint('[ProgressCubit] Error in startTranscription: $e');
       if (_currentTaskId != null) {
-        final errorProgress = ProgressModel.initial(_currentTaskId!).copyWith(
+        final errorProgress = ProgressModel.create(
+          taskId: _currentTaskId!,
           status: ProgressStatus.failed,
           currentStep: ProgressStep.initializing,
           message: 'Failed to start transcription',
@@ -75,52 +64,9 @@ class ProgressCubit extends Cubit<ProgressState> {
     }
   }
 
-  /// Compress video with progress tracking
-  Future<void> _compressVideo(File videoFile, String taskId) async {
-    try {
-      // Update progress to compressing
-      final compressingProgress = ProgressModel.initial(taskId).copyWith(
-        status: ProgressStatus.compressing,
-        currentStep: ProgressStep.compressing,
-        progress: 5.0,
-        message: 'Compressing video...',
-      );
-      emit(ProgressLoading(compressingProgress));
-
-      // Perform compression
-      final info = await VideoCompress.compressVideo(
-        videoFile.path,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: false,
-      );
-
-      if (_isCancelled) return;
-
-      // Update progress after compression
-      final compressedProgress = compressingProgress.copyWith(
-        progress: 15.0,
-        message: info != null
-            ? 'Video compressed successfully'
-            : 'Video compression completed',
-      );
-      emit(ProgressLoading(compressedProgress));
-    } catch (e) {
-      debugPrint('[ProgressCubit] Compression error: $e');
-      // Continue without compression if it fails
-      final progress = ProgressModel.initial(taskId).copyWith(
-        status: ProgressStatus.uploading,
-        currentStep: ProgressStep.uploading,
-        progress: 15.0,
-        message: 'Proceeding without compression...',
-      );
-      emit(ProgressLoading(progress));
-    }
-  }
-
   /// Upload file and start backend processing
   Future<void> _uploadAndProcess({
-    required File file,
+    required File? file,
     required String modelName,
     bool diacritized = false,
     String? fileHash,
@@ -133,10 +79,8 @@ class ProgressCubit extends Cubit<ProgressState> {
   }) async {
     try {
       // Update progress to uploading
-      final uploadingProgress = ProgressModel.initial(taskId).copyWith(
-        status: ProgressStatus.uploading,
-        currentStep: ProgressStep.uploading,
-        progress: 20.0,
+      final uploadingProgress = ProgressModel.create(
+        taskId: taskId,
         message: 'Uploading to server...',
       );
       emit(ProgressLoading(uploadingProgress));
@@ -145,7 +89,7 @@ class ProgressCubit extends Cubit<ProgressState> {
 
       // Start transcription and get backend task ID
       final backendTaskId = await ApiService.startTranscription(
-        file: fileHash == null ? file : null,
+        file: file,
         modelName: modelName,
         dia: diacritized,
         fileHash: fileHash,
@@ -157,15 +101,16 @@ class ProgressCubit extends Cubit<ProgressState> {
         onUploadProgress: (progress) {
           if (_isCancelled) return;
 
-          // Map upload progress to our scale (20-30%)
-          final mappedProgress = 20.0 + (progress * 10.0);
-          final progressModel = uploadingProgress.copyWith(
-            progress: mappedProgress,
+          final progressModel = ProgressModel.create(
+            taskId: taskId,
             message: 'Uploading... ${(progress * 100).toInt()}%',
           );
           emit(ProgressLoading(progressModel));
         },
       );
+
+      // Store backend task ID for cancellation
+      _backendTaskId = backendTaskId;
 
       if (_isCancelled) return;
 
@@ -173,7 +118,8 @@ class ProgressCubit extends Cubit<ProgressState> {
       await _streamBackendProgress(backendTaskId, taskId);
     } catch (e) {
       debugPrint('[ProgressCubit] Upload/Process error: $e');
-      final errorProgress = ProgressModel.initial(taskId).copyWith(
+      final errorProgress = ProgressModel.create(
+        taskId: taskId,
         status: ProgressStatus.failed,
         currentStep: ProgressStep.uploading,
         message: 'Upload failed',
@@ -187,10 +133,9 @@ class ProgressCubit extends Cubit<ProgressState> {
       String backendTaskId, String frontendTaskId) async {
     try {
       // Update to processing status
-      final processingProgress = ProgressModel.initial(frontendTaskId).copyWith(
+      final processingProgress = ProgressModel.create(
+        taskId: frontendTaskId,
         status: ProgressStatus.processing,
-        currentStep: ProgressStep.backendInitializing,
-        progress: 30.0,
         message: 'Starting backend processing...',
       );
       emit(ProgressLoading(processingProgress));
@@ -202,34 +147,37 @@ class ProgressCubit extends Cubit<ProgressState> {
         (backendProgress) {
           if (_isCancelled) return;
 
-          // Map backend progress to our frontend task
-          final frontendProgress = backendProgress.copyWith(
-            taskId: frontendTaskId,
-            // Map backend progress (30-100%)
-            progress: 30.0 + ((backendProgress.progress / 100.0) * 70.0),
-          );
-
           if (backendProgress.status == ProgressStatus.completed) {
             emit(ProgressCompleted(
-                frontendProgress, backendProgress.result ?? {}));
+                backendProgress, backendProgress.result ?? {}));
             _cleanup(backendTaskId);
           } else if (backendProgress.status == ProgressStatus.failed) {
-            emit(ProgressFailed(frontendProgress,
-                backendProgress.errorMessage ?? 'Unknown error'));
+            final errorMessage =
+                backendProgress.errorMessage ?? 'Unknown error occurred';
+            debugPrint(
+                '[ProgressCubit] Backend processing failed: $errorMessage');
+            debugPrint(
+                '[ProgressCubit] Progress details: ${backendProgress.toString()}');
+
+            emit(ProgressFailed(backendProgress, errorMessage));
             _cleanup(backendTaskId);
           } else {
-            emit(ProgressLoading(frontendProgress));
+            emit(ProgressLoading(backendProgress));
           }
         },
         onError: (error) {
           debugPrint('[ProgressCubit] Stream error: $error');
+          debugPrint('[ProgressCubit] Stream error type: ${error.runtimeType}');
+
           if (!_isCancelled) {
-            final errorProgress =
-                ProgressModel.initial(frontendTaskId).copyWith(
+            final errorMessage = error.toString();
+            final errorProgress = ProgressModel.create(
+              taskId: frontendTaskId,
               status: ProgressStatus.failed,
               message: 'Connection lost',
+              errorMessage: errorMessage,
             );
-            emit(ProgressFailed(errorProgress, error.toString()));
+            emit(ProgressFailed(errorProgress, errorMessage));
             _cleanup(backendTaskId);
           }
         },
@@ -240,7 +188,8 @@ class ProgressCubit extends Cubit<ProgressState> {
       );
     } catch (e) {
       debugPrint('[ProgressCubit] Backend streaming error: $e');
-      final errorProgress = ProgressModel.initial(frontendTaskId).copyWith(
+      final errorProgress = ProgressModel.create(
+        taskId: frontendTaskId,
         status: ProgressStatus.failed,
         message: 'Backend connection failed',
       );
@@ -254,9 +203,19 @@ class ProgressCubit extends Cubit<ProgressState> {
 
     if (_currentTaskId != null) {
       // Cancel backend task if it exists
-      // Note: We can't cancel compression easily, so we just mark as cancelled
+      if (_backendTaskId != null) {
+        try {
+          debugPrint(
+              '[ProgressCubit] Cancelling backend task: $_backendTaskId');
+          await ApiService.cancelTask(_backendTaskId!);
+        } catch (e) {
+          debugPrint('[ProgressCubit] Error cancelling backend task: $e');
+          // Continue with local cancellation even if backend cancellation fails
+        }
+      }
 
-      final cancelledProgress = ProgressModel.initial(_currentTaskId!).copyWith(
+      final cancelledProgress = ProgressModel.create(
+        taskId: _currentTaskId!,
         status: ProgressStatus.cancelled,
         message: 'Transcription cancelled',
       );
@@ -281,6 +240,7 @@ class ProgressCubit extends Cubit<ProgressState> {
     // No manual cleanup endpoint available
 
     _currentTaskId = null;
+    _backendTaskId = null;
   }
 
   @override

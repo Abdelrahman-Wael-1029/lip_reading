@@ -167,7 +167,7 @@ class HelpScreen extends StatelessWidget {
               icon: Icons.videocam,
               title: 'How to Record',
               description:
-                  'Tap the record button to capture a video for lip reading analysis. Make sure to speak clearly and face the camera directly.',
+                  'Tap the record button to capture a video for lip reading analysis. Make sure to have clear lip movements and face the camera directly.',
             ),
             const SizedBox(height: 16),
             _buildHelpCard(
