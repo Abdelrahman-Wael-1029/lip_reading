@@ -9,6 +9,7 @@ import 'package:lip_reading/cubit/progress/progress_cubit.dart';
 import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/cubit/video_cubit/video_state.dart';
 import 'package:lip_reading/model/video_model.dart';
+import 'package:lip_reading/model/progress_model.dart';
 import 'package:lip_reading/repository/video_repository.dart';
 import 'package:lip_reading/service/api_service.dart';
 import 'package:lip_reading/service/connectivity_service.dart';
@@ -284,8 +285,11 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
-  Future<File?> compressVideo(String videoPath) async {
+  Future<File?> compressVideo(String videoPath, {Function()? onProgress}) async {
     try {
+      // Emit progress during compression
+      onProgress?.call(); // Starting compression
+      
       // Start compression
       final info = await VideoCompress.compressVideo(
         videoPath,
@@ -352,11 +356,34 @@ class VideoCubit extends Cubit<VideoState> {
     loading = true;
     if (state is VideoLoading) return;
     emit(VideoLoading());
+    
+    // Start progress tracking immediately when video processing begins
+    final progressCubit = context.read<ProgressCubit>();
+    final taskId = DateTime.now().millisecondsSinceEpoch.toString();
+    
+    // Emit initial progress
+    progressCubit.emitLocalProgress(
+      taskId: taskId,
+      step: ProgressStep.initializing,
+      message: 'Starting video processing...',
+    );
+    
     try {
       await cleanupController();
 
+      // Update progress to loading video
+      progressCubit.emitLocalProgress(
+        taskId: taskId,
+        step: ProgressStep.loadingVideo,
+        message: 'Loading video file...',
+      );
+
+      // Add a small delay to make progress visible
+      await Future.delayed(const Duration(milliseconds: 500));
+
       var temp = VideoPlayerController.file(videoFile!);
       await temp.initialize();
+      
       // check on time duration of video max is 1 minute
       if (temp.value.duration.inSeconds > 60) {
         _currentVideoPath = null;
@@ -385,17 +412,34 @@ class VideoCubit extends Cubit<VideoState> {
 
       // Only compress video if we don't have a cached hash
       if (selectedVideo?.fileHash == null) {
-        File? file = await compressVideo(videoFile!.path);
+        // Update progress to compressing
+        progressCubit.emitLocalProgress(
+          taskId: taskId,
+          step: ProgressStep.compressingVideo,
+          message: 'Compressing video for better quality...',
+        );
+        
+        File? file = await compressVideo(videoFile!.path, onProgress: () {
+          // Update compression progress
+          progressCubit.emitLocalProgress(
+            taskId: taskId,
+            step: ProgressStep.compressingVideo,
+            message: 'Compressing video...',
+          );
+        });
         if (file != null) {
           videoFile = file;
         }
+        
+        // Add a small delay to show compression completion
+        await Future.delayed(const Duration(milliseconds: 300));
       }
 
       // Start transcription using the new progress system
       if (context.mounted) {
         debugPrint(
             '[VideoCubit] Starting transcription with progress tracking');
-        await startTranscriptionWithProgress(context);
+        await startTranscriptionWithProgress(context, existingTaskId: taskId);
       }
 
       await controller!.play();
@@ -407,6 +451,7 @@ class VideoCubit extends Cubit<VideoState> {
       return;
     } catch (e) {
       loading = false;
+      debugPrint('[VideoCubit] Error initializing video controller: $e');
       emit(VideoError('Failed to process video try again'));
       return;
     }
@@ -733,7 +778,7 @@ class VideoCubit extends Cubit<VideoState> {
   }
 
   /// Start transcription using the new progress system
-  Future<void> startTranscriptionWithProgress(BuildContext context) async {
+  Future<void> startTranscriptionWithProgress(BuildContext context, {String? existingTaskId}) async {
     if (selectedVideo == null || selectedModel.isEmpty) {
       emit(VideoError('Please select a video and model'));
       return;
@@ -807,6 +852,7 @@ class VideoCubit extends Cubit<VideoState> {
         fileHash: selectedVideo?.fileHash,
         videoUrl:
             selectedVideo?.url.isNotEmpty == true ? selectedVideo?.url : null,
+        existingTaskId: existingTaskId,
       );
     } catch (e) {
       emit(VideoError('Failed to start transcription: ${e.toString()}'));

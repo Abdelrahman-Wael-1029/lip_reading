@@ -43,8 +43,7 @@ class ApiService {
     bool enhance = false,
     bool includeSummary = false,
     bool includeTranslation = false,
-    String targetLanguage = "English",
-    Function(double)? onUploadProgress,
+    String targetLanguage = "English"
   }) async {
     final url = Uri.parse('$baseUrl/transcribe/');
 

@@ -319,6 +319,10 @@ class _ModernProgressBarState extends State<ModernProgressBar>
     switch (step) {
       case ProgressStep.initializing:
         return Icons.play_circle_outline;
+      case ProgressStep.loadingVideo:
+        return Icons.video_library;
+      case ProgressStep.compressingVideo:
+        return Icons.compress;
       case ProgressStep.uploading:
         return Icons.cloud_upload;
       case ProgressStep.backendInitializing:

@@ -12,6 +12,8 @@ enum ProgressStatus {
 enum ProgressStep {
   // Flutter steps
   initializing,
+  loadingVideo,
+  compressingVideo,
   uploading,
 
   // Backend steps
@@ -30,6 +32,10 @@ extension ProgressStepExtension on ProgressStep {
     switch (this) {
       case ProgressStep.initializing:
         return 'Initializing...';
+      case ProgressStep.loadingVideo:
+        return 'Loading video...';
+      case ProgressStep.compressingVideo:
+        return 'Compressing video...';
       case ProgressStep.uploading:
         return 'Uploading to server...';
       case ProgressStep.backendInitializing:
@@ -55,8 +61,12 @@ extension ProgressStepExtension on ProgressStep {
     switch (this) {
       case ProgressStep.initializing:
         return 0;
+      case ProgressStep.loadingVideo:
+        return 10;
+      case ProgressStep.compressingVideo:
+        return 20;
       case ProgressStep.uploading:
-        return 25;
+        return 35;
       case ProgressStep.backendInitializing:
         return 50;
       case ProgressStep.videoPreprocessing:
@@ -143,7 +153,7 @@ class ProgressModel {
       final step = currentStep ?? _parseStepFromMessage(message);
       return ProgressModel(
         taskId: taskId,
-        status: status ?? ProgressStatus.uploading,
+        status: status ?? ProgressStatus.processing,
         currentStep: step,
         progress: step.progressValue,
         message: message,
@@ -157,7 +167,7 @@ class ProgressModel {
         status: status ?? ProgressStatus.idle,
         currentStep: currentStep ?? ProgressStep.initializing,
         progress: 0.0,
-        message: 'Preparing...',
+        message: 'Preparing video for transcription...',
         errorMessage: errorMessage,
         startTime: DateTime.now(),
       );

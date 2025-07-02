@@ -14,6 +14,22 @@ class ProgressCubit extends Cubit<ProgressState> {
   StreamSubscription? _progressSubscription;
   bool _isCancelled = false;
 
+  /// Emit local progress for frontend operations (loading, compressing)
+  void emitLocalProgress({
+    required String taskId,
+    ProgressStep? step,
+    String? message,
+    ProgressStatus status = ProgressStatus.processing,
+  }) {
+    final progress = ProgressModel.create(
+      taskId: taskId,
+      status: status,
+      currentStep: step,
+      message: message,
+    );
+    emit(ProgressLoading(progress));
+  }
+
   /// Start the complete transcription process with progress tracking
   Future<void> startTranscription({
     required File? videoFile,
@@ -25,17 +41,19 @@ class ProgressCubit extends Cubit<ProgressState> {
     bool includeSummary = false,
     bool includeTranslation = false,
     String targetLanguage = "English",
+    String? existingTaskId, // Allow continuing from existing local processing
   }) async {
     try {
       _isCancelled = false;
 
-      // Generate task ID
-      final taskId = DateTime.now().millisecondsSinceEpoch.toString();
+      // Use existing task ID or generate new one
+      final taskId = existingTaskId ?? DateTime.now().millisecondsSinceEpoch.toString();
       _currentTaskId = taskId;
 
-      // Start with initial progress
-      final initialProgress = ProgressModel.create(taskId: taskId);
-      emit(ProgressLoading(initialProgress));
+      // If no existing task ID, start with initial progress
+      if (existingTaskId == null) {
+        emitLocalProgress(taskId: taskId);
+      }
 
       // Step 2: Upload and start backend processing
       await _uploadAndProcess(
@@ -81,6 +99,7 @@ class ProgressCubit extends Cubit<ProgressState> {
       // Update progress to uploading
       final uploadingProgress = ProgressModel.create(
         taskId: taskId,
+        currentStep: ProgressStep.uploading,
         message: 'Uploading to server...',
       );
       emit(ProgressLoading(uploadingProgress));
@@ -97,16 +116,7 @@ class ProgressCubit extends Cubit<ProgressState> {
         enhance: enhance,
         includeSummary: includeSummary,
         includeTranslation: includeTranslation,
-        targetLanguage: targetLanguage,
-        onUploadProgress: (progress) {
-          if (_isCancelled) return;
-
-          final progressModel = ProgressModel.create(
-            taskId: taskId,
-            message: 'Uploading... ${(progress * 100).toInt()}%',
-          );
-          emit(ProgressLoading(progressModel));
-        },
+        targetLanguage: targetLanguage
       );
 
       // Store backend task ID for cancellation
