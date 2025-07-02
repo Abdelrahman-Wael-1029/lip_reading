@@ -712,6 +712,26 @@ class VideoCubit extends Cubit<VideoState> {
     }
   }
 
+  /// Cancel current transcription and show back the transcription result widget
+  Future<void> cancelTranscription(BuildContext context) async {
+    try {
+      final progressCubit = context.read<ProgressCubit>();
+      await progressCubit.cancelTranscription();
+      
+      // Set loading to false to show the transcription result widget
+      loading = false;
+      
+      // Emit VideoSuccess to show the result widget
+      emit(VideoSuccess());
+      
+      debugPrint('[VideoCubit] Transcription cancelled successfully');
+    } catch (e) {
+      debugPrint('[VideoCubit] Error cancelling transcription: $e');
+      loading = false;
+      emit(VideoError('Failed to cancel transcription: ${e.toString()}'));
+    }
+  }
+
   /// Start transcription using the new progress system
   Future<void> startTranscriptionWithProgress(BuildContext context) async {
     if (selectedVideo == null || selectedModel.isEmpty) {
@@ -769,6 +789,12 @@ class VideoCubit extends Cubit<VideoState> {
           loading = false;
           emit(VideoError(
               'Transcription failed: ${progressState.errorMessage}'));
+          progressSubscription.cancel();
+        } else if (progressState is ProgressCancelled) {
+          debugPrint('[VideoCubit] Progress cancelled by user');
+          loading = false;
+          // Show back the transcription result widget
+          emit(VideoSuccess());
           progressSubscription.cancel();
         }
       });

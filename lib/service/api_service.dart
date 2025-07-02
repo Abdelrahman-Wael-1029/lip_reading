@@ -249,7 +249,7 @@ class ApiService {
   static Future<void> cancelTask(String taskId) async {
     try {
       final url = Uri.parse('$baseUrl/progress/$taskId/cancel');
-      final response = await http.post(url);
+      final response = await http.delete(url);
 
       if (response.statusCode != 200) {
         debugPrint('[ApiService] Failed to cancel task: ${response.body}');

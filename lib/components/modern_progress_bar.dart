@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lip_reading/cubit/progress/progress_cubit.dart';
 import 'package:lip_reading/cubit/progress/progress_state.dart';
+import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
 import 'package:lip_reading/model/progress_model.dart';
 
 class ModernProgressBar extends StatefulWidget {
@@ -193,7 +194,7 @@ class _ModernProgressBarState extends State<ModernProgressBar>
                     if (state is ProgressLoading)
                       TextButton(
                         onPressed: () {
-                          context.read<ProgressCubit>().cancelTranscription();
+                          context.read<VideoCubit>().cancelTranscription(context);
                         },
                         child: Text(
                           'Cancel',
