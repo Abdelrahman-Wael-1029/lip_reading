@@ -65,6 +65,30 @@ class VideoCubit extends Cubit<VideoState> {
     });
   }
 
+  // Cache helper methods
+  VideoModel? findInCache(String model, bool diacritized) {
+    for (final item in videoModelsCache) {
+      if (item.model == model && item.diacritized == diacritized) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  void addToCache(VideoModel video, String model, bool diacritized) {
+    // Remove existing item with same model and diacritized setting
+    videoModelsCache.removeWhere(
+        (item) => item.model == model && item.diacritized == diacritized);
+
+    // Add new item with correct model and diacritized values
+    final cacheItem = video.copyWith(
+      model: model,
+      diacritized: diacritized,
+    );
+    videoModelsCache.add(cacheItem);
+    debugPrint('[VideoCache] Added to cache: $cacheItem');
+  }
+
   // UI Control Methods
   void toggleControls() {
     showControls = !showControls;
@@ -118,6 +142,7 @@ class VideoCubit extends Cubit<VideoState> {
       _currentVideoPath = null;
       await cleanupController(clearSelectedVideo: false);
       videoModelsCache.clear();
+      videoModelsCache.add(selectedVideo!.copyWith());
 
       // Create controller with safeguards
       final VideoPlayerController newController =
@@ -317,10 +342,8 @@ class VideoCubit extends Cubit<VideoState> {
           videoFile = file;
           videoModelsCache.clear();
           if (context.mounted) await _initializeVideoController(context);
-          videoModelsCache.add(selectedVideo!.copyWith());
-          for (final item in videoModelsCache) {
-            debugPrint('[VideoCache] Cache item: $item');
-          }
+          // Don't add to cache here - wait until we have transcription results
+          debugPrint('[VideoCache] Cache cleared for new video');
         } else {
           emit(VideoError('Video file not found'));
         }
@@ -649,15 +672,19 @@ class VideoCubit extends Cubit<VideoState> {
     }
     try {
       emit(ModelProcessing()); // Use ModelProcessing instead of VideoLoading
-      for (final item in videoModelsCache) {
-        if (item.model == model && item.diacritized == isDiacritized) {
-          selectedVideo = item.copyWith();
-          loading = false;
-          emit(VideoSuccess());
-          return;
-        }
+
+      // Check cache first using helper method
+      final cachedItem = findInCache(model, isDiacritized);
+      if (cachedItem != null) {
+        debugPrint('[VideoCubit] Found matching cached item: $cachedItem');
+        selectedVideo = cachedItem.copyWith();
+        loading = false;
+        emit(VideoSuccess());
+        return;
       }
 
+      debugPrint(
+          '[VideoCache] No matching cache found, starting transcription');
       // Use the new progress-based transcription system
       await startTranscriptionWithProgress(context);
     } catch (e) {
@@ -688,15 +715,15 @@ class VideoCubit extends Cubit<VideoState> {
     try {
       emit(ModelProcessing());
 
-      // Check cache first
-      for (final item in videoModelsCache) {
-        if (item.model == selectedModel && item.diacritized == isDiacritized) {
-          debugPrint('[VideoDiacritized] Found matching cached item: $item');
-          selectedVideo = item.copyWith();
-          loading = false;
-          emit(VideoSuccess());
-          return;
-        }
+      // Check cache first using helper method
+      final cachedItem = findInCache(selectedModel, isDiacritized);
+      if (cachedItem != null) {
+        debugPrint(
+            '[VideoDiacritized] Found matching cached item: $cachedItem');
+        selectedVideo = cachedItem.copyWith();
+        loading = false;
+        emit(VideoSuccess());
+        return;
       }
 
       // Use the progress-based transcription system
@@ -790,11 +817,9 @@ class VideoCubit extends Cubit<VideoState> {
             metadata: metadata,
           );
           debugPrint('[VideoCubit] Final transcript: $selectedVideo');
-          // Cache the result
+          // Cache the result with correct model and diacritized values
           if (selectedVideo != null) {
-            selectedVideo!.diacritized = isDiacritized;
-            videoModelsCache.add(selectedVideo!.copyWith());
-            debugPrint('[VideoCubit] Added to cache: ${selectedVideo!}');
+            addToCache(selectedVideo!, selectedModel, isDiacritized);
             if (context.mounted) await uploadVideo(context);
           }
 

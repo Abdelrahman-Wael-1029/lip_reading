@@ -55,6 +55,9 @@ class VideoModel {
     String? title,
     String? url,
     String? result,
+    String? model,
+    String? fileHash,
+    bool? diacritized,
   }) {
     return VideoModel(
       id: id,
@@ -62,9 +65,9 @@ class VideoModel {
       url: url ?? this.url,
       result: result ?? this.result,
       createdAt: createdAt,
-      model: model,
-      fileHash: fileHash,
-      diacritized: diacritized,
+      model: model ?? this.model,
+      fileHash: fileHash ?? this.fileHash,
+      diacritized: diacritized ?? this.diacritized,
     );
   }
 
