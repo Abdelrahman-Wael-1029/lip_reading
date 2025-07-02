@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lip_reading/cubit/progress/progress_state.dart';
 import 'package:lip_reading/model/progress_model.dart';
-import 'package:lip_reading/service/progress_service.dart';
+import 'package:lip_reading/service/api_service.dart';
 import 'package:video_compress/video_compress.dart';
 
 class ProgressCubit extends Cubit<ProgressState> {
@@ -20,6 +20,7 @@ class ProgressCubit extends Cubit<ProgressState> {
     required String modelName,
     bool diacritized = false,
     String? fileHash,
+    String? videoUrl, // Firebase storage URL for history videos
     bool enhance = false,
     bool includeSummary = false,
     bool includeTranslation = false,
@@ -54,6 +55,7 @@ class ProgressCubit extends Cubit<ProgressState> {
         modelName: modelName,
         diacritized: diacritized,
         fileHash: fileHash,
+        videoUrl: videoUrl,
         enhance: enhance,
         includeSummary: includeSummary,
         includeTranslation: includeTranslation,
@@ -122,6 +124,7 @@ class ProgressCubit extends Cubit<ProgressState> {
     required String modelName,
     bool diacritized = false,
     String? fileHash,
+    String? videoUrl, // Firebase storage URL for history videos
     bool enhance = false,
     bool includeSummary = false,
     bool includeTranslation = false,
@@ -141,11 +144,12 @@ class ProgressCubit extends Cubit<ProgressState> {
       if (_isCancelled) return;
 
       // Start transcription and get backend task ID
-      final backendTaskId = await ProgressService.startTranscription(
+      final backendTaskId = await ApiService.startTranscription(
         file: fileHash == null ? file : null,
         modelName: modelName,
         dia: diacritized,
         fileHash: fileHash,
+        videoUrl: videoUrl,
         enhance: enhance,
         includeSummary: includeSummary,
         includeTranslation: includeTranslation,
@@ -194,8 +198,7 @@ class ProgressCubit extends Cubit<ProgressState> {
       if (_isCancelled) return;
 
       // Start streaming progress
-      _progressSubscription =
-          ProgressService.streamProgress(backendTaskId).listen(
+      _progressSubscription = ApiService.streamProgress(backendTaskId).listen(
         (backendProgress) {
           if (_isCancelled) return;
 

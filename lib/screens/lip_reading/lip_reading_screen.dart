@@ -111,7 +111,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               if (state is ProgressCompleted) {
                 // Extract result and update video cubit
                 final result = state.result;
-                final rawTranscript = result['enhanced_transcript'] as String? ?? '';
+                final rawTranscript =
+                    result['enhanced_transcript'] as String? ?? '';
                 final videoHash = result['video_hash'] as String?;
                 final metadata = result['metadata'] as Map<String, dynamic>?;
 

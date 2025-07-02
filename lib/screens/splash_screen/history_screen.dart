@@ -188,15 +188,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
         onTap: () async {
           final videoCubit = context.read<VideoCubit>();
           final navigationCubit = context.read<NavigationCubit>();
-          
+
           if (videoCubit.loading) return;
-          
+
           // First navigate to the record page to show loading state
           navigationCubit.setTab(0);
-          
+
           // Then initialize the video
           bool success = await videoCubit.initializeNetworkVideo(video);
-          
+
           if (!success && context.mounted) {
             // If initialization failed, show error
             ScaffoldMessenger.of(context).showSnackBar(

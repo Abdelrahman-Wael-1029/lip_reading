@@ -631,24 +631,8 @@ class VideoCubit extends Cubit<VideoState> {
         }
       }
 
-      var response = await ApiService.uploadFile(
-          fileHash: selectedVideo?.fileHash,
-          file: videoFile,
-          modelName: selectedModel,
-          dia: isDiacritized);
-      if (response['error'] != null) {
-        loading = false;
-        emit(VideoError(response['error']));
-      }
-      selectedVideo?.result = response['enhanced_transcript'] ?? '';
-      selectedVideo?.fileHash = response['video_hash'];
-
-      selectedVideo?.model = selectedModel;
-      videoModelsCache.add(selectedVideo!.copyWith());
-      updateVideoResult();
-
-      loading = false;
-      emit(VideoSuccess());
+      // Use the new progress-based transcription system
+      await startTranscriptionWithProgress(context);
     } catch (e) {
       loading = false;
       debugPrint('[VideoCubit] Error in changeModel: $e');
@@ -688,28 +672,41 @@ class VideoCubit extends Cubit<VideoState> {
           return;
         }
       }
-      var response = await ApiService.uploadFile(
-          fileHash: selectedVideo?.fileHash,
-          file: videoFile,
-          modelName: selectedModel,
-          dia: isDiacritized);
-      if (response['error'] != null) {
-        loading = false;
-        emit(VideoError(response['error']));
-      }
-      selectedVideo?.result = response['enhanced_transcript'] ?? '';
-      selectedVideo?.fileHash = response['video_hash'];
-      debugPrint(
-          '[VideoDiacritized] API response diacritized status: ${response['diacritized']}');
-      selectedVideo?.diacritized = isDiacritized;
-      videoModelsCache.add(selectedVideo!.copyWith());
-      for (final item in videoModelsCache) {
-        debugPrint('[VideoDiacritized] Updated cache item: $item');
-      }
-      await updateVideoResult();
 
+      // Use the new progress-based transcription system
+      // Note: This method needs a BuildContext, so it should be called from UI with context
+      debugPrint(
+          '[VideoDiacritized] No cached result found, need to reprocess with progress system');
       loading = false;
-      emit(VideoSuccess());
+      emit(VideoError('Please use the diacritized toggle to reprocess'));
+    } catch (e) {
+      loading = false;
+      debugPrint('[VideoDiacritized] Error: ${e.toString()}');
+      emit(VideoError('Network error occurred'));
+    }
+  }
+
+  // Re-process video with current diacritized setting using progress system
+  Future<void> reprocessWithDiacritizedUsingProgress(
+      BuildContext context) async {
+    if (selectedVideo == null || loading) return;
+    loading = true;
+    try {
+      emit(ModelProcessing());
+
+      // Check cache first
+      for (final item in videoModelsCache) {
+        if (item.model == selectedModel && item.diacritized == isDiacritized) {
+          debugPrint('[VideoDiacritized] Found matching cached item: $item');
+          selectedVideo = item.copyWith();
+          loading = false;
+          emit(VideoSuccess());
+          return;
+        }
+      }
+
+      // Use the progress-based transcription system
+      await startTranscriptionWithProgress(context);
     } catch (e) {
       loading = false;
       debugPrint('[VideoDiacritized] Error: ${e.toString()}');
@@ -809,6 +806,8 @@ class VideoCubit extends Cubit<VideoState> {
         modelName: selectedModel,
         diacritized: isDiacritized,
         fileHash: selectedVideo?.fileHash,
+        videoUrl:
+            selectedVideo?.url.isNotEmpty == true ? selectedVideo?.url : null,
       );
     } catch (e) {
       emit(VideoError('Failed to start transcription: ${e.toString()}'));
