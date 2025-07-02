@@ -716,17 +716,17 @@ class VideoCubit extends Cubit<VideoState> {
 
   /// Update video results from progress system
   void updateVideoResultFromProgress({
-    required String rawTranscript,
+    required String enhancedTranscript,
     String? videoHash,
     Map<String, dynamic>? metadata,
   }) {
     if (selectedVideo != null) {
       debugPrint('[VideoCubit] Updating video results from progress');
-      debugPrint('[VideoCubit] Raw transcript: $rawTranscript');
+      debugPrint('[VideoCubit] Enhanced transcript: $enhancedTranscript');
       debugPrint('[VideoCubit] Video hash: $videoHash');
       debugPrint('[VideoCubit] Metadata: $metadata');
 
-      selectedVideo!.result = rawTranscript;
+      selectedVideo!.result = enhancedTranscript;
       selectedVideo!.fileHash = videoHash;
       if (metadata != null) {
         selectedVideo!.diacritized = metadata['diacritized'] ?? isDiacritized;
@@ -760,14 +760,14 @@ class VideoCubit extends Cubit<VideoState> {
           // Extract results from progress completion
           final result = progressState.result;
           if (result.containsKey('enhanced_transcript')) {
-            final rawTranscript =
+            final enhancedTranscript =
                 result['enhanced_transcript'] as String? ?? '';
             final videoHash = result['video_hash'] as String?;
             final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
 
             // Update video results
             updateVideoResultFromProgress(
-              rawTranscript: rawTranscript,
+              enhancedTranscript: enhancedTranscript,
               videoHash: videoHash,
               metadata: metadata,
             );
