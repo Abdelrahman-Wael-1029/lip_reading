@@ -16,12 +16,14 @@ class _ModelSelectorState extends State<ModelSelector>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
+  bool _isLoadingAnimationActive = false;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(
+          milliseconds: 2000), // Increased duration for loading animation
       vsync: this,
     );
     _slideAnimation = Tween<double>(
@@ -70,9 +72,25 @@ class _ModelSelectorState extends State<ModelSelector>
           current is! HistoryError),
       builder: (context, state) {
         final videoCubit = context.read<VideoCubit>();
+
+        // Handle loading animation
         if (videoCubit.models == null) {
+          // Start repeating animation for loading
+          if (!_isLoadingAnimationActive) {
+            _isLoadingAnimationActive = true;
+            _animationController.repeat();
+          }
           return _buildLoadingState(context);
+        } else {
+          // Stop repeating and reset for normal use
+          if (_isLoadingAnimationActive) {
+            _isLoadingAnimationActive = false;
+            _animationController.stop();
+            _animationController.reset();
+            _animationController.forward();
+          }
         }
+
         if (videoCubit.models!.isEmpty) {
           return _buildErrorState(context);
         }
@@ -280,29 +298,76 @@ class _ModelSelectorState extends State<ModelSelector>
 
   Widget _buildLoadingState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: colorScheme.primary,
+          // Loading animation
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  color: colorScheme.primary,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'Loading AI models...',
+                style: textTheme.titleSmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Loading progress indicator
+          Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: colorScheme.outline.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return FractionallySizedBox(
+                  widthFactor: _animationController.value,
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 8),
+
           Text(
-            'Loading AI models...',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+            'Connecting to server...',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+            ),
           ),
         ],
       ),
@@ -324,17 +389,261 @@ class _ModelSelectorState extends State<ModelSelector>
 
   Widget _buildErrorState(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
+    final textTheme = Theme.of(context).textTheme;
+    final videoCubit = context.read<VideoCubit>();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.errorContainer.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.error.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
-      child: Text(
-        'Error loading AI models. Please try again later.',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      child: Column(
+        children: [
+          // Error icon and title
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorScheme.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.warning_rounded,
+                  color: colorScheme.error,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Unable to load AI models',
+                  style: textTheme.titleSmall?.copyWith(
+                    color: colorScheme.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Error description
+          Text(
+            'We\'re having trouble connecting to our servers. This could be a temporary issue.',
+            style: textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
+              height: 1.4,
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Retry button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                videoCubit.fetchModels();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(
+                'Try Again',
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Detailed error info button
+          GestureDetector(
+            onTap: () => _showDetailedErrorInfo(context),
+            child: Text(
+              'What could be causing this?',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                decoration: TextDecoration.underline,
+                decorationColor:
+                    colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDetailedErrorInfo(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Icon(
+                      Icons.help_outline_rounded,
+                      color: colorScheme.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Possible Causes',
+                        style: textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Error reasons
+                _buildErrorReason(
+                  context,
+                  icon: Icons.cloud_off_rounded,
+                  title: 'Server Issues',
+                  description:
+                      'Our servers might be temporarily unavailable or under maintenance.',
+                ),
+                _buildErrorReason(
+                  context,
+                  icon: Icons.wifi_off_rounded,
+                  title: 'Network Connection',
+                  description:
+                      'Please check your internet connection and try again.',
+                ),
+                _buildErrorReason(
+                  context,
+                  icon: Icons.security_rounded,
+                  title: 'Firewall/Proxy',
+                  description:
+                      'Corporate firewalls or proxy settings might be blocking the connection.',
+                ),
+                _buildErrorReason(
+                  context,
+                  icon: Icons.update_rounded,
+                  title: 'Service Update',
+                  description:
+                      'The AI service might be updating. Please try again in a few minutes.',
+                ),
+
+                const SizedBox(height: 16),
+
+                // Action button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Got it'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorReason(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              icon,
+              size: 16,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -632,7 +632,7 @@ class VideoCubit extends Cubit<VideoState> {
         loading = false;
         emit(VideoError(response['error']));
       }
-      selectedVideo?.result = response['raw_transcript'] ?? '';
+      selectedVideo?.result = response['enhanced_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
 
       selectedVideo?.model = selectedModel;
@@ -689,7 +689,7 @@ class VideoCubit extends Cubit<VideoState> {
         loading = false;
         emit(VideoError(response['error']));
       }
-      selectedVideo?.result = response['raw_transcript'] ?? '';
+      selectedVideo?.result = response['enhanced_transcript'] ?? '';
       selectedVideo?.fileHash = response['video_hash'];
       debugPrint(
           '[VideoDiacritized] API response diacritized status: ${response['diacritized']}');
@@ -754,8 +754,8 @@ class VideoCubit extends Cubit<VideoState> {
 
           // Extract results from progress completion
           final result = progressState.result;
-          if (result.containsKey('raw_transcript')) {
-            final rawTranscript = result['raw_transcript'] as String? ?? '';
+          if (result.containsKey('enhanced_transcript')) {
+            final rawTranscript = result['enhanced_transcript'] as String? ?? '';
             final videoHash = result['video_hash'] as String?;
             final metadata = result['metadata'] as Map<String, dynamic>? ?? {};
 

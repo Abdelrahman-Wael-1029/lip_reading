@@ -111,7 +111,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
               if (state is ProgressCompleted) {
                 // Extract result and update video cubit
                 final result = state.result;
-                final rawTranscript = result['raw_transcript'] as String? ?? '';
+                final rawTranscript = result['enhanced_transcript'] as String? ?? '';
                 final videoHash = result['video_hash'] as String?;
                 final metadata = result['metadata'] as Map<String, dynamic>?;
 
@@ -223,20 +223,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                                   ),
                         ),
                       ),
-                      if (context.read<VideoCubit>().models?.isEmpty ?? false)
-                        IconButton(
-                          icon: Icon(
-                            Icons.refresh,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            context.read<VideoCubit>().fetchModels();
-                          },
-                        ),
-                      if (context.read<VideoCubit>().models == null)
-                        CircularProgressIndicator(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
                     ],
                   ),
                   const SizedBox(height: 16),
