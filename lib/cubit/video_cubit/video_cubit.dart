@@ -227,19 +227,6 @@ class VideoCubit extends Cubit<VideoState> {
     return "$minutes:$seconds";
   }
 
-  // show popup to tell user wait for process video
-  void showLoadingPopup(context) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Row(
-        children: const [
-          CircularProgressIndicator(),
-          SizedBox(width: 10),
-          Text('Processing video please wait...')
-        ],
-      ),
-    ));
-  }
-
   // Video Pick Methods
   Future<void> pickVideoFromGallery(BuildContext context) async {
     if (loading) return;

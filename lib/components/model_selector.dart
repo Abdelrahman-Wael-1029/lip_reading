@@ -202,7 +202,7 @@ class _ModelSelectorState extends State<ModelSelector>
                   decoration: BoxDecoration(
                     color: isSelected
                         ? colorScheme.onPrimary.withValues(alpha: 0.2)
-                        : colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                        : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -331,7 +331,7 @@ class _ModelSelectorState extends State<ModelSelector>
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: colorScheme.primary.withValues(alpha: 0.2),

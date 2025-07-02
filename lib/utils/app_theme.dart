@@ -14,8 +14,6 @@ class AppTheme {
   // Surface colors with better contrast
   static const _surfaceLight = Color(0xFFFAFAFA);
   static const _surfaceDark = Color(0xFF121212);
-  static const _backgroundLight = Color(0xFFFFFFFF);
-  static const _backgroundDark = Color(0xFF000000);
 
   // Error colors
   static const _errorLight = Color(0xFFD32F2F);
@@ -29,23 +27,21 @@ class AppTheme {
 
     return GoogleFonts.interTextTheme(baseTextTheme).copyWith(
       displayLarge: GoogleFonts.inter(
-        fontSize: 32,
-        fontWeight: FontWeight.w300,
-        letterSpacing: -1.5,
+        fontSize: 57,
+        fontWeight: FontWeight.w400,
+        letterSpacing: -0.25,
       ),
       displayMedium: GoogleFonts.inter(
-        fontSize: 28,
-        fontWeight: FontWeight.w300,
-        letterSpacing: -0.5,
+        fontSize: 45,
+        fontWeight: FontWeight.w400,
       ),
       displaySmall: GoogleFonts.inter(
-        fontSize: 24,
+        fontSize: 36,
         fontWeight: FontWeight.w400,
       ),
       headlineLarge: GoogleFonts.inter(
-        fontSize: 22,
+        fontSize: 28,
         fontWeight: FontWeight.w500,
-        letterSpacing: 0.25,
       ),
       headlineMedium: GoogleFonts.inter(
         fontSize: 20,
@@ -112,13 +108,11 @@ class AppTheme {
       onSecondary: Colors.white,
       surface: _surfaceLight,
       onSurface: Color(0xFF1C1B1F),
-      background: _backgroundLight,
-      onBackground: Color(0xFF1C1B1F),
       error: _errorLight,
       onError: Colors.white,
       outline: Color(0xFF79747E),
       outlineVariant: Color(0xFFCAC4D0),
-      surfaceVariant: Color(0xFFE7E0EC),
+      surfaceContainerHighest: Color(0xFFE7E0EC),
       onSurfaceVariant: Color(0xFF49454F),
     );
 
@@ -126,7 +120,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       textTheme: _createTextTheme(Brightness.light),
-      scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.surface,
 
       // AppBar theme with modern Material 3 styling
       appBarTheme: AppBarTheme(
@@ -199,32 +193,21 @@ class AppTheme {
         ),
       ),
 
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.outline),
           minimumSize: const Size(64, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      ),
-
-      // FloatingActionButton theme
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.4),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -241,8 +224,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
 
       // Switch theme
@@ -257,14 +244,14 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return colorScheme.primary;
           }
-          return colorScheme.surfaceVariant;
+          return colorScheme.surfaceContainerHighest;
         }),
       ),
 
       // Slider theme
       sliderTheme: SliderThemeData(
         activeTrackColor: colorScheme.primary,
-        inactiveTrackColor: colorScheme.surfaceVariant,
+        inactiveTrackColor: colorScheme.surfaceContainerHighest,
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primary,
@@ -281,13 +268,11 @@ class AppTheme {
       onSecondary: Color(0xFF003544),
       surface: _surfaceDark,
       onSurface: Color(0xFFE6E1E5),
-      background: _backgroundDark,
-      onBackground: Color(0xFFE6E1E5),
       error: _errorDark,
       onError: Color(0xFF690005),
       outline: Color(0xFF938F99),
       outlineVariant: Color(0xFF49454F),
-      surfaceVariant: Color(0xFF49454F),
+      surfaceContainerHighest: Color(0xFF49454F),
       onSurfaceVariant: Color(0xFFCAC4D0),
     );
 
@@ -295,7 +280,7 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       textTheme: _createTextTheme(Brightness.dark),
-      scaffoldBackgroundColor: colorScheme.background,
+      scaffoldBackgroundColor: colorScheme.surface,
 
       // AppBar theme
       appBarTheme: AppBarTheme(
@@ -368,32 +353,21 @@ class AppTheme {
         ),
       ),
 
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
-          side: BorderSide(color: colorScheme.outline),
           minimumSize: const Size(64, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      ),
-
-      // FloatingActionButton theme
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        elevation: 6,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
         ),
       ),
 
       // Input decoration theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withValues(alpha: 0.4),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -410,8 +384,12 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error),
         ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.error, width: 2),
+        ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
 
       // Switch theme
@@ -426,14 +404,14 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return colorScheme.primary;
           }
-          return colorScheme.surfaceVariant;
+          return colorScheme.surfaceContainerHighest;
         }),
       ),
 
       // Slider theme
       sliderTheme: SliderThemeData(
         activeTrackColor: colorScheme.primary,
-        inactiveTrackColor: colorScheme.surfaceVariant,
+        inactiveTrackColor: colorScheme.surfaceContainerHighest,
         thumbColor: colorScheme.primary,
         overlayColor: colorScheme.primary.withValues(alpha: 0.12),
         valueIndicatorColor: colorScheme.primary,

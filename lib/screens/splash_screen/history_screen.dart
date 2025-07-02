@@ -1,6 +1,7 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lip_reading/components/custom_text_from_field.dart';
 import 'package:lip_reading/cubit/navigation_cubit/navigation_cubit.dart';
 import 'package:lip_reading/cubit/video_cubit/video_cubit.dart';
@@ -59,12 +60,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
       body: BlocListener<VideoCubit, VideoState>(
         listener: (context, state) {
           if (state is HistoryError) {
-            // Show a toast or Snackbar
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage)),
+            // Show a toast
+            Fluttertoast.showToast(
+              msg: state.errorMessage,
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              fontSize: 16.0,
             );
-            // OR if you use `fluttertoast`:
-            // Fluttertoast.showToast(msg: state.message);
           }
         },
         child: BlocBuilder<VideoCubit, VideoState>(
@@ -199,11 +203,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
           if (!success && context.mounted) {
             // If initialization failed, show error
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to load video. Please try again.'),
-                backgroundColor: Colors.red,
-              ),
+            Fluttertoast.showToast(
+              msg: 'Failed to load video. Please try again.',
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.BOTTOM,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              fontSize: 16.0,
             );
           }
         },

@@ -75,7 +75,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Lip Reading',
@@ -200,7 +200,7 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                       colors: [
                         Theme.of(context)
                             .colorScheme
-                            .surfaceVariant
+                            .surfaceContainerHighest
                             .withValues(alpha: 0.3),
                         Theme.of(context).colorScheme.surface,
                       ],
@@ -392,14 +392,13 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: result));
                           HapticFeedback.lightImpact();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Text copied to clipboard'),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                          Fluttertoast.showToast(
+                            msg: 'Text copied to clipboard',
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            backgroundColor: Colors.black87,
+                            textColor: Colors.white,
+                            fontSize: 16.0,
                           );
                         },
                         icon: const Icon(Icons.copy),
@@ -417,7 +416,8 @@ class _LipReadingScreenState extends State<LipReadingScreen>
                 constraints: const BoxConstraints(minHeight: 120),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                  color: colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: colorScheme.outline.withValues(alpha: 0.2),
@@ -690,7 +690,6 @@ class _LipReadingScreenState extends State<LipReadingScreen>
       BuildContext context, String errorType, String errorMessage) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    print('Error Type: $errorType');
 
     // Get error-specific icon and title
     IconData errorIcon;
