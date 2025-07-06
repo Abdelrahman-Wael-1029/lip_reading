@@ -92,14 +92,11 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 
 ## 🎬 Demo
 
-Watch the application in action with our demo video showcasing the Arabic lip reading functionality:
+Watch the application in action with our demo showcasing the Arabic lip reading functionality:
 
-<video width="600" controls>
-  <source src="assets/video/demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![App Demo](assets/video/demo.gif)
 
-*The demo video demonstrates the complete workflow from video recording to Arabic text transcription.*
+*The demo shows the complete workflow from video recording to Arabic text transcription.*
 
 ## 🚀 Flutter-Specific Features
 
