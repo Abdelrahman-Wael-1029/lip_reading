@@ -494,6 +494,10 @@ For support and questions:
 - Video quality optimization
 - Cloud-based model updates
 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ---
 
 **Note**: This application requires clear video quality with visible lip movements for optimal results. Performance may vary based on lighting conditions, video quality, and pronunciation clarity.
