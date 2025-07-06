@@ -1,13 +1,78 @@
 # 📱 Arabic Lip Reading App
 
-A Flutter-based mobile application that uses artificial intelligence to convert lip movements into Arabic text. This app leverages machine learning models to analyze video recordings and transcribe spoken Arabic words from lip movements.
+A Flutter-based mobile application that uses artificial intelligence to convert lip movements into Arabic text. This app leverages machine learning models to analyze video recordings and transcribe spoken words from lip movements.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.6.2+-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS-lightgrey.svg)
 ![Firebase](https://img.shields.io/badge/Backend-Firebase-orange.svg)
 ![AI](https://img.shields.io/badge/AI-Lip%20Reading-green.svg)
 
-## 📋 App Overview
+## 📋 Table of Contents
+
+- [📋 Table of Contents](#-table-of-contents)
+- [🎯 App Overview](#-app-overview)
+  - [Key Functionalities](#key-functionalities)
+- [🚀 Flutter-Specific Features](#-flutter-specific-features)
+  - [Core Features](#core-features)
+  - [State Management](#state-management)
+  - [AI Models Available](#ai-models-available)
+- [🛠 Tech Stack & Dependencies](#-tech-stack--dependencies)
+  - [Flutter SDK](#flutter-sdk)
+  - [Core Dependencies](#core-dependencies)
+  - [Backend Integration](#backend-integration)
+- [🏗 App Architecture](#-app-architecture)
+  - [Folder Structure](#folder-structure)
+  - [State Management Architecture](#state-management-architecture)
+  - [Data Flow](#data-flow)
+- [📱 Prerequisites & Installation](#-prerequisites--installation)
+  - [System Requirements](#system-requirements)
+  - [Platform-Specific Setup](#platform-specific-setup)
+  - [Firebase Configuration](#firebase-configuration)
+- [🚀 Getting Started](#-getting-started)
+  - [1. Clone the Repository](#1-clone-the-repository)
+  - [2. Install Dependencies](#2-install-dependencies)
+  - [3. Firebase Setup](#3-firebase-setup)
+  - [4. Run the Application](#4-run-the-application)
+- [🎯 Usage Guide](#-usage-guide)
+  - [Recording a Video](#recording-a-video)
+  - [Using Gallery Videos](#using-gallery-videos)
+  - [Managing History](#managing-history)
+  - [AI Model Selection](#ai-model-selection)
+  - [Text Format Options](#text-format-options)
+- [🤖 AI Models](#-ai-models)
+  - [Available Models](#available-models)
+  - [Model Comparison](#model-comparison)
+- [🔧 Configuration](#-configuration)
+  - [Backend Configuration](#backend-configuration)
+  - [Firebase Configuration](#firebase-configuration-1)
+  - [App Theme Customization](#app-theme-customization)
+- [📊 Progress Tracking](#-progress-tracking)
+  - [Real-time Updates](#real-time-updates)
+  - [Progress Steps](#progress-steps)
+- [🔐 Authentication & Security](#-authentication--security)
+  - [Firebase Authentication](#firebase-authentication)
+  - [Data Security](#data-security)
+- [💾 Data Management](#-data-management)
+  - [Firestore Database](#firestore-database)
+  - [Firebase Storage](#firebase-storage)
+  - [Video Repository](#video-repository)
+- [🎨 UI/UX Design](#-uiux-design)
+  - [Material 3 Design](#material-3-design)
+  - [Theme System](#theme-system)
+  - [Custom Components](#custom-components)
+- [📝 API Documentation](#-api-documentation)
+  - [Backend API](#backend-api)
+  - [Progress Streaming](#progress-streaming)
+- [🧪 Testing & Debugging](#-testing--debugging)
+  - [BLoC Observer](#bloc-observer)
+  - [Error Handling](#error-handling)
+- [📝 Contributing](#-contributing)
+- [🐛 Troubleshooting](#-troubleshooting)
+  - [Common Issues](#common-issues)
+- [🤝 Support](#-support)
+- [🔮 Future Enhancements](#-future-enhancements)
+
+## 🎯 App Overview
 
 The Arabic Lip Reading App is designed to bridge communication gaps by converting Arabic lip movements into text using advanced AI models. This application is particularly useful for:
 
@@ -27,7 +92,8 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 ## 🚀 Flutter-Specific Features
 
 ### Core Features
-- **Video Recording & Selection**: Native camera integration and gallery picker
+- **Video Recording & Selection**: Native camera integration and gallery picker using `image_picker`
+- **Custom Video Player**: Built with `video_player` package with custom controls
 - **Multiple AI Models**: Support for MSTCN, DCTCN, and Conformer models
 - **Real-time Progress Tracking**: Server-sent events for processing updates
 - **Firebase Integration**: Authentication, Firestore database, and Cloud Storage
@@ -39,6 +105,12 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 - **BLoC Pattern**: Using `flutter_bloc` for predictable state management
 - **Cubit Implementation**: Separate cubits for video, auth, progress, and navigation
 - **Stream Handling**: Real-time progress updates via Server-Sent Events
+- **State Persistence**: Proper state management across app lifecycle
+
+### AI Models Available
+- **MSTCN**: Multi-Scale Temporal Convolutional Network (Fast & efficient)
+- **DCTCN**: Densely-Connected Temporal Convolutional Network (Balanced accuracy)
+- **Conformer**: Convolution-augmented Transformer (Highest accuracy)
 
 ## 🛠 Tech Stack & Dependencies
 
@@ -62,6 +134,9 @@ dependencies:
   responsive_framework: ^1.5.1   # Responsive design
   awesome_dialog: ^3.2.1        # Modern dialogs
   fluttertoast: ^8.2.12        # User notifications
+  connectivity_plus: ^6.1.4     # Network connectivity
+  path_provider: ^2.1.5         # File system paths
+  uuid: ^4.5.1                  # Unique identifiers
 ```
 
 ### Backend Integration
@@ -77,29 +152,44 @@ dependencies:
 lib/
 ├── main.dart                    # App entry point with BLoC providers
 ├── components/                  # Reusable UI components
-│   ├── custom_video_player.dart
-│   ├── model_selector.dart
-│   ├── modern_progress_bar.dart
-│   └── diacritized_toggle.dart
-├── cubit/                      # State management
+│   ├── custom_video_player.dart    # Video player with controls
+│   ├── model_selector.dart         # AI model selection widget
+│   ├── modern_progress_bar.dart    # Animated progress indicator
+│   ├── diacritized_toggle.dart     # Text format toggle
+│   └── custom_text_from_field.dart # Custom input field
+├── cubit/                      # State management (BLoC pattern)
 │   ├── auth/                   # Authentication logic
+│   │   ├── auth_cubit.dart
+│   │   └── auth_state.dart
 │   ├── video_cubit/            # Video handling and processing
+│   │   ├── video_cubit.dart
+│   │   └── video_state.dart
 │   ├── progress/               # Progress tracking
+│   │   ├── progress_cubit.dart
+│   │   └── progress_state.dart
 │   └── navigation_cubit/       # Bottom navigation
+│       └── navigation_cubit.dart
 ├── model/                      # Data models
-│   ├── video_model.dart
-│   └── progress_model.dart
+│   ├── video_model.dart        # Video data structure
+│   └── progress_model.dart     # Progress tracking model
 ├── repository/                 # Data layer
-│   └── video_repository.dart
+│   └── video_repository.dart   # Video data operations
 ├── screens/                    # UI screens
-│   ├── auth/                   # Login/signup
+│   ├── auth/                   # Login/signup screens
+│   │   ├── login_screen.dart
+│   │   └── signup_screen.dart
 │   ├── lip_reading/            # Main recording screen
+│   │   └── lip_reading_screen.dart
 │   ├── layout/                 # App shell with navigation
+│   │   └── app_shell.dart
 │   └── splash_screen/          # Splash and history
+│       ├── splash_screen.dart
+│       └── history_screen.dart
 ├── service/                    # Business logic
 │   ├── api_service.dart        # Backend communication
 │   ├── firestore_service.dart  # Database operations
-│   └── storage_service.dart    # File management
+│   ├── storage_service.dart    # File management
+│   └── connectivity_service.dart # Network monitoring
 └── utils/                      # Utilities and themes
     ├── app_theme.dart          # Material 3 theming
     ├── app_route.dart          # Navigation routes
@@ -107,18 +197,18 @@ lib/
 ```
 
 ### State Management Architecture
-- **BLoC Pattern**: Separation of business logic from UI
+- **BLoC Pattern**: Separation of business logic from UI components
 - **Event-Driven**: User actions trigger events processed by cubits
 - **Stream-Based**: Real-time progress updates through streams
 - **Firebase Integration**: Reactive data binding with Firestore
 
 ### Data Flow
-1. **Video Input** → Camera recording or gallery selection
-2. **Video Processing** → Compression and optimization
-3. **API Communication** → Upload to lip reading backend
-4. **Progress Tracking** → Real-time updates via SSE
+1. **Video Input** → Camera recording or gallery selection via `image_picker`
+2. **Video Processing** → Compression using `video_compress`
+3. **API Communication** → Upload to lip reading backend via `http`
+4. **Progress Tracking** → Real-time updates via Server-Sent Events
 5. **Results Storage** → Save to Firebase with transcription
-6. **History Management** → Retrieve and manage past results
+6. **History Management** → Retrieve and manage past results from Firestore
 
 ## 📱 Prerequisites & Installation
 
@@ -187,7 +277,7 @@ cd ios && pod install && cd ..
 flutter run
 ```
 
-## 🎯 Usage
+## 🎯 Usage Guide
 
 ### Recording a Video
 1. **Launch the app** and complete authentication
@@ -206,10 +296,19 @@ flutter run
 
 ### Managing History
 1. **Navigate to History tab**
-2. **Search videos** by title
+2. **Search videos** by title using search field
 3. **Tap any video** to reload and reprocess
 4. **Delete videos** using the delete button
 5. **Pull to refresh** to update the list
+
+### AI Model Selection
+- **MSTCN**: Best for quick processing
+- **DCTCN**: Balanced performance
+- **Conformer**: Highest accuracy
+
+### Text Format Options
+- **Plain Text**: Arabic without diacritical marks
+- **Diacritized**: Arabic with harakat (diacritical marks)
 
 ## 🤖 AI Models
 
@@ -229,6 +328,13 @@ flutter run
   - Slower processing
   - Best for quality transcription
 
+### Model Comparison
+| Model | Speed | Accuracy | Best For |
+|-------|-------|----------|----------|
+| MSTCN | ⭐⭐⭐ | ⭐⭐ | Quick results |
+| DCTCN | ⭐⭐ | ⭐⭐⭐ | Balanced use |
+| Conformer | ⭐ | ⭐⭐⭐ | High accuracy |
+
 ## 🔧 Configuration
 
 ### Backend Configuration
@@ -240,6 +346,100 @@ static const String baseUrl = "https://arabic-lip-reading.loca.lt";
 
 ### Firebase Configuration
 Firebase configuration is handled automatically through `flutterfire configure`. Manual setup is in `lib/firebase_options.dart`.
+
+### App Theme Customization
+Customize the app theme in `lib/utils/app_theme.dart`:
+- Material 3 design system
+- Google Fonts (Inter) integration
+- Light and dark theme support
+- Custom color schemes
+
+## 📊 Progress Tracking
+
+### Real-time Updates
+- Server-Sent Events for live progress
+- Animated progress bars with steps
+- Estimated time remaining
+- Cancellation support
+
+### Progress Steps
+1. **Initializing** - Setting up processing
+2. **Loading Video** - Preparing video file
+3. **Compressing Video** - Optimizing file size
+4. **Uploading** - Sending to server
+5. **Backend Processing** - AI analysis
+6. **Completed** - Results ready
+
+## 🔐 Authentication & Security
+
+### Firebase Authentication
+- Email/password authentication
+- Secure user session management
+- User-specific data isolation
+
+### Data Security
+- Firebase Security Rules
+- Encrypted data transmission
+- User data privacy protection
+
+## 💾 Data Management
+
+### Firestore Database
+- User video history storage
+- Scalable document structure
+- Real-time synchronization
+
+### Firebase Storage
+- Secure video file storage
+- Automatic file management
+- CDN-powered delivery
+
+### Video Repository
+- Abstracted data layer
+- CRUD operations for videos
+- Error handling and validation
+
+## 🎨 UI/UX Design
+
+### Material 3 Design
+- Modern design system
+- Adaptive color schemes
+- Smooth animations and transitions
+
+### Theme System
+- System-based theme switching
+- Custom color palettes
+- Typography using Inter font
+
+### Custom Components
+- `CustomVideoPlayer` - Video playback with controls
+- `ModelSelector` - AI model selection interface
+- `ModernProgressBar` - Animated progress tracking
+- `DiacritizedToggle` - Text format switching
+
+## 📝 API Documentation
+
+### Backend API
+- **GET** `/config` - Retrieve available models
+- **POST** `/transcribe/` - Start transcription process
+- **GET** `/progress/{taskId}` - Stream progress updates
+- **DELETE** `/progress/{taskId}/cancel` - Cancel processing
+
+### Progress Streaming
+Real-time updates via Server-Sent Events with structured progress data including status, steps, and error handling.
+
+## 🧪 Testing & Debugging
+
+### BLoC Observer
+Custom BLoC observer for state tracking:
+- State creation and changes
+- Error monitoring
+- Performance debugging
+
+### Error Handling
+- User-friendly error messages
+- Network error recovery
+- Graceful failure handling
 
 ## 📝 Contributing
 
@@ -269,6 +469,10 @@ Firebase configuration is handled automatically through `flutterfire configure`.
 - Check authentication status
 - Ensure Firestore rules allow read/write
 
+**Model loading issues:**
+- Check network connectivity
+- Verify server status
+- Try refreshing the model list
 
 ## 🤝 Support
 
@@ -286,7 +490,10 @@ For support and questions:
 - Export options (PDF, text files)
 - Real-time lip reading during recording
 - Integration with Arabic TTS services
+- Advanced user analytics
+- Video quality optimization
+- Cloud-based model updates
 
 ---
 
-**Note**: This application requires clear video quality with visible lip movements for optimal results. Performance may vary based on lighting conditions, video quality, and
+**Note**: This application requires clear video quality with visible lip movements for optimal results. Performance may vary based on lighting conditions, video quality, and pronunciation clarity.
