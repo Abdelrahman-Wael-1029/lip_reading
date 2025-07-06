@@ -12,6 +12,7 @@ A Flutter-based mobile application that uses artificial intelligence to convert 
 - [📋 Table of Contents](#-table-of-contents)
 - [🎯 App Overview](#-app-overview)
   - [Key Functionalities](#key-functionalities)
+- [🎬 Demo](#-demo)
 - [🚀 Flutter-Specific Features](#-flutter-specific-features)
   - [Core Features](#core-features)
   - [State Management](#state-management)
@@ -88,6 +89,17 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 - Video history management with Firebase integration
 - Cross-platform support (Android & iOS)
 - Modern Material 3 UI with dark/light theme support
+
+## 🎬 Demo
+
+Watch the application in action with our demo video showcasing the Arabic lip reading functionality:
+
+<video width="600" controls>
+  <source src="assets/video/demo.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
+*The demo video demonstrates the complete workflow from video recording to Arabic text transcription.*
 
 ## 🚀 Flutter-Specific Features
 
