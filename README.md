@@ -9,7 +9,6 @@ A Flutter-based mobile application that uses artificial intelligence to convert 
 
 ## 📋 Table of Contents
 
-- [📋 Table of Contents](#-table-of-contents)
 - [🎯 App Overview](#-app-overview)
   - [Key Functionalities](#key-functionalities)
 - [🎬 Demo](#-demo)
@@ -92,7 +91,9 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 
 ## 🎬 Demo
 
-![Demo Video]()
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/b7620198-3be9-4938-86ec-2d20a9c57ddf" alt="Demo Video" style="border-radius: 15px; max-width: 80%;" />
+</div>
 
 ## 🚀 Flutter-Specific Features
 
