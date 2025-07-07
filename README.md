@@ -92,11 +92,7 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 
 ## 🎬 Demo
 
-Watch the application in action with our demo showcasing the Arabic lip reading functionality:
-
-![App Demo](assets/video/demo.gif)
-
-*The demo shows the complete workflow from video recording to Arabic text transcription.*
+![Demo Video]()
 
 ## 🚀 Flutter-Specific Features
 
@@ -149,6 +145,7 @@ dependencies:
 ```
 
 ### Backend Integration
+- **Backend Repository**: [Arabic Lip Reading Backend](https://github.com/Essa-Ramzy/Arabic-Lib-Reading.git)
 - **API Service**: Custom service connecting to Arabic lip reading backend
 - **Base URL**: `https://arabic-lip-reading.loca.lt`
 - **Progress Streaming**: Server-Sent Events for real-time updates
