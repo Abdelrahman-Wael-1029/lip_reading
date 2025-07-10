@@ -27,21 +27,23 @@ class AppTheme {
 
     return GoogleFonts.interTextTheme(baseTextTheme).copyWith(
       displayLarge: GoogleFonts.inter(
-        fontSize: 57,
-        fontWeight: FontWeight.w400,
-        letterSpacing: -0.25,
+        fontSize: 32,
+        fontWeight: FontWeight.w300,
+        letterSpacing: -1.5,
       ),
       displayMedium: GoogleFonts.inter(
-        fontSize: 45,
-        fontWeight: FontWeight.w400,
+        fontSize: 28,
+        fontWeight: FontWeight.w300,
+        letterSpacing: -0.5,
       ),
       displaySmall: GoogleFonts.inter(
-        fontSize: 36,
+        fontSize: 24,
         fontWeight: FontWeight.w400,
       ),
       headlineLarge: GoogleFonts.inter(
-        fontSize: 28,
+        fontSize: 22,
         fontWeight: FontWeight.w500,
+        letterSpacing: 0.25,
       ),
       headlineMedium: GoogleFonts.inter(
         fontSize: 20,
@@ -193,13 +195,14 @@ class AppTheme {
         ),
       ),
 
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
           minimumSize: const Size(64, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -229,7 +232,7 @@ class AppTheme {
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
 
       // Switch theme
@@ -353,13 +356,14 @@ class AppTheme {
         ),
       ),
 
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
           foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.outline),
           minimumSize: const Size(64, 48),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -389,7 +393,7 @@ class AppTheme {
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
 
       // Switch theme
