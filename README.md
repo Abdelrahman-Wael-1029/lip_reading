@@ -92,7 +92,9 @@ The Arabic Lip Reading App is designed to bridge communication gaps by convertin
 ## 🎬 Demo
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/b7620198-3be9-4938-86ec-2d20a9c57ddf" alt="Demo Video" style="border-radius: 15px; max-width: 80%;" />
+  <video src="https://github.com/user-attachments/assets/b7620198-3be9-4938-86ec-2d20a9c57ddf" alt="Demo Video" style="border-radius: 15px; max-width: 80%;" controls>
+    <em>If you can't see the video, <a href="https://github.com/user-attachments/assets/b7620198-3be9-4938-86ec-2d20a9c57ddf">click here to watch it directly</a>.</em>
+  </video>
 </div>
 
 ## 🚀 Flutter-Specific Features
